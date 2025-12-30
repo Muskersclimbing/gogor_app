@@ -75,3 +75,9 @@
 - [ ] Música ambient generada con IA
 - [ ] Efectos de sonido
 - [ ] Animaciones avanzadas (parallax)
+
+
+## BUGS REPORTADOS (Urgente)
+- [x] Corregir error "Cannot read property 'createClient' of null" en dispositivo móvil
+- [x] Cambiar nombre de app de "El Vuelo del Cuervo" a "Gogor Games"
+- [x] Corregir error "Unmatched Route" en navegación

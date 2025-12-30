@@ -7,16 +7,10 @@
 
 import { Platform } from 'react-native';
 
-// Tipos e importaciones condicionales para BLE
+// Tipos para BLE
 type Device = any;
 type Characteristic = any;
-let BleManager: any;
-
-// Importar BleManager solo en plataformas nativas
-if (Platform.OS !== 'web') {
-  const ble = require('react-native-ble-plx');
-  BleManager = ble.BleManager;
-}
+type BleManagerType = any;
 
 // UUIDs del Tindeq Progressor
 const TINDEQ_SERVICE_UUID = '7e4e1701-1ea6-40c9-9dcc-13d34ffead57';
@@ -52,7 +46,7 @@ type BatteryCallback = (voltage: number) => void;
 type ConnectionCallback = (connected: boolean) => void;
 
 class TindeqService {
-  private manager: BleManager;
+  private manager: BleManagerType | null = null;
   private device: Device | null = null;
   private forceCallback: ForceCallback | null = null;
   private batteryCallback: BatteryCallback | null = null;
@@ -61,8 +55,28 @@ class TindeqService {
   private isConnected = false;
 
   constructor() {
-    if (Platform.OS !== 'web' && BleManager) {
+    // No inicializar BleManager en el constructor
+    // Se inicializará de forma lazy cuando se necesite
+  }
+
+  /**
+   * Inicializar BleManager de forma lazy
+   */
+  private initializeManager(): void {
+    if (this.manager) {
+      return; // Ya inicializado
+    }
+
+    if (Platform.OS === 'web') {
+      throw new Error('Bluetooth no disponible en web');
+    }
+
+    try {
+      const { BleManager } = require('react-native-ble-plx');
       this.manager = new BleManager();
+    } catch (error) {
+      console.error('Error inicializando BleManager:', error);
+      throw new Error('No se pudo inicializar el gestor de Bluetooth');
     }
   }
 
@@ -70,7 +84,9 @@ class TindeqService {
    * Escanear dispositivos Tindeq cercanos
    */
   async scanForDevices(onDeviceFound: (device: Device) => void): Promise<void> {
-    if (Platform.OS === 'web' || !this.manager) {
+    this.initializeManager();
+
+    if (!this.manager) {
       throw new Error('Bluetooth no disponible en esta plataforma');
     }
 
@@ -91,7 +107,7 @@ class TindeqService {
     this.manager.startDeviceScan(
       [TINDEQ_SERVICE_UUID],
       { allowDuplicates: false },
-      (error, device) => {
+      (error: any, device: Device) => {
         if (error) {
           console.error('Error escaneando:', error);
           this.isScanning = false;
@@ -119,7 +135,9 @@ class TindeqService {
    * Conectar a un dispositivo Tindeq
    */
   async connect(deviceId: string): Promise<void> {
-    if (Platform.OS === 'web' || !this.manager) {
+    this.initializeManager();
+
+    if (!this.manager) {
       throw new Error('Bluetooth no disponible en esta plataforma');
     }
 
@@ -184,7 +202,7 @@ class TindeqService {
     await this.device.monitorCharacteristicForService(
       TINDEQ_SERVICE_UUID,
       DATA_POINT_UUID,
-      (error, characteristic) => {
+      (error: any, characteristic: Characteristic) => {
         if (error) {
           console.error('Error monitoreando Data Point:', error);
           return;

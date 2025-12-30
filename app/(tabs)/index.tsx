@@ -6,7 +6,7 @@ import { ScreenContainer } from "@/components/screen-container";
 import { useColors } from "@/hooks/use-colors";
 
 /**
- * Home Screen - El Vuelo del Cuervo
+ * Home Screen - Gogor Games
  * 
  * Pantalla principal donde el usuario puede:
  * - Ver el título del juego
@@ -31,7 +31,7 @@ export default function HomeScreen() {
       <View className="items-center mb-12">
         <Text className="text-5xl font-bold text-primary mb-2">🦅</Text>
         <Text className="text-3xl font-bold text-foreground text-center">
-          El Vuelo del Cuervo
+          Gogor Games
         </Text>
         <Text className="text-base text-muted text-center mt-2">
           Juego de fuerza con Tindeq Progressor
