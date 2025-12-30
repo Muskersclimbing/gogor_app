@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { View, Text, TouchableOpacity, ActivityIndicator, FlatList, Platform, Alert } from "react-native";
-import { useRouter } from "expo-router";
+import { useRouter, useLocalSearchParams } from "expo-router";
 import * as Haptics from "expo-haptics";
 
 import { ScreenContainer } from "@/components/screen-container";
@@ -25,6 +25,7 @@ type BluetoothDevice = {
 export default function ConnectScreen() {
   const colors = useColors();
   const router = useRouter();
+  const params = useLocalSearchParams<{ mode?: string }>();
   const [isScanning, setIsScanning] = useState(true);
   const [isConnecting, setIsConnecting] = useState(false);
   const [devices, setDevices] = useState<BluetoothDevice[]>([]);
@@ -91,8 +92,11 @@ export default function ConnectScreen() {
       // Conectar al dispositivo
       await tindeqService.connect(deviceInfo.id);
 
-      // Navegar a la pantalla de calibración/juego
-      router.push("/game");
+      // Navegar a la pantalla de calibración/juego con el modo seleccionado
+      router.push({
+        pathname: "/game",
+        params: { mode: params.mode || "quick" },
+      });
 
     } catch (error) {
       console.error("Error conectando:", error);

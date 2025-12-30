@@ -1,25 +1,88 @@
 import { useState, useEffect } from "react";
-import { View, Text, TouchableOpacity, Platform, Alert } from "react-native";
-import { useRouter } from "expo-router";
+import { View, Text, TouchableOpacity, Platform, Alert, ImageBackground } from "react-native";
+import { useRouter, useLocalSearchParams } from "expo-router";
 import * as Haptics from "expo-haptics";
 
 import { ScreenContainer } from "@/components/screen-container";
 import { useColors } from "@/hooks/use-colors";
 import { tindeqService, type ForceData, type CalibrationData } from "@/lib/tindeq-service";
 
-type GamePhase = "calibration" | "ready" | "playing" | "finished";
+type GameMode = "quick" | "total" | "resistance";
+type GamePhase = "calibration" | "ready" | "playing" | "rest" | "finished";
+type SceneName = "yosemite" | "utah" | "albarracin" | "fontainebleau";
+
+interface SceneConfig {
+  name: SceneName;
+  title: string;
+  dayImage: any;
+  nightImage: any;
+}
+
+const SCENES: Record<SceneName, SceneConfig> = {
+  yosemite: {
+    name: "yosemite",
+    title: "Yosemite",
+    dayImage: require("@/assets/images/yosemite-day.png"),
+    nightImage: require("@/assets/images/yosemite-night.png"),
+  },
+  utah: {
+    name: "utah",
+    title: "Utah",
+    dayImage: require("@/assets/images/utah-day.png"),
+    nightImage: require("@/assets/images/utah-night.png"),
+  },
+  albarracin: {
+    name: "albarracin",
+    title: "Albarracín",
+    dayImage: require("@/assets/images/albarracin-day.png"),
+    nightImage: require("@/assets/images/albarracin-night.png"),
+  },
+  fontainebleau: {
+    name: "fontainebleau",
+    title: "Fontainebleau",
+    dayImage: require("@/assets/images/fontainebleau-day.png"),
+    nightImage: require("@/assets/images/fontainebleau-night.png"),
+  },
+};
+
+// Configuración de modalidades
+const MODE_CONFIG = {
+  quick: {
+    title: "Calentamiento Rápido",
+    duration: 180, // 3 minutos
+    scenes: ["yosemite"] as SceneName[],
+    hasNightTransition: false,
+  },
+  total: {
+    title: "Calentamiento Total",
+    duration: 300, // 5 minutos
+    scenes: ["yosemite", "utah"] as SceneName[],
+    hasNightTransition: true,
+    nightAt: 120, // Transición nocturna a los 2 minutos
+  },
+  resistance: {
+    title: "Resistencia",
+    duration: 0, // Sin límite de tiempo
+    scenes: ["yosemite", "utah", "albarracin", "fontainebleau"] as SceneName[],
+    hasNightTransition: true,
+    lives: 3,
+  },
+};
 
 /**
  * Game Screen - Gogor Games
  * 
- * Pantalla principal del juego donde:
- * 1. Calibración: El usuario aplica fuerza máxima para determinar zonas
- * 2. Juego: Ejercicios de fuerza con feedback visual en tiempo real
- * 3. Resultados: Estadísticas de la sesión
+ * Pantalla principal del juego con soporte para 3 modalidades:
+ * - Calentamiento Rápido (3min, 1 escenario)
+ * - Calentamiento Total (5min, 2 escenarios + noche)
+ * - Resistencia (3 vidas, 4 escenarios + noches)
  */
 export default function GameScreen() {
   const colors = useColors();
   const router = useRouter();
+  const params = useLocalSearchParams<{ mode?: string }>();
+  const gameMode = (params.mode || "quick") as GameMode;
+  const modeConfig = MODE_CONFIG[gameMode];
   
   // Estado de conexión
   const [isConnected, setIsConnected] = useState(false);
@@ -34,8 +97,21 @@ export default function GameScreen() {
   // Estado del juego
   const [currentForce, setCurrentForce] = useState(0);
   const [maxForceReached, setMaxForceReached] = useState(0);
-  const [timeRemaining, setTimeRemaining] = useState(180); // 3 minutos por defecto
+  const [averageForce, setAverageForce] = useState(0);
+  const [forceHistory, setForceHistory] = useState<number[]>([]);
+  const [timeRemaining, setTimeRemaining] = useState(modeConfig.duration);
+  const [timeElapsed, setTimeElapsed] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
+  
+  // Estado de escenarios
+  const [currentSceneIndex, setCurrentSceneIndex] = useState(0);
+  const [isNightTransition, setIsNightTransition] = useState(false);
+  const [nightTransitionTime, setNightTransitionTime] = useState(0);
+  
+  // Estado de resistencia
+  const [lives, setLives] = useState(modeConfig.lives || 0);
+
+  const currentScene = SCENES[modeConfig.scenes[currentSceneIndex]];
 
   // Verificar conexión al montar
   useEffect(() => {
@@ -74,25 +150,29 @@ export default function GameScreen() {
 
   // Cronómetro del juego
   useEffect(() => {
-    if (!isPlaying || timeRemaining <= 0) {
-      if (timeRemaining <= 0 && isPlaying) {
-        handleGameEnd();
-      }
-      return;
-    }
+    if (!isPlaying) return;
 
     const timer = setInterval(() => {
-      setTimeRemaining((prev) => {
-        if (prev <= 1) {
-          setIsPlaying(false);
-          return 0;
-        }
-        return prev - 1;
-      });
+      setTimeElapsed((prev) => prev + 1);
+      
+      if (modeConfig.duration > 0) {
+        setTimeRemaining((prev) => {
+          if (prev <= 1) {
+            handleGameEnd();
+            return 0;
+          }
+          return prev - 1;
+        });
+      }
+
+      // Verificar transición nocturna (solo en Total)
+      if (gameMode === "total" && timeElapsed === modeConfig.nightAt) {
+        startNightTransition();
+      }
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [isPlaying, timeRemaining]);
+  }, [isPlaying, timeElapsed]);
 
   // Cronómetro de calibración (5 segundos)
   useEffect(() => {
@@ -113,6 +193,25 @@ export default function GameScreen() {
     return () => clearInterval(timer);
   }, [gamePhase, calibrationTime]);
 
+  // Cronómetro de transición nocturna (10 segundos)
+  useEffect(() => {
+    if (!isNightTransition || nightTransitionTime === 0) {
+      return;
+    }
+
+    const timer = setInterval(() => {
+      setNightTransitionTime((prev) => {
+        if (prev <= 1) {
+          endNightTransition();
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [isNightTransition, nightTransitionTime]);
+
   const handleForceData = (data: ForceData) => {
     const force = data.weight;
     setCurrentForce(force);
@@ -122,9 +221,18 @@ export default function GameScreen() {
       setCalibrationForces((prev) => [...prev, force]);
     }
 
-    // Durante el juego, actualizar máximo alcanzado
-    if (gamePhase === "playing" && force > maxForceReached) {
-      setMaxForceReached(force);
+    // Durante el juego, actualizar estadísticas
+    if (gamePhase === "playing" && !isNightTransition) {
+      if (force > maxForceReached) {
+        setMaxForceReached(force);
+      }
+      
+      setForceHistory((prev) => {
+        const newHistory = [...prev, force];
+        const avg = newHistory.reduce((sum, f) => sum + f, 0) / newHistory.length;
+        setAverageForce(avg);
+        return newHistory;
+      });
     }
   };
 
@@ -220,10 +328,33 @@ export default function GameScreen() {
       setIsPlaying(true);
       setGamePhase("playing");
       setMaxForceReached(0);
+      setAverageForce(0);
+      setForceHistory([]);
+      setTimeElapsed(0);
 
     } catch (error) {
       console.error("Error iniciando juego:", error);
       Alert.alert("Error", "No se pudo iniciar el juego.");
+    }
+  };
+
+  const startNightTransition = () => {
+    setIsNightTransition(true);
+    setNightTransitionTime(10);
+    setIsPlaying(false);
+    
+    if (Platform.OS !== "web") {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
+  };
+
+  const endNightTransition = () => {
+    setIsNightTransition(false);
+    setCurrentSceneIndex((prev) => prev + 1);
+    setIsPlaying(true);
+    
+    if (Platform.OS !== "web") {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     }
   };
 
@@ -252,9 +383,16 @@ export default function GameScreen() {
       setIsPlaying(false);
       setGamePhase("finished");
       
-      // Navegar a resultados
-      // TODO: Pasar datos de la sesión
-      router.push("/results");
+      // Navegar a resultados con estadísticas
+      router.push({
+        pathname: "/results",
+        params: {
+          mode: gameMode,
+          maxForce: maxForceReached.toFixed(1),
+          avgForce: averageForce.toFixed(1),
+          timeElapsed: timeElapsed.toString(),
+        },
+      });
 
     } catch (error) {
       console.error("Error finalizando juego:", error);
@@ -299,158 +437,212 @@ export default function GameScreen() {
     }
   };
 
+  const backgroundImage = isNightTransition ? currentScene.nightImage : currentScene.dayImage;
+
   return (
-    <ScreenContainer className="flex-1 p-6">
-      {/* Header: Estado de conexión */}
-      <View className="flex-row justify-between items-center mb-6">
-        <TouchableOpacity onPress={handleBackPress} className="active:opacity-70">
-          <Text className="text-primary text-lg">← Atrás</Text>
-        </TouchableOpacity>
-        <View className="flex-row items-center">
-          <Text className="text-muted mr-2">🔋 {batteryPercent}%</Text>
-          <Text className="text-success">{isConnected ? "Bluetooth ✓" : "Desconectado"}</Text>
+    <ImageBackground
+      source={backgroundImage}
+      className="flex-1"
+      resizeMode="cover"
+    >
+      <ScreenContainer className="flex-1 p-6" containerClassName="bg-transparent">
+        {/* Header: Estado de conexión */}
+        <View className="flex-row justify-between items-center mb-6">
+          <TouchableOpacity onPress={handleBackPress} className="active:opacity-70">
+            <Text className="text-white text-lg font-semibold drop-shadow">← Atrás</Text>
+          </TouchableOpacity>
+          <View className="flex-row items-center">
+            <Text className="text-white mr-2 drop-shadow">🔋 {batteryPercent}%</Text>
+            <Text className="text-white drop-shadow">{isConnected ? "Bluetooth ✓" : "Desconectado"}</Text>
+          </View>
         </View>
-      </View>
 
-      {/* FASE: CALIBRACIÓN */}
-      {gamePhase === "calibration" && (
-        <View className="flex-1 justify-center items-center">
-          <Text className="text-foreground text-2xl font-bold text-center mb-4">
-            Calibración
-          </Text>
-          <Text className="text-muted text-center mb-8 px-4">
-            Vamos a medir tu fuerza máxima para ajustar los ejercicios.{"\n\n"}
-            Cuando presiones "Iniciar", aplica la máxima fuerza que puedas sostener durante 5 segundos.
-          </Text>
+        {/* FASE: CALIBRACIÓN */}
+        {gamePhase === "calibration" && (
+          <View className="flex-1 justify-center items-center">
+            <View className="bg-black/60 rounded-3xl p-8 items-center">
+              <Text className="text-white text-2xl font-bold text-center mb-4">
+                Calibración
+              </Text>
+              <Text className="text-white/80 text-center mb-8 px-4">
+                Vamos a medir tu fuerza máxima.{"\n\n"}
+                Cuando presiones "Iniciar", aplica la máxima fuerza durante 5 segundos.
+              </Text>
 
-          {calibrationTime > 0 ? (
-            <>
-              <Text className="text-foreground text-7xl font-bold mb-4">
-                {calibrationTime}
+              {calibrationTime > 0 ? (
+                <>
+                  <Text className="text-white text-7xl font-bold mb-4">
+                    {calibrationTime}
+                  </Text>
+                  <Text className="text-primary text-xl font-semibold mb-8">
+                    ¡Aprieta con fuerza!
+                  </Text>
+                  <View className="bg-white/90 rounded-3xl p-8">
+                    <Text className="text-foreground text-5xl font-bold text-center">
+                      {currentForce.toFixed(1)}
+                    </Text>
+                    <Text className="text-muted text-xl text-center mt-2">kg</Text>
+                  </View>
+                </>
+              ) : (
+                <TouchableOpacity
+                  onPress={handleStartCalibration}
+                  className="bg-primary px-8 py-4 rounded-xl active:opacity-80"
+                >
+                  <Text className="text-background text-lg font-semibold">
+                    Iniciar Calibración
+                  </Text>
+                </TouchableOpacity>
+              )}
+            </View>
+          </View>
+        )}
+
+        {/* FASE: LISTO PARA JUGAR */}
+        {gamePhase === "ready" && calibrationData && (
+          <View className="flex-1 justify-center items-center">
+            <View className="bg-black/60 rounded-3xl p-8 items-center max-w-md">
+              <Text className="text-white text-2xl font-bold text-center mb-4">
+                ¡Calibración completa!
               </Text>
-              <Text className="text-primary text-xl font-semibold mb-8">
-                ¡Aprieta con fuerza!
+              <Text className="text-white/80 text-center mb-2">
+                {modeConfig.title}
               </Text>
-              <View className="bg-surface border-4 border-primary rounded-3xl p-8">
-                <Text className="text-foreground text-5xl font-bold text-center">
+              <Text className="text-white/60 text-center mb-6">
+                Tu fuerza máxima: {calibrationData.maxForce.toFixed(1)} kg
+              </Text>
+
+              <View className="bg-white/10 rounded-2xl p-6 mb-8 w-full">
+                <Text className="text-white font-semibold mb-3">Zonas de entrenamiento:</Text>
+                <View className="gap-2">
+                  <View className="flex-row justify-between">
+                    <Text className="text-white/80">🟢 Zona baja:</Text>
+                    <Text className="text-white">0 - {calibrationData.lowZone.toFixed(1)} kg</Text>
+                  </View>
+                  <View className="flex-row justify-between">
+                    <Text className="text-white/80">🟡 Zona media:</Text>
+                    <Text className="text-white">{calibrationData.lowZone.toFixed(1)} - {calibrationData.mediumZone.toFixed(1)} kg</Text>
+                  </View>
+                  <View className="flex-row justify-between">
+                    <Text className="text-white/80">🔴 Zona alta:</Text>
+                    <Text className="text-white">{calibrationData.mediumZone.toFixed(1)} - {calibrationData.highZone.toFixed(1)} kg</Text>
+                  </View>
+                </View>
+              </View>
+
+              <TouchableOpacity
+                onPress={handleStartGame}
+                className="bg-primary px-8 py-4 rounded-xl active:opacity-80"
+              >
+                <Text className="text-background text-lg font-semibold">
+                  Comenzar
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        )}
+
+        {/* FASE: TRANSICIÓN NOCTURNA */}
+        {isNightTransition && (
+          <View className="flex-1 justify-center items-center">
+            <View className="items-center">
+              <Text className="text-white text-6xl mb-4">🌙</Text>
+              <Text className="text-white text-3xl font-bold mb-2">
+                Descansa...
+              </Text>
+              <Text className="text-white/80 text-xl mb-8">
+                Respira profundo
+              </Text>
+              <Text className="text-white text-5xl font-bold">
+                {nightTransitionTime}
+              </Text>
+            </View>
+          </View>
+        )}
+
+        {/* FASE: JUGANDO */}
+        {gamePhase === "playing" && !isNightTransition && calibrationData && (
+          <>
+            {/* Título del escenario */}
+            <View className="items-center mb-4">
+              <Text className="text-white text-xl font-bold drop-shadow">
+                {currentScene.title}
+              </Text>
+            </View>
+
+            {/* Fuerza actual (grande) */}
+            <View className="items-center my-8">
+              <View 
+                className="bg-white/90 border-4 rounded-3xl p-8 shadow-lg"
+                style={{ borderColor: getZoneColor() }}
+              >
+                <Text 
+                  className="text-7xl font-bold text-center"
+                  style={{ color: getZoneColor() }}
+                >
                   {currentForce.toFixed(1)}
                 </Text>
                 <Text className="text-muted text-xl text-center mt-2">kg</Text>
               </View>
-            </>
-          ) : (
+              <Text className="text-white text-sm mt-4 drop-shadow">
+                Zona: {currentZone === "none" ? "Ninguna" : currentZone === "low" ? "Baja 🟢" : currentZone === "medium" ? "Media 🟡" : "Alta 🔴"}
+              </Text>
+            </View>
+
+            {/* Barra de progreso */}
+            <View className="mb-6">
+              <View className="bg-white/30 h-4 rounded-full overflow-hidden">
+                <View
+                  className="h-full"
+                  style={{ 
+                    width: `${Math.min((currentForce / calibrationData.maxForce) * 100, 100)}%`,
+                    backgroundColor: getZoneColor(),
+                  }}
+                />
+              </View>
+              <Text className="text-white text-sm text-center mt-2 drop-shadow">
+                Máximo: {maxForceReached.toFixed(1)} kg | Promedio: {averageForce.toFixed(1)} kg
+              </Text>
+            </View>
+
+            {/* Cronómetro */}
+            <View className="items-center mb-8">
+              <Text 
+                style={{ color: timeRemaining < 10 ? colors.error : "white" }} 
+                className="text-5xl font-bold drop-shadow"
+              >
+                {modeConfig.duration > 0 ? (
+                  <>
+                    {String(Math.floor(timeRemaining / 60)).padStart(2, "0")}:
+                    {String(timeRemaining % 60).padStart(2, "0")}
+                  </>
+                ) : (
+                  <>
+                    {String(Math.floor(timeElapsed / 60)).padStart(2, "0")}:
+                    {String(timeElapsed % 60).padStart(2, "0")}
+                  </>
+                )}
+              </Text>
+              {gameMode === "resistance" && (
+                <Text className="text-white text-xl mt-2 drop-shadow">
+                  ❤️ {lives} vidas
+                </Text>
+              )}
+            </View>
+
+            {/* Botón detener */}
             <TouchableOpacity
-              onPress={handleStartCalibration}
-              className="bg-primary px-8 py-4 rounded-xl active:opacity-80"
+              onPress={handleStopGame}
+              className="px-6 py-4 rounded-xl active:opacity-80"
+              style={{ backgroundColor: colors.error }}
             >
-              <Text className="text-background text-lg font-semibold">
-                Iniciar Calibración
+              <Text className="text-background text-lg font-semibold text-center">
+                DETENER
               </Text>
             </TouchableOpacity>
-          )}
-        </View>
-      )}
-
-      {/* FASE: LISTO PARA JUGAR */}
-      {gamePhase === "ready" && calibrationData && (
-        <View className="flex-1 justify-center items-center">
-          <Text className="text-foreground text-2xl font-bold text-center mb-4">
-            ¡Calibración completa!
-          </Text>
-          <Text className="text-muted text-center mb-8 px-4">
-            Tu fuerza máxima: {calibrationData.maxForce.toFixed(1)} kg
-          </Text>
-
-          <View className="bg-surface rounded-2xl p-6 mb-8 w-full">
-            <Text className="text-foreground font-semibold mb-3">Zonas de entrenamiento:</Text>
-            <View className="gap-2">
-              <View className="flex-row justify-between">
-                <Text className="text-muted">🟢 Zona baja:</Text>
-                <Text className="text-foreground">0 - {calibrationData.lowZone.toFixed(1)} kg</Text>
-              </View>
-              <View className="flex-row justify-between">
-                <Text className="text-muted">🟡 Zona media:</Text>
-                <Text className="text-foreground">{calibrationData.lowZone.toFixed(1)} - {calibrationData.mediumZone.toFixed(1)} kg</Text>
-              </View>
-              <View className="flex-row justify-between">
-                <Text className="text-muted">🔴 Zona alta:</Text>
-                <Text className="text-foreground">{calibrationData.mediumZone.toFixed(1)} - {calibrationData.highZone.toFixed(1)} kg</Text>
-              </View>
-            </View>
-          </View>
-
-          <TouchableOpacity
-            onPress={handleStartGame}
-            className="bg-primary px-8 py-4 rounded-xl active:opacity-80"
-          >
-            <Text className="text-background text-lg font-semibold">
-              Comenzar Juego
-            </Text>
-          </TouchableOpacity>
-        </View>
-      )}
-
-      {/* FASE: JUGANDO */}
-      {gamePhase === "playing" && calibrationData && (
-        <>
-          {/* Fuerza actual (grande) */}
-          <View className="items-center my-8">
-            <View 
-              className="bg-surface border-4 rounded-3xl p-8 shadow-lg"
-              style={{ borderColor: getZoneColor() }}
-            >
-              <Text 
-                className="text-7xl font-bold text-center"
-                style={{ color: getZoneColor() }}
-              >
-                {currentForce.toFixed(1)}
-              </Text>
-              <Text className="text-muted text-xl text-center mt-2">kg</Text>
-            </View>
-            <Text className="text-muted text-sm mt-4">
-              Zona: {currentZone === "none" ? "Ninguna" : currentZone === "low" ? "Baja" : currentZone === "medium" ? "Media" : "Alta"}
-            </Text>
-          </View>
-
-          {/* Barra de progreso */}
-          <View className="mb-6">
-            <View className="bg-border h-4 rounded-full overflow-hidden">
-              <View
-                className="h-full"
-                style={{ 
-                  width: `${Math.min((currentForce / calibrationData.maxForce) * 100, 100)}%`,
-                  backgroundColor: getZoneColor(),
-                }}
-              />
-            </View>
-            <Text className="text-muted text-sm text-center mt-2">
-              Máximo alcanzado: {maxForceReached.toFixed(1)} kg
-            </Text>
-          </View>
-
-          {/* Cronómetro */}
-          <View className="items-center mb-8">
-            <Text 
-              style={{ color: timeRemaining < 10 ? colors.error : colors.foreground }} 
-              className="text-5xl font-bold"
-            >
-              {String(Math.floor(timeRemaining / 60)).padStart(2, "0")}:
-              {String(timeRemaining % 60).padStart(2, "0")}
-            </Text>
-          </View>
-
-          {/* Botón detener */}
-          <TouchableOpacity
-            onPress={handleStopGame}
-            className="px-6 py-4 rounded-xl active:opacity-80"
-            style={{ backgroundColor: colors.error }}
-          >
-            <Text className="text-background text-lg font-semibold text-center">
-              DETENER
-            </Text>
-          </TouchableOpacity>
-        </>
-      )}
-    </ScreenContainer>
+          </>
+        )}
+      </ScreenContainer>
+    </ImageBackground>
   );
 }

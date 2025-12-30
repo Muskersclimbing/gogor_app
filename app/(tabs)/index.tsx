@@ -17,12 +17,12 @@ export default function HomeScreen() {
   const colors = useColors();
   const router = useRouter();
 
-  const handleConnectPress = () => {
+  const handleStartPress = () => {
     if (Platform.OS !== "web") {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     }
-    // Navegar a la pantalla de conexión
-    router.push("/connect");
+    // Navegar a la pantalla de selección de modalidad
+    router.push("/mode-select");
   };
 
   return (
@@ -40,12 +40,12 @@ export default function HomeScreen() {
 
       {/* Botón principal */}
       <TouchableOpacity
-        onPress={handleConnectPress}
+        onPress={handleStartPress}
         className="bg-primary px-8 py-4 rounded-2xl shadow-lg active:opacity-80 w-full max-w-sm"
         style={{ backgroundColor: colors.primary }}
       >
         <Text className="text-background text-lg font-semibold text-center">
-          Conectar Tindeq
+          Comenzar
         </Text>
       </TouchableOpacity>
 

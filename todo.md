@@ -81,3 +81,14 @@
 - [x] Corregir error "Cannot read property 'createClient' of null" en dispositivo móvil
 - [x] Cambiar nombre de app de "El Vuelo del Cuervo" a "Gogor Games"
 - [x] Corregir error "Unmatched Route" en navegación
+
+- [x] Corregir error de permisos de Bluetooth en Android (requiere Development Build)
+
+## Fase 5+6: Implementar modalidades y escenarios (En progreso)
+- [x] Crear pantalla de selección de modalidad
+- [x] Implementar lógica de Calentamiento Rápido (3min, 1 escenario)
+- [x] Implementar lógica de Calentamiento Total (5min, 2 escenarios)
+- [x] Implementar lógica de Resistencia (3 vidas, escenarios aleatorios)
+- [x] Integrar ilustraciones como fondos de pantalla
+- [x] Implementar transiciones día/noche
+- [x] Actualizar pantalla de resultados con estadísticas
