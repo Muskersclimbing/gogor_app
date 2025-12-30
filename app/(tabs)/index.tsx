@@ -1,48 +1,60 @@
-import { ScrollView, Text, View, TouchableOpacity } from "react-native";
+import { View, Text, TouchableOpacity, Platform } from "react-native";
+import { useRouter } from "expo-router";
+import * as Haptics from "expo-haptics";
 
 import { ScreenContainer } from "@/components/screen-container";
+import { useColors } from "@/hooks/use-colors";
 
 /**
- * Home Screen - NativeWind Example
- *
- * This template uses NativeWind (Tailwind CSS for React Native).
- * You can use familiar Tailwind classes directly in className props.
- *
- * Key patterns:
- * - Use `className` instead of `style` for most styling
- * - Theme colors: use tokens directly (bg-background, text-foreground, bg-primary, etc.); no dark: prefix needed
- * - Responsive: standard Tailwind breakpoints work on web
- * - Custom colors defined in tailwind.config.js
+ * Home Screen - El Vuelo del Cuervo
+ * 
+ * Pantalla principal donde el usuario puede:
+ * - Ver el título del juego
+ * - Conectarse al Tindeq Progressor
+ * - Ver el estado de Bluetooth
  */
 export default function HomeScreen() {
+  const colors = useColors();
+  const router = useRouter();
+
+  const handleConnectPress = () => {
+    if (Platform.OS !== "web") {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
+    // Navegar a la pantalla de conexión
+    router.push("/connect");
+  };
+
   return (
-    <ScreenContainer className="p-6">
-      <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
-        <View className="flex-1 gap-8">
-          {/* Hero Section */}
-          <View className="items-center gap-2">
-            <Text className="text-4xl font-bold text-foreground">Welcome</Text>
-            <Text className="text-base text-muted text-center">
-              Edit app/(tabs)/index.tsx to get started
-            </Text>
-          </View>
+    <ScreenContainer className="flex-1 justify-center items-center p-6">
+      {/* Logo/Título */}
+      <View className="items-center mb-12">
+        <Text className="text-5xl font-bold text-primary mb-2">🦅</Text>
+        <Text className="text-3xl font-bold text-foreground text-center">
+          El Vuelo del Cuervo
+        </Text>
+        <Text className="text-base text-muted text-center mt-2">
+          Juego de fuerza con Tindeq Progressor
+        </Text>
+      </View>
 
-          {/* Example Card */}
-          <View className="w-full max-w-sm self-center bg-surface rounded-2xl p-6 shadow-sm border border-border">
-            <Text className="text-lg font-semibold text-foreground mb-2">NativeWind Ready</Text>
-            <Text className="text-sm text-muted leading-relaxed">
-              Use Tailwind CSS classes directly in your React Native components.
-            </Text>
-          </View>
+      {/* Botón principal */}
+      <TouchableOpacity
+        onPress={handleConnectPress}
+        className="bg-primary px-8 py-4 rounded-2xl shadow-lg active:opacity-80 w-full max-w-sm"
+        style={{ backgroundColor: colors.primary }}
+      >
+        <Text className="text-background text-lg font-semibold text-center">
+          Conectar Tindeq
+        </Text>
+      </TouchableOpacity>
 
-          {/* Example Button */}
-          <View className="items-center">
-            <TouchableOpacity className="bg-primary px-6 py-3 rounded-full active:opacity-80">
-              <Text className="text-background font-semibold">Get Started</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </ScrollView>
+      {/* Información adicional */}
+      <View className="mt-8 items-center">
+        <Text className="text-sm text-muted text-center">
+          Asegúrate de tener el Bluetooth activado
+        </Text>
+      </View>
     </ScreenContainer>
   );
 }

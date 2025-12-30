@@ -12,7 +12,7 @@ const schemeFromBundleId = `manus${timestamp}`;
 
 const env = {
   // App branding - update these values directly (do not use env vars)
-  appName: "Muskers Climbing App",
+  appName: "El Vuelo del Cuervo",
   appSlug: "muskers_app",
   // S3 URL of the app logo - set this to the URL returned by generate_image when creating custom logo
   // Leave empty to use the default icon from assets/images/icon.png
@@ -34,6 +34,10 @@ const config: ExpoConfig = {
   ios: {
     supportsTablet: true,
     bundleIdentifier: env.iosBundleId,
+    infoPlist: {
+      NSBluetoothAlwaysUsageDescription: "This app needs Bluetooth to connect to Tindeq Progressor.",
+      NSBluetoothPeripheralUsageDescription: "This app needs Bluetooth to connect to Tindeq Progressor.",
+    },
   },
   android: {
     adaptiveIcon: {
@@ -45,7 +49,14 @@ const config: ExpoConfig = {
     edgeToEdgeEnabled: true,
     predictiveBackGestureEnabled: false,
     package: env.androidPackage,
-    permissions: ["POST_NOTIFICATIONS"],
+    permissions: [
+      "POST_NOTIFICATIONS",
+      "BLUETOOTH",
+      "BLUETOOTH_ADMIN",
+      "BLUETOOTH_CONNECT",
+      "BLUETOOTH_SCAN",
+      "ACCESS_FINE_LOCATION",
+    ],
     intentFilters: [
       {
         action: "VIEW",
@@ -67,6 +78,14 @@ const config: ExpoConfig = {
   },
   plugins: [
     "expo-router",
+    [
+      "react-native-ble-plx",
+      {
+        isBackgroundEnabled: false,
+        modes: ["peripheral", "central"],
+        bluetoothAlwaysPermission: "Allow $(PRODUCT_NAME) to connect to Tindeq Progressor via Bluetooth.",
+      },
+    ],
     [
       "expo-audio",
       {
