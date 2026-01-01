@@ -177,3 +177,5 @@
 - [x] Confirmar que se necesita Expo Development Build
 - [x] Documentar proceso de compilación con EAS Build
 - [x] Proporcionar instrucciones claras al usuario (ver INSTRUCCIONES_INSTALACION.md)
+- [x] Compilar APK exitosamente con EAS Build (Build ID: 19384e30-0499-451a-92f3-b95386fd8220)
+- [x] APK listo para descargar: https://expo.dev/artifacts/eas/47CoFGQLfswfDG81fvzKF7.apk
