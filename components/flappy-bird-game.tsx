@@ -66,6 +66,16 @@ export function FlappyBirdGame({
   onCollision,
   isPaused,
 }: FlappyBirdGameProps) {
+  // Refs para capturar valores actualizados en el game loop
+  const currentForceRef = useRef(currentForce);
+  const lowZoneRef = useRef(lowZone);
+  
+  // Actualizar refs cuando cambien las props
+  useEffect(() => {
+    currentForceRef.current = currentForce;
+    lowZoneRef.current = lowZone;
+  }, [currentForce, lowZone]);
+  
   // Posición del pájaro
   const birdY = useSharedValue(SCREEN_HEIGHT / 2);
   const birdVelocity = useRef(0);
@@ -145,8 +155,8 @@ export function FlappyBirdGame({
       birdVelocity.current += GRAVITY;
       
       // Si hay fuerza, contrarrestar gravedad y subir
-      if (currentForce > lowZone) {
-        const upwardForce = (currentForce - lowZone) * FORCE_MULTIPLIER;
+      if (currentForceRef.current > lowZoneRef.current) {
+        const upwardForce = (currentForceRef.current - lowZoneRef.current) * FORCE_MULTIPLIER;
         birdVelocity.current -= upwardForce; // Restar para subir (negativo = arriba)
       }
       

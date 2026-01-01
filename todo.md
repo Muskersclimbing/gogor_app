@@ -203,3 +203,17 @@
 - [x] Sprites pixel art optimizados (pájaro + 9 frutos, 6-16KB cada uno)
 - [x] Colisiones que pausan el juego correctamente
 - [x] Todo verificado antes de compilar
+
+
+## BUGS CRÍTICOS - APK NO FUNCIONA
+- [x] Pájaro NO responde a la fuerza del Tindeq, se queda caído en la parte baja - ARREGLADO: usar useRef para capturar currentForce actualizado
+- [x] Sprites tienen fondo blanco (cuadradito blanco), deben ser transparentes - ARREGLADO: convert -transparent white
+- [x] Revisar por qué currentForce no afecta la posición del pájaro - PROBLEMA: setInterval capturaba valor inicial de prop
+- [x] Regenerar sprites con fondo transparente - COMPLETADO
+
+## APK FINAL CORREGIDO
+- [x] Build ID: e3a10ae4-d57c-4709-817a-a5b969755d7f
+- [x] URL: https://expo.dev/artifacts/eas/u7imMrBMj22zvLQTLDqqdp.apk
+- [x] Física corregida: currentForce capturado con useRef
+- [x] Sprites con fondo transparente
+- [x] QR generado: /home/ubuntu/apk_final_qr.png
