@@ -1,19 +1,21 @@
-import { useState, useEffect } from "react";
-import { View, Text, TouchableOpacity, Platform, Alert, ImageBackground } from "react-native";
+import React, { useState, useEffect } from "react";
+import { View, Text, TouchableOpacity, Platform, Alert, ImageBackground, Dimensions } from "react-native";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import * as Haptics from "expo-haptics";
 
 import { ScreenContainer } from "@/components/screen-container";
 import { useColors } from "@/hooks/use-colors";
 import { tindeqService, type ForceData, type CalibrationData } from "@/lib/tindeq-service";
-import { AnimatedBird } from "@/components/animated-bird";
-import { ParticleEffects } from "@/components/particle-effects";
+import { FlappyBirdGame } from "@/components/flappy-bird-game";
+import { FruitProgressIndicator } from "@/components/fruit-progress-indicator";
 import { useAudioService } from "@/lib/audio-service";
 import Animated, { FadeIn, FadeOut } from "react-native-reanimated";
 
+const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
+
 type GameMode = "quick" | "total" | "resistance";
 type GamePhase = "calibration" | "ready" | "playing" | "rest" | "finished";
-type SceneName = "yosemite" | "utah" | "albarracin" | "fontainebleau";
+type SceneName = "yosemite" | "monument_valley" | "albarracin" | "fontainebleau";
 
 interface SceneConfig {
   name: SceneName;
@@ -26,26 +28,26 @@ const SCENES: Record<SceneName, SceneConfig> = {
   yosemite: {
     name: "yosemite",
     title: "Yosemite",
-    dayImage: require("@/assets/images/yosemite-day.png"),
-    nightImage: require("@/assets/images/yosemite-night.png"),
+    dayImage: require("@/assets/backgrounds/yosemite_1.jpg"),
+    nightImage: require("@/assets/backgrounds/yosemite_1.jpg"), // TODO: versión nocturna
   },
-  utah: {
-    name: "utah",
-    title: "Utah",
-    dayImage: require("@/assets/images/utah-day.png"),
-    nightImage: require("@/assets/images/utah-night.png"),
+  monument_valley: {
+    name: "monument_valley",
+    title: "Monument Valley",
+    dayImage: require("@/assets/backgrounds/monument_valley_1.jpg"),
+    nightImage: require("@/assets/backgrounds/monument_valley_1.jpg"), // TODO: versión nocturna
   },
   albarracin: {
     name: "albarracin",
     title: "Albarracín",
-    dayImage: require("@/assets/images/albarracin-day.png"),
-    nightImage: require("@/assets/images/albarracin-night.png"),
+    dayImage: require("@/assets/backgrounds/albarracin_1.jpg"),
+    nightImage: require("@/assets/backgrounds/albarracin_1.jpg"), // TODO: versión nocturna
   },
   fontainebleau: {
     name: "fontainebleau",
     title: "Fontainebleau",
-    dayImage: require("@/assets/images/fontainebleau-day.png"),
-    nightImage: require("@/assets/images/fontainebleau-night.png"),
+    dayImage: require("@/assets/backgrounds/fontainebleau_1.jpg"),
+    nightImage: require("@/assets/backgrounds/fontainebleau_1.jpg"), // TODO: versión nocturna
   },
 };
 
@@ -53,6 +55,7 @@ const SCENES: Record<SceneName, SceneConfig> = {
 const MODE_CONFIG: Record<GameMode, {
   title: string;
   duration: number;
+  fruitGoal: number;
   scenes: SceneName[];
   hasNightTransition: boolean;
   nightAt?: number;
@@ -61,20 +64,23 @@ const MODE_CONFIG: Record<GameMode, {
   quick: {
     title: "Calentamiento Rápido",
     duration: 180, // 3 minutos
+    fruitGoal: 15,
     scenes: ["yosemite"] as SceneName[],
     hasNightTransition: false,
   },
   total: {
     title: "Calentamiento Total",
     duration: 300, // 5 minutos
-    scenes: ["yosemite", "utah"] as SceneName[],
+    fruitGoal: 25,
+    scenes: ["yosemite", "monument_valley"] as SceneName[],
     hasNightTransition: true,
     nightAt: 120, // Transición nocturna a los 2 minutos
   },
   resistance: {
     title: "Resistencia",
     duration: 0, // Sin límite de tiempo
-    scenes: ["yosemite", "utah", "albarracin", "fontainebleau"] as SceneName[],
+    fruitGoal: 999,
+    scenes: ["yosemite", "monument_valley", "albarracin", "fontainebleau"] as SceneName[],
     hasNightTransition: true,
     lives: 3,
   },
@@ -83,10 +89,7 @@ const MODE_CONFIG: Record<GameMode, {
 /**
  * Game Screen - Gogor Games
  * 
- * Pantalla principal del juego con soporte para 3 modalidades:
- * - Calentamiento Rápido (3min, 1 escenario)
- * - Calentamiento Total (5min, 2 escenarios + noche)
- * - Resistencia (3 vidas, 4 escenarios + noches)
+ * Pantalla principal del juego con mecánica Flappy Bird
  */
 export default function GameScreen() {
   const colors = useColors();
@@ -116,6 +119,7 @@ export default function GameScreen() {
   const [timeRemaining, setTimeRemaining] = useState(modeConfig.duration);
   const [timeElapsed, setTimeElapsed] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [fruitsCollected, setFruitsCollected] = useState(0);
   
   // Estado de escenarios
   const [currentSceneIndex, setCurrentSceneIndex] = useState(0);
@@ -348,6 +352,7 @@ export default function GameScreen() {
       setAverageForce(0);
       setForceHistory([]);
       setTimeElapsed(0);
+      setFruitsCollected(0);
 
     } catch (error) {
       console.error("Error iniciando juego:", error);
@@ -385,7 +390,7 @@ export default function GameScreen() {
     try {
       await tindeqService.stopMeasurement();
       setIsPlaying(false);
-      setGamePhase("ready");
+      handleGameEnd();
 
     } catch (error) {
       console.error("Error deteniendo juego:", error);
@@ -410,11 +415,41 @@ export default function GameScreen() {
           maxForce: maxForceReached.toFixed(1),
           avgForce: averageForce.toFixed(1),
           timeElapsed: timeElapsed.toString(),
+          fruitsCollected: fruitsCollected.toString(),
         },
       });
 
     } catch (error) {
       console.error("Error finalizando juego:", error);
+    }
+  };
+
+  const handleFruitCollected = () => {
+    setFruitsCollected((prev) => prev + 1);
+    
+    if (Platform.OS !== "web") {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
+
+    // Verificar si se alcanzó el objetivo
+    if (fruitsCollected + 1 >= modeConfig.fruitGoal && modeConfig.duration > 0) {
+      handleGameEnd();
+    }
+  };
+
+  const handleCollision = () => {
+    if (gameMode === "resistance") {
+      setLives((prev) => {
+        const newLives = prev - 1;
+        if (newLives <= 0) {
+          handleGameEnd();
+        }
+        return newLives;
+      });
+      
+      if (Platform.OS !== "web") {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      }
     }
   };
 
@@ -435,27 +470,6 @@ export default function GameScreen() {
     ? Math.min(Math.max(((batteryVoltage - 3000) / 1200) * 100, 0), 100).toFixed(0)
     : "?";
 
-  // Determinar zona actual
-  const getCurrentZone = (): "low" | "medium" | "high" | "none" => {
-    if (!calibrationData) return "none";
-    if (currentForce < calibrationData.lowZone) return "none";
-    if (currentForce < calibrationData.mediumZone) return "low";
-    if (currentForce < calibrationData.highZone) return "medium";
-    return "high";
-  };
-
-  const currentZone = getCurrentZone();
-
-  // Color según zona
-  const getZoneColor = () => {
-    switch (currentZone) {
-      case "low": return "#4ADE80"; // verde
-      case "medium": return "#FBBF24"; // amarillo
-      case "high": return "#F87171"; // rojo
-      default: return colors.muted;
-    }
-  };
-
   const backgroundImage = isNightTransition ? currentScene.nightImage : currentScene.dayImage;
 
   return (
@@ -464,22 +478,14 @@ export default function GameScreen() {
       className="flex-1"
       resizeMode="cover"
     >
-      <ScreenContainer className="flex-1 p-6" containerClassName="bg-transparent">
-        {/* Header: Estado de conexión */}
-        <View className="flex-row justify-between items-center mb-6">
-          <TouchableOpacity onPress={handleBackPress} className="active:opacity-70">
-            <Text className="text-white text-lg font-semibold drop-shadow">← Atrás</Text>
-          </TouchableOpacity>
-          <View className="flex-row items-center">
-            <Text className="text-white mr-2 drop-shadow">🔋 {batteryPercent}%</Text>
-            <Text className="text-white drop-shadow">{isConnected ? "Bluetooth ✓" : "Desconectado"}</Text>
-          </View>
-        </View>
+      {/* Overlay para mejorar legibilidad */}
+      <View className="absolute inset-0 bg-black/20" />
 
+      <ScreenContainer className="flex-1" containerClassName="bg-transparent" edges={["top", "left", "right"]}>
         {/* FASE: CALIBRACIÓN */}
         {gamePhase === "calibration" && (
-          <View className="flex-1 justify-center items-center">
-            <View className="bg-black/60 rounded-3xl p-8 items-center">
+          <View className="flex-1 justify-center items-center px-6">
+            <View className="bg-black/70 rounded-3xl p-8 items-center max-w-md">
               <Text className="text-white text-2xl font-bold text-center mb-4">
                 Calibración
               </Text>
@@ -519,8 +525,8 @@ export default function GameScreen() {
 
         {/* FASE: LISTO PARA JUGAR */}
         {gamePhase === "ready" && calibrationData && (
-          <View className="flex-1 justify-center items-center">
-            <View className="bg-black/60 rounded-3xl p-8 items-center max-w-md">
+          <View className="flex-1 justify-center items-center px-6">
+            <View className="bg-black/70 rounded-3xl p-8 items-center max-w-md">
               <Text className="text-white text-2xl font-bold text-center mb-4">
                 ¡Calibración completa!
               </Text>
@@ -530,24 +536,6 @@ export default function GameScreen() {
               <Text className="text-white/60 text-center mb-6">
                 Tu fuerza máxima: {calibrationData.maxForce.toFixed(1)} kg
               </Text>
-
-              <View className="bg-white/10 rounded-2xl p-6 mb-8 w-full">
-                <Text className="text-white font-semibold mb-3">Zonas de entrenamiento:</Text>
-                <View className="gap-2">
-                  <View className="flex-row justify-between">
-                    <Text className="text-white/80">🟢 Zona baja:</Text>
-                    <Text className="text-white">0 - {calibrationData.lowZone.toFixed(1)} kg</Text>
-                  </View>
-                  <View className="flex-row justify-between">
-                    <Text className="text-white/80">🟡 Zona media:</Text>
-                    <Text className="text-white">{calibrationData.lowZone.toFixed(1)} - {calibrationData.mediumZone.toFixed(1)} kg</Text>
-                  </View>
-                  <View className="flex-row justify-between">
-                    <Text className="text-white/80">🔴 Zona alta:</Text>
-                    <Text className="text-white">{calibrationData.mediumZone.toFixed(1)} - {calibrationData.highZone.toFixed(1)} kg</Text>
-                  </View>
-                </View>
-              </View>
 
               <TouchableOpacity
                 onPress={handleStartGame}
@@ -581,97 +569,75 @@ export default function GameScreen() {
 
         {/* FASE: JUGANDO */}
         {gamePhase === "playing" && !isNightTransition && calibrationData && (
-          <>
-            {/* Efectos de partículas */}
-            <ParticleEffects zone={currentZone} isPlaying={true} />
-
-            {/* Título del escenario */}
-            <View className="items-center mb-4">
-              <Text className="text-white text-xl font-bold drop-shadow">
-                {currentScene.title}
-              </Text>
-            </View>
-
-            {/* Pájaro animado */}
-            <View className="items-center mb-4">
-              <AnimatedBird 
-                force={currentForce} 
-                maxForce={calibrationData.maxForce}
-                zone={currentZone}
-              />
-            </View>
-
-            {/* Fuerza actual (grande) */}
-            <View className="items-center my-8">
-              <View 
-                className="bg-white/90 border-4 rounded-3xl p-8 shadow-lg"
-                style={{ borderColor: getZoneColor() }}
-              >
-                <Text 
-                  className="text-7xl font-bold text-center"
-                  style={{ color: getZoneColor() }}
-                >
-                  {currentForce.toFixed(1)}
+          <View className="flex-1">
+            {/* UI Top Left: Contador de frutos */}
+            <View className="absolute top-4 left-4 z-20">
+              <View className="bg-[#F5E6D3]/90 rounded-2xl px-4 py-2">
+                <Text className="text-[#5C4A3A] text-2xl font-bold">
+                  {fruitsCollected}/{modeConfig.fruitGoal}
                 </Text>
-                <Text className="text-muted text-xl text-center mt-2">kg</Text>
               </View>
-              <Text className="text-white text-sm mt-4 drop-shadow">
-                Zona: {currentZone === "none" ? "Ninguna" : currentZone === "low" ? "Baja 🟢" : currentZone === "medium" ? "Media 🟡" : "Alta 🔴"}
-              </Text>
             </View>
 
-            {/* Barra de progreso */}
-            <View className="mb-6">
-              <View className="bg-white/30 h-4 rounded-full overflow-hidden">
-                <View
-                  className="h-full"
-                  style={{ 
-                    width: `${Math.min((currentForce / calibrationData.maxForce) * 100, 100)}%`,
-                    backgroundColor: getZoneColor(),
-                  }}
+            {/* UI Top Center: Indicador de progreso con fresas */}
+            <View className="absolute top-4 left-0 right-0 z-20 items-center">
+              <View className="bg-[#F5E6D3]/90 rounded-2xl px-4 py-2">
+                <FruitProgressIndicator
+                  collected={fruitsCollected}
+                  goal={modeConfig.fruitGoal}
                 />
               </View>
-              <Text className="text-white text-sm text-center mt-2 drop-shadow">
-                Máximo: {maxForceReached.toFixed(1)} kg | Promedio: {averageForce.toFixed(1)} kg
-              </Text>
             </View>
 
-            {/* Cronómetro */}
-            <View className="items-center mb-8">
-              <Text 
-                style={{ color: timeRemaining < 10 ? colors.error : "white" }} 
-                className="text-5xl font-bold drop-shadow"
-              >
-                {modeConfig.duration > 0 ? (
-                  <>
-                    {String(Math.floor(timeRemaining / 60)).padStart(2, "0")}:
-                    {String(timeRemaining % 60).padStart(2, "0")}
-                  </>
-                ) : (
-                  <>
-                    {String(Math.floor(timeElapsed / 60)).padStart(2, "0")}:
-                    {String(timeElapsed % 60).padStart(2, "0")}
-                  </>
-                )}
-              </Text>
-              {gameMode === "resistance" && (
-                <Text className="text-white text-xl mt-2 drop-shadow">
-                  ❤️ {lives} vidas
+            {/* UI Top Right: Fuerza actual */}
+            <View className="absolute top-4 right-4 z-20">
+              <View className="bg-[#F5E6D3]/90 rounded-2xl px-4 py-2">
+                <Text className="text-[#5C4A3A] text-2xl font-bold">
+                  {currentForce.toFixed(1)}Kg
                 </Text>
-              )}
+              </View>
             </View>
 
-            {/* Botón detener */}
-            <TouchableOpacity
-              onPress={handleStopGame}
-              className="px-6 py-4 rounded-xl active:opacity-80"
-              style={{ backgroundColor: colors.error }}
-            >
-              <Text className="text-background text-lg font-semibold text-center">
-                DETENER
-              </Text>
-            </TouchableOpacity>
-          </>
+            {/* UI Bottom Left: Tiempo */}
+            <View className="absolute bottom-4 left-4 z-20">
+              <View className="bg-[#F5E6D3]/90 rounded-2xl px-4 py-2">
+                <Text className="text-[#5C4A3A] text-2xl font-bold">
+                  {modeConfig.duration > 0 ? (
+                    <>
+                      {String(Math.floor(timeRemaining / 60)).padStart(2, "0")}:
+                      {String(timeRemaining % 60).padStart(2, "0")}
+                    </>
+                  ) : (
+                    <>
+                      {String(Math.floor(timeElapsed / 60)).padStart(2, "0")}:
+                      {String(timeElapsed % 60).padStart(2, "0")}
+                    </>
+                  )}
+                </Text>
+              </View>
+            </View>
+
+            {/* UI Bottom Right: Botón STOP */}
+            <View className="absolute bottom-4 right-4 z-20">
+              <TouchableOpacity
+                onPress={handleStopGame}
+                className="bg-white/90 rounded-full w-16 h-16 items-center justify-center active:opacity-70"
+              >
+                <View className="bg-[#5C4A3A] w-6 h-6 rounded-sm" />
+              </TouchableOpacity>
+            </View>
+
+            {/* Juego Flappy Bird */}
+            <FlappyBirdGame
+              currentForce={currentForce}
+              lowZone={calibrationData.lowZone}
+              midZone={calibrationData.mediumZone}
+              highZone={calibrationData.highZone}
+              onFruitCollected={handleFruitCollected}
+              onCollision={handleCollision}
+              isPaused={!isPlaying}
+            />
+          </View>
         )}
       </ScreenContainer>
     </ImageBackground>

@@ -92,3 +92,75 @@
 - [x] Integrar ilustraciones como fondos de pantalla
 - [x] Implementar transiciones día/noche
 - [x] Actualizar pantalla de resultados con estadísticas
+
+
+## REDISEÑO COMPLETO DEL JUEGO (Nueva Especificación)
+
+### Mecánica Core
+- [x] Implementar mecánica Flappy Bird (fuerza Tindeq = altura del pájaro)
+- [x] Pájaro sube cuando aplicas fuerza, baja por gravedad
+- [x] Obstáculos geométricos (pilares) que el pájaro debe esquivar
+- [x] Sistema de colisiones (pájaro vs obstáculos, pájaro vs suelo/techo)
+
+### Sistema de Frutos
+- [x] Implementar sistema de recolección de frutos pixel art
+- [x] 9 tipos de frutos: sandía, plátano, manzana, naranja, fresa, mandarina, cereza, pera, melocotón
+- [ ] Frutos aparecen en posiciones según tipo de ejercicio:
+  - Isométrico: horizontal en lo alto
+  - Excéntrico: diagonal descendente
+  - Concéntrico: intercalados arriba y abajo
+- [x] Contador de frutos: X/25 (Calentamiento 3min y 5min)
+- [x] Modo Resistencia: máximo de frutos posible
+- [ ] Indicador visual de progreso (fresas pixel art en top center)
+
+### Estética y Assets
+- [x] Descargar fondos fotográficos reales de:
+  - Yosemite
+  - Fontainebleau
+  - Albarracín
+  - Monument Valley
+- [ ] Fondos rotan cada intervalo (no uno por modalidad)
+- [x] Transición a noche entre intervalos (10 seg descanso)
+- [x] Crear/descargar sprites de frutos pixel art (9 tipos)
+- [x] Diseñar pájaro geométrico minimal (no realista)
+- [ ] Pájaro debe tener animación de aleteo sutil
+- [x] Obstáculos geométricos simples (pilares, rectángulos)
+
+### UI Layout (según imagen del usuario)
+- [x] Top left: Contador frutos (5/25) - fuente grande, color tierra
+- [x] Top center: 4 fresas pixel art mostrando progreso visual
+- [x] Top right: Fuerza actual (5.1Kg) - fuente grande, tiempo real
+- [x] Bottom left: Tiempo restante (2:35) - fuente grande
+- [x] Bottom right: Botón STOP circular
+- [x] Centro: Área de juego (pájaro, obstáculos, frutos, fondo)
+- [x] Reducir drasticamente el espacio del panel de números
+- [x] Protagonismo visual al pájaro y el recorrido
+
+### Música y Audio
+- [x] Descargar música ambient estilo Brian Eno / Boards of Canada
+- [x] Música debe ser atmosférica, no dramática/cinemática
+- [x] Música de fondo continua durante el juego
+- [ ] Efectos de sonido sutiles al recoger frutos (opcional)
+
+### Física y Animación
+- [x] Implementar física realista de Flappy Bird
+- [x] Gravedad constante
+- [x] Impulso hacia arriba proporcional a la fuerza aplicada
+- [x] Rotación del pájaro según velocidad vertical
+- [ ] Animación de aleteo del pájaro
+- [ ] Parallax suave del fondo (opcional)
+- [ ] Partículas reposicionadas alrededor del pájaro (no sobre botón)
+
+### Sistema de Intervalos y Descansos
+- [ ] Cada intervalo = nuevo fondo fotográfico
+- [ ] Entre intervalos: 10 seg descanso con transición a noche
+- [ ] Durante descanso: pájaro desaparece, mensaje "Descansa"
+- [ ] Fondos rotan: Yosemite → Fontainebleau → Albarracín → Monument Valley → repite
+- [ ] Cronómetro sigue corriendo durante descansos
+### Correcciones Críticas
+
+- [x] Pájaro DEBE cambiar de color según zona de fuerza (verde/amarillo/rojo)
+- [x] Pájaro DEBE moverse verticalmente según fuerza aplicada
+- [ ] Partículas DEBEN estar alrededor del pájaro, no sobre botones
+- [x] Música DEBE ser ambient, no cinemática
+- [x] UI DEBE ser minimalista, protagonismo al juego
