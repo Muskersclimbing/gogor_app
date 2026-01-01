@@ -260,3 +260,18 @@
 - [x] NO usa setInterval para física del pájaro
 - [x] Game loop separado solo para obstáculos y frutos
 - [x] QR: /home/ubuntu/apk_crane_qr.png
+
+
+## BUG - Pájaro cae y se queda quieto
+- [x] Pájaro cae lentamente y se queda abajo - ARREGLADO
+- [x] Física solo se actualiza cuando cambia currentForce - ARREGLADO
+- [x] Necesita actualización continua a 60 FPS (requestAnimationFrame) - IMPLEMENTADO
+- [x] Sprites no se ven (solo círculos de colores) - ARREGLADO: usa Image con sprites PNG
+
+## APK CON requestAnimationFrame
+- [x] Build ID: 4bf0abc0-12ed-4d4a-9902-a6007f72065a
+- [x] URL: https://expo.dev/artifacts/eas/anTBc7conSop5AE3PBE2jA.apk
+- [x] requestAnimationFrame para game loop continuo a 60 FPS
+- [x] Física se actualiza en cada frame (no solo cuando cambia currentForce)
+- [x] Sprites PNG con Image component
+- [x] QR: /home/ubuntu/apk_raf_qr.png
