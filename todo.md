@@ -179,3 +179,16 @@
 - [x] Proporcionar instrucciones claras al usuario (ver INSTRUCCIONES_INSTALACION.md)
 - [x] Compilar APK exitosamente con EAS Build (Build ID: 19384e30-0499-451a-92f3-b95386fd8220)
 - [x] APK listo para descargar: https://expo.dev/artifacts/eas/47CoFGQLfswfDG81fvzKF7.apk
+- [x] NUEVO APK con todos los arreglos (Build ID: 1241bd32-6a7d-4d02-b506-e02919d60b18)
+- [x] NUEVO APK listo: https://expo.dev/artifacts/eas/3fKTGcFKzriw9EgnRjsFZA.apk
+
+## BUGS CRÍTICOS REPORTADOS POR USUARIO
+- [ ] Pájaro no se mueve cuando se aplica fuerza (númer## BUGS CRÍTICOS REPORTADOS POR USUARIO
+- [x] Pájaro no se mueve cuando se aplica fuerza (números cambian pero sprite no se mueve) - ARREGLADO: actualiza directamente birdY.value
+- [x] Sprites son bolas simples, necesitan diseño visual decente - ARREGLADO: generados sprites de pájaro y frutos
+- [x] Música es la misma de antes, cambiar por tracks diferentes - YA EXISTÍAN: mountain.wav, forest.wav, desert.wav
+- [x] Conectar fuerza real del Tindeq al componente FlappyBirdGame - ARREGLADO: usa currentForce correctamente
+- [x] El juego no se para cuando el pájaro choca con obstáculos - ARREGLADO: hasCollidedRef para el game loop
+- [x] No se ven los fondos fotográficos de Yosemite, Monument Valley, etc - ARREGLADO: ImageBackground con imágenes optimizadas
+- [x] Optimizar imágenes de fondo para que no causen crash - ARREGLADO: descargadas de Unsplash a 800px, 60-130KB
+- [x] No hay zonas de descanso entre intervalos - YA EXISTÍA: transición nocturna de 10 segundos implementada

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, TouchableOpacity, Platform, Alert, Dimensions } from "react-native";
+import { View, Text, TouchableOpacity, Platform, Alert, Dimensions, ImageBackground } from "react-native";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import * as Haptics from "expo-haptics";
 
@@ -24,31 +24,30 @@ interface SceneConfig {
   nightImage: any;
 }
 
-// Usar color de fondo simple para evitar problemas con imágenes grandes en Expo Go
 const SCENES: Record<SceneName, SceneConfig> = {
   yosemite: {
     name: "yosemite",
     title: "Yosemite",
-    dayImage: null,
-    nightImage: null,
+    dayImage: require("@/assets/backgrounds/yosemite_1.jpg"),
+    nightImage: require("@/assets/backgrounds/yosemite_1.jpg"),
   },
   monument_valley: {
     name: "monument_valley",
     title: "Monument Valley",
-    dayImage: null,
-    nightImage: null,
+    dayImage: require("@/assets/backgrounds/monument_valley_1.jpg"),
+    nightImage: require("@/assets/backgrounds/monument_valley_1.jpg"),
   },
   albarracin: {
     name: "albarracin",
     title: "Albarracín",
-    dayImage: null,
-    nightImage: null,
+    dayImage: require("@/assets/backgrounds/albarracin_1.jpg"),
+    nightImage: require("@/assets/backgrounds/albarracin_1.jpg"),
   },
   fontainebleau: {
     name: "fontainebleau",
     title: "Fontainebleau",
-    dayImage: null,
-    nightImage: null,
+    dayImage: require("@/assets/backgrounds/fontainebleau_1.jpg"),
+    nightImage: require("@/assets/backgrounds/fontainebleau_1.jpg"),
   },
 };
 
@@ -479,12 +478,16 @@ export default function GameScreen() {
     ? Math.min(Math.max(((batteryVoltage - 3000) / 1200) * 100, 0), 100).toFixed(0)
     : "?";
 
-  const backgroundColor = SCENE_COLORS[currentScene.name];
+  const backgroundImage = isNightTransition ? currentScene.nightImage : currentScene.dayImage;
 
   return (
-    <View style={{ flex: 1, backgroundColor }}>
+    <ImageBackground
+      source={backgroundImage}
+      style={{ flex: 1 }}
+      resizeMode="cover"
+    >
       {/* Overlay para mejorar legibilidad */}
-      <View className="absolute inset-0 bg-black/10" />
+      <View className="absolute inset-0 bg-black/30" />
 
       <ScreenContainer className="flex-1" containerClassName="bg-transparent" edges={["top", "left", "right"]}>
         {/* FASE: CALIBRACIÓN */}
@@ -645,6 +648,6 @@ export default function GameScreen() {
           </View>
         )}
       </ScreenContainer>
-    </View>
+    </ImageBackground>
   );
 }
