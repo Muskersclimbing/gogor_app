@@ -27,27 +27,27 @@ interface SceneConfig {
 const SCENES: Record<SceneName, SceneConfig> = {
   yosemite: {
     name: "yosemite",
-    title: "Yosemite",
-    dayImage: require("@/assets/backgrounds/yosemite_1.jpg"),
-    nightImage: require("@/assets/backgrounds/yosemite_1.jpg"),
+    title: "Mountain",
+    dayImage: require("@/assets/backgrounds/mountain_illustration.png"),
+    nightImage: require("@/assets/backgrounds/mountain_illustration.png"),
   },
   monument_valley: {
     name: "monument_valley",
-    title: "Monument Valley",
-    dayImage: require("@/assets/backgrounds/monument_valley_1.jpg"),
-    nightImage: require("@/assets/backgrounds/monument_valley_1.jpg"),
+    title: "Desert",
+    dayImage: require("@/assets/backgrounds/desert_illustration.png"),
+    nightImage: require("@/assets/backgrounds/desert_illustration.png"),
   },
   albarracin: {
     name: "albarracin",
-    title: "Albarracín",
-    dayImage: require("@/assets/backgrounds/albarracin_1.jpg"),
-    nightImage: require("@/assets/backgrounds/albarracin_1.jpg"),
+    title: "Valley",
+    dayImage: require("@/assets/backgrounds/valley_illustration.png"),
+    nightImage: require("@/assets/backgrounds/valley_illustration.png"),
   },
   fontainebleau: {
     name: "fontainebleau",
-    title: "Fontainebleau",
-    dayImage: require("@/assets/backgrounds/fontainebleau_1.jpg"),
-    nightImage: require("@/assets/backgrounds/fontainebleau_1.jpg"),
+    title: "Forest",
+    dayImage: require("@/assets/backgrounds/forest_illustration.png"),
+    nightImage: require("@/assets/backgrounds/forest_illustration.png"),
   },
 };
 

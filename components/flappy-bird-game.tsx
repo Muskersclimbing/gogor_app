@@ -10,8 +10,8 @@ import Animated, {
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
 
 // Constantes de física
-const GRAVITY = 0.8;
-const FORCE_MULTIPLIER = 0.2;
+const GRAVITY = 0.6; // Gravedad que hace caer al pájaro
+const FORCE_MULTIPLIER = 1.5; // Multiplicador de fuerza (mayor = más sensible)
 const BIRD_SIZE = 50;
 const OBSTACLE_WIDTH = 60;
 const GAP_HEIGHT = 200;
@@ -138,8 +138,17 @@ export function FlappyBirdGame({
 
     gameLoopRef.current = setInterval(() => {
       // Física del pájaro
-      const forceEffect = currentForce > lowZone ? (currentForce - lowZone) * FORCE_MULTIPLIER : 0;
-      birdVelocity.current += GRAVITY - forceEffect;
+      // Si aplicas fuerza por encima de lowZone, el pájaro sube
+      // Si no, cae por gravedad
+      
+      // Aplicar gravedad (siempre cae)
+      birdVelocity.current += GRAVITY;
+      
+      // Si hay fuerza, contrarrestar gravedad y subir
+      if (currentForce > lowZone) {
+        const upwardForce = (currentForce - lowZone) * FORCE_MULTIPLIER;
+        birdVelocity.current -= upwardForce; // Restar para subir (negativo = arriba)
+      }
       
       // Limitar velocidad
       birdVelocity.current = Math.max(-15, Math.min(15, birdVelocity.current));

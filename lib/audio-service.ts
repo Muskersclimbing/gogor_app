@@ -4,9 +4,9 @@ import { Platform } from 'react-native';
 
 // Mapeo de música por escenario
 const SCENARIO_MUSIC = {
-  mountain: require('@/assets/audio/game_music_1.mp3'),
-  forest: require('@/assets/audio/game_music_2.mp3'),
-  desert: require('@/assets/audio/game_music_3.mp3'),
+  mountain: require('@/assets/music/ambient_drone.wav'),
+  forest: require('@/assets/music/ethereal_pad.wav'),
+  desert: require('@/assets/music/celestial_wash.wav'),
 };
 
 const SUCCESS_SOUND = require('@/assets/audio/success.mp3');
