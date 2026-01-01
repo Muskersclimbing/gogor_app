@@ -164,3 +164,10 @@
 - [ ] Partículas DEBEN estar alrededor del pájaro, no sobre botones
 - [x] Música DEBE ser ambient, no cinemática
 - [x] UI DEBE ser minimalista, protagonismo al juego
+
+## BUG URGENTE - Error en Expo Go
+- [x] Diagnosticar error "Something went wrong" en pantalla azul al cargar app en Expo Go
+- [x] Revisar imports y dependencias que puedan estar causando el error
+- [x] Verificar que todos los assets (imágenes, música) existan y estén correctamente referenciados
+- [x] Solución: Reemplazar ImageBackground con View + colores sólidos (imágenes JPG grandes causaban crash en Expo Go)
+- [ ] Probar que la app carga correctamente en Expo Go

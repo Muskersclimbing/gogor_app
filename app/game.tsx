@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, TouchableOpacity, Platform, Alert, ImageBackground, Dimensions } from "react-native";
+import { View, Text, TouchableOpacity, Platform, Alert, Dimensions } from "react-native";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import * as Haptics from "expo-haptics";
 
@@ -24,31 +24,40 @@ interface SceneConfig {
   nightImage: any;
 }
 
+// Usar color de fondo simple para evitar problemas con imágenes grandes en Expo Go
 const SCENES: Record<SceneName, SceneConfig> = {
   yosemite: {
     name: "yosemite",
     title: "Yosemite",
-    dayImage: require("@/assets/backgrounds/yosemite_1.jpg"),
-    nightImage: require("@/assets/backgrounds/yosemite_1.jpg"), // TODO: versión nocturna
+    dayImage: null,
+    nightImage: null,
   },
   monument_valley: {
     name: "monument_valley",
     title: "Monument Valley",
-    dayImage: require("@/assets/backgrounds/monument_valley_1.jpg"),
-    nightImage: require("@/assets/backgrounds/monument_valley_1.jpg"), // TODO: versión nocturna
+    dayImage: null,
+    nightImage: null,
   },
   albarracin: {
     name: "albarracin",
     title: "Albarracín",
-    dayImage: require("@/assets/backgrounds/albarracin_1.jpg"),
-    nightImage: require("@/assets/backgrounds/albarracin_1.jpg"), // TODO: versión nocturna
+    dayImage: null,
+    nightImage: null,
   },
   fontainebleau: {
     name: "fontainebleau",
     title: "Fontainebleau",
-    dayImage: require("@/assets/backgrounds/fontainebleau_1.jpg"),
-    nightImage: require("@/assets/backgrounds/fontainebleau_1.jpg"), // TODO: versión nocturna
+    dayImage: null,
+    nightImage: null,
   },
+};
+
+// Colores de fondo por escenario
+const SCENE_COLORS: Record<SceneName, string> = {
+  yosemite: "#87CEEB", // Azul cielo
+  monument_valley: "#FFB366", // Naranja desierto
+  albarracin: "#D4A574", // Marrón tierra
+  fontainebleau: "#90B494", // Verde bosque
 };
 
 // Configuración de modalidades
@@ -470,16 +479,12 @@ export default function GameScreen() {
     ? Math.min(Math.max(((batteryVoltage - 3000) / 1200) * 100, 0), 100).toFixed(0)
     : "?";
 
-  const backgroundImage = isNightTransition ? currentScene.nightImage : currentScene.dayImage;
+  const backgroundColor = SCENE_COLORS[currentScene.name];
 
   return (
-    <ImageBackground
-      source={backgroundImage}
-      className="flex-1"
-      resizeMode="cover"
-    >
+    <View style={{ flex: 1, backgroundColor }}>
       {/* Overlay para mejorar legibilidad */}
-      <View className="absolute inset-0 bg-black/20" />
+      <View className="absolute inset-0 bg-black/10" />
 
       <ScreenContainer className="flex-1" containerClassName="bg-transparent" edges={["top", "left", "right"]}>
         {/* FASE: CALIBRACIÓN */}
@@ -640,6 +645,6 @@ export default function GameScreen() {
           </View>
         )}
       </ScreenContainer>
-    </ImageBackground>
+    </View>
   );
 }
