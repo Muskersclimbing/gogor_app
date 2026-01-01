@@ -12,10 +12,10 @@ type Device = any;
 type Characteristic = any;
 type BleManagerType = any;
 
-// UUIDs del Tindeq Progressor
+// UUIDs del Tindeq Progressor (verificados contra código oficial)
 const TINDEQ_SERVICE_UUID = '7e4e1701-1ea6-40c9-9dcc-13d34ffead57';
-const CONTROL_POINT_UUID = '7e4e1702-1ea6-40c9-9dcc-13d34ffead57';
-const DATA_POINT_UUID = '7e4e1703-1ea6-40c9-9dcc-13d34ffead57';
+const DATA_POINT_UUID = '7e4e1702-1ea6-40c9-9dcc-13d34ffead57'; // Para recibir datos
+const CONTROL_POINT_UUID = '7e4e1703-1ea6-40c9-9dcc-13d34ffead57'; // Para enviar comandos
 
 // Comandos del Progressor
 const CMD_TARE = 0x64;
@@ -230,15 +230,18 @@ class TindeqService {
 
     switch (responseCode) {
       case RESP_WEIGHT:
-        if (data.length >= 10) {
-          // Weight: float32 (4 bytes) + Timestamp: uint32 (4 bytes)
-          const weight = this.bytesToFloat32(data.slice(2, 6));
-          const timestamp = this.bytesToUint32(data.slice(6, 10));
-          
-          this.forceCallback?.({
-            weight,
-            timestamp,
-          });
+        // Procesar TODAS las mediciones en el paquete (cada 8 bytes)
+        // Formato: [response_code][length][weight1][timestamp1][weight2][timestamp2]...
+        for (let i = 2; i < data.length; i += 8) {
+          if (i + 8 <= data.length) {
+            const weight = this.bytesToFloat32(data.slice(i, i + 4));
+            const timestamp = this.bytesToUint32(data.slice(i + 4, i + 8));
+            
+            this.forceCallback?.({
+              weight,
+              timestamp,
+            });
+          }
         }
         break;
 

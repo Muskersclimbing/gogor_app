@@ -6,6 +6,10 @@ import * as Haptics from "expo-haptics";
 import { ScreenContainer } from "@/components/screen-container";
 import { useColors } from "@/hooks/use-colors";
 import { tindeqService, type ForceData, type CalibrationData } from "@/lib/tindeq-service";
+import { AnimatedBird } from "@/components/animated-bird";
+import { ParticleEffects } from "@/components/particle-effects";
+import { useAudioService } from "@/lib/audio-service";
+import Animated, { FadeIn, FadeOut } from "react-native-reanimated";
 
 type GameMode = "quick" | "total" | "resistance";
 type GamePhase = "calibration" | "ready" | "playing" | "rest" | "finished";
@@ -46,7 +50,14 @@ const SCENES: Record<SceneName, SceneConfig> = {
 };
 
 // Configuración de modalidades
-const MODE_CONFIG = {
+const MODE_CONFIG: Record<GameMode, {
+  title: string;
+  duration: number;
+  scenes: SceneName[];
+  hasNightTransition: boolean;
+  nightAt?: number;
+  lives?: number;
+}> = {
   quick: {
     title: "Calentamiento Rápido",
     duration: 180, // 3 minutos
@@ -83,6 +94,9 @@ export default function GameScreen() {
   const params = useLocalSearchParams<{ mode?: string }>();
   const gameMode = (params.mode || "quick") as GameMode;
   const modeConfig = MODE_CONFIG[gameMode];
+  
+  // Servicio de audio
+  const audioService = useAudioService();
   
   // Estado de conexión
   const [isConnected, setIsConnected] = useState(false);
@@ -313,6 +327,9 @@ export default function GameScreen() {
   };
 
   const handleStartGame = async () => {
+    // Reproducir música según escenario
+    const scenarioMusic = currentSceneIndex === 0 ? "mountain" : currentSceneIndex === 1 ? "forest" : "desert";
+    audioService.playMusic(scenarioMusic);
     if (Platform.OS !== "web") {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     }
@@ -359,6 +376,8 @@ export default function GameScreen() {
   };
 
   const handleStopGame = async () => {
+    // Detener música
+    audioService.stopMusic();
     if (Platform.OS !== "web") {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     }
@@ -563,11 +582,23 @@ export default function GameScreen() {
         {/* FASE: JUGANDO */}
         {gamePhase === "playing" && !isNightTransition && calibrationData && (
           <>
+            {/* Efectos de partículas */}
+            <ParticleEffects zone={currentZone} isPlaying={true} />
+
             {/* Título del escenario */}
             <View className="items-center mb-4">
               <Text className="text-white text-xl font-bold drop-shadow">
                 {currentScene.title}
               </Text>
+            </View>
+
+            {/* Pájaro animado */}
+            <View className="items-center mb-4">
+              <AnimatedBird 
+                force={currentForce} 
+                maxForce={calibrationData.maxForce}
+                zone={currentZone}
+              />
             </View>
 
             {/* Fuerza actual (grande) */}
