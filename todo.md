@@ -171,3 +171,9 @@
 - [x] Verificar que todos los assets (imágenes, música) existan y estén correctamente referenciados
 - [x] Solución: Reemplazar ImageBackground con View + colores sólidos (imágenes JPG grandes causaban crash en Expo Go)
 - [ ] Probar que la app carga correctamente en Expo Go
+
+## PROBLEMA IDENTIFICADO - Expo Go no soporta Bluetooth
+- [x] Identificar que Expo Go no puede usar react-native-ble-plx (Bluetooth)
+- [x] Confirmar que se necesita Expo Development Build
+- [x] Documentar proceso de compilación con EAS Build
+- [x] Proporcionar instrucciones claras al usuario (ver INSTRUCCIONES_INSTALACION.md)
