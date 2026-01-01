@@ -67,6 +67,16 @@ export function FlappyBirdGame({
   onCollision,
   isPaused,
 }: FlappyBirdGameProps) {
+  // Refs para capturar valores actualizados en el game loop
+  const currentForceRef = useRef(currentForce);
+  const lowZoneRef = useRef(lowZone);
+  
+  // Actualizar refs cuando cambien las props
+  useEffect(() => {
+    currentForceRef.current = currentForce;
+    lowZoneRef.current = lowZone;
+  }, [currentForce, lowZone]);
+  
   // Posición del pájaro (usar useState en lugar de Shared Value)
   const [birdY, setBirdY] = useState(SCREEN_HEIGHT / 2);
   const birdVelocity = useRef(0);
@@ -138,9 +148,10 @@ export function FlappyBirdGame({
       birdVelocity.current += GRAVITY;
       
       // Si hay fuerza, contrarrestar gravedad y subir
-      if (currentForce > lowZone) {
-        const upwardForce = (currentForce - lowZone) * FORCE_MULTIPLIER;
+      if (currentForceRef.current > lowZoneRef.current) {
+        const upwardForce = (currentForceRef.current - lowZoneRef.current) * FORCE_MULTIPLIER;
         birdVelocity.current -= upwardForce; // Restar para subir (negativo = arriba)
+        console.log(`[BIRD] Force: ${currentForceRef.current.toFixed(2)}, LowZone: ${lowZoneRef.current.toFixed(2)}, UpwardForce: ${upwardForce.toFixed(2)}, Velocity: ${birdVelocity.current.toFixed(2)}`);
       }
       
       // Limitar velocidad
@@ -252,7 +263,7 @@ export function FlappyBirdGame({
         clearInterval(gameLoopRef.current);
       }
     };
-  }, [isPaused, currentForce, lowZone, onFruitCollected, onCollision]);
+  }, [isPaused, onFruitCollected, onCollision]);
 
   // Reset collision flag when game resumes
   useEffect(() => {

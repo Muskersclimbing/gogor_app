@@ -232,3 +232,12 @@
 - [x] Pájaro usa useState para posición (más confiable que Shared Value)
 - [x] Física simplificada y funcional
 - [x] QR: /home/ubuntu/apk_ultimo_qr.png
+
+
+## APK CON TODOS LOS FIXES
+- [x] Build ID: 16bb5abf-a29c-4559-8d1d-2126056acdca
+- [x] URL: https://expo.dev/artifacts/eas/3NNQuv4CRgQ1dwviKxXnhf.apk
+- [x] useRef para currentForce y lowZone
+- [x] Eliminadas dependencias problemáticas del useEffect (currentForce, lowZone)
+- [x] Console.log agregado para debug
+- [x] QR: /home/ubuntu/apk_all_fixes_qr.png
