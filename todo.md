@@ -217,3 +217,18 @@
 - [x] Física corregida: currentForce capturado con useRef
 - [x] Sprites con fondo transparente
 - [x] QR generado: /home/ubuntu/apk_final_qr.png
+
+
+## BUG CRÍTICO - Pájaro no se mueve
+- [x] currentForce cambia correctamente (números en pantalla cambian)
+- [x] Usuario aplica hasta 12.5kg de fuerza
+- [x] Pájaro completamente quieto, no responde - ARREGLADO
+- [x] Revisar lógica del game loop y actualización de birdY - PROBLEMA: useSharedValue no se sincronizaba
+- [x] SOLUCIÓN: Reescribir usando useState para birdY en lugar de Reanimated Shared Value
+
+## APK DEFINITIVO
+- [x] Build ID: c2bdd119-de18-4903-8b61-9456bbfb5d4f
+- [x] URL: https://expo.dev/artifacts/eas/q3KPdKSutw62QR9QWRtJu8.apk
+- [x] Pájaro usa useState para posición (más confiable que Shared Value)
+- [x] Física simplificada y funcional
+- [x] QR: /home/ubuntu/apk_ultimo_qr.png
