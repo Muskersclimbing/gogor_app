@@ -241,3 +241,22 @@
 - [x] Eliminadas dependencias problemáticas del useEffect (currentForce, lowZone)
 - [x] Console.log agregado para debug
 - [x] QR: /home/ubuntu/apk_all_fixes_qr.png
+
+
+## HALLAZGO CRÍTICO - Código Crane (Tindeq app open source)
+- [x] Analizad código de Crane (https://github.com/sebws/Crane)
+- [x] Usan DisplayLink (60 FPS timer) para actualizar UI
+- [x] addDataPoint() se llama cada vez que llega dato del Tindeq
+- [x] La vista se actualiza automáticamente con @Observable
+- [x] NO usan setInterval con lógica compleja
+- [x] SOLUCIÓN: Actualizar birdY directamente en useEffect que escucha currentForce
+
+
+## APK CON TÉCNICA DE CRANE
+- [x] Build ID: d16c3573-7810-4baf-89a1-ae99aa44b8a2
+- [x] URL: https://expo.dev/artifacts/eas/rRUpErei9bJ1QTSiN7TQ3o.apk
+- [x] useEffect que escucha currentForce directamente (como DisplayLink de Crane)
+- [x] Actualización inmediata de birdY en cada cambio de fuerza
+- [x] NO usa setInterval para física del pájaro
+- [x] Game loop separado solo para obstáculos y frutos
+- [x] QR: /home/ubuntu/apk_crane_qr.png
