@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import { View, Dimensions, Text } from "react-native";
+import { View, Dimensions, Text, Animated } from "react-native";
 
 const SCREEN_WIDTH = Dimensions.get("window").width;
 const SCREEN_HEIGHT = Dimensions.get("window").height;
@@ -55,14 +55,16 @@ export function FlappyBirdGame({
   onFruitCollected,
   onGameOver,
 }: FlappyBirdGameProps) {
-  const [birdY, setBirdY] = useState(SCREEN_HEIGHT / 2);
+  // Usar Animated.Value para la posición del pájaro
+  const birdY = useRef(new Animated.Value(SCREEN_HEIGHT / 2)).current;
+  
   const [obstacles, setObstacles] = useState<Obstacle[]>([]);
   const [fruits, setFruits] = useState<Fruit[]>([]);
   
   const currentForceRef = useRef(0);
   const highZoneRef = useRef(0);
   const isPausedRef = useRef(false);
-  const birdYRef = useRef(SCREEN_HEIGHT / 2);
+  const birdYValue = useRef(SCREEN_HEIGHT / 2);
   const obstaclesRef = useRef<Obstacle[]>([]);
   const fruitsRef = useRef<Fruit[]>([]);
   const gameOverCalledRef = useRef(false);
@@ -70,13 +72,23 @@ export function FlappyBirdGame({
   useEffect(() => { currentForceRef.current = currentForce; }, [currentForce]);
   useEffect(() => { highZoneRef.current = highZone; }, [highZone]);
   useEffect(() => { isPausedRef.current = isPaused; }, [isPaused]);
-  useEffect(() => { birdYRef.current = birdY; }, [birdY]);
   useEffect(() => { obstaclesRef.current = obstacles; }, [obstacles]);
   useEffect(() => { fruitsRef.current = fruits; }, [fruits]);
   
+  // Listener para actualizar birdYValue cuando cambia birdY (Animated.Value)
+  useEffect(() => {
+    const listenerId = birdY.addListener(({ value }) => {
+      birdYValue.current = value;
+    });
+    
+    return () => {
+      birdY.removeListener(listenerId);
+    };
+  }, []);
+  
   // Generar obstáculos y frutos iniciales
   useEffect(() => {
-    const initialObstacles: Obstacle[] = [];
+    const initialObstacles: Obstacle[]= [];
     const initialFruits: Fruit[] = [];
     
     for (let i = 0; i < 3; i++) {
@@ -113,19 +125,17 @@ export function FlappyBirdGame({
       }
       
       // ===== CONTROL DIRECTO DEL PÁJARO =====
-      // Mapeo lineal: 0 kg = abajo, highZone kg = arriba
       const force = currentForceRef.current;
-      const maxForce = highZoneRef.current || 20; // Valor por defecto si no hay calibración
+      const maxForce = highZoneRef.current || 20;
       
-      // Calcular porcentaje de fuerza (0-1)
       const forcePercent = Math.max(0, Math.min(1, force / maxForce));
       
-      // Mapear a posición Y (invertido: 0% = abajo, 100% = arriba)
-      const minY = 50; // Tope superior
-      const maxY = SCREEN_HEIGHT - BIRD_SIZE - 50; // Tope inferior
+      const minY = 50;
+      const maxY = SCREEN_HEIGHT - BIRD_SIZE - 50;
       const targetY = maxY - (forcePercent * (maxY - minY));
       
-      setBirdY(targetY);
+      // Actualizar Animated.Value directamente (sin animación, cambio inmediato)
+      birdY.setValue(targetY);
       
       // ===== ACTUALIZAR OBSTÁCULOS =====
       const updatedObstacles = obstaclesRef.current.map(obs => ({
@@ -175,7 +185,7 @@ export function FlappyBirdGame({
       
       // ===== COLISIONES CON OBSTÁCULOS =====
       const birdX = 50;
-      const currentBirdY = birdYRef.current;
+      const currentBirdY = birdYValue.current;
       
       for (const obs of visibleObstacles) {
         if (
@@ -228,10 +238,10 @@ export function FlappyBirdGame({
     const low = lowZone;
     const high = highZone;
     
-    if (force < low * 0.5) return "#999"; // Gris
-    if (force < low) return "#4CAF50"; // Verde
-    if (force < high) return "#FFC107"; // Amarillo
-    return "#F44336"; // Rojo
+    if (force < low * 0.5) return "#999";
+    if (force < low) return "#4CAF50";
+    if (force < high) return "#FFC107";
+    return "#F44336";
   };
   
   return (
@@ -241,7 +251,7 @@ export function FlappyBirdGame({
         <Text style={{ color: "white", fontSize: 11 }}>Force: {currentForce.toFixed(1)} kg</Text>
         <Text style={{ color: "white", fontSize: 11 }}>Max: {highZone.toFixed(1)} kg</Text>
         <Text style={{ color: "white", fontSize: 11 }}>%: {((currentForce / highZone) * 100).toFixed(0)}%</Text>
-        <Text style={{ color: "white", fontSize: 11 }}>BirdY: {birdY.toFixed(0)}</Text>
+        <Text style={{ color: "white", fontSize: 11 }}>BirdY: {birdYValue.current.toFixed(0)}</Text>
       </View>
       
       {/* Obstáculos */}
@@ -294,8 +304,8 @@ export function FlappyBirdGame({
         )
       ))}
       
-      {/* Pájaro */}
-      <View
+      {/* Pájaro con Animated.View */}
+      <Animated.View
         style={{
           position: "absolute",
           left: 50,

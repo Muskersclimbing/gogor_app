@@ -350,4 +350,19 @@
 - [x] PROBLEMA ENCONTRADO: calibrationData.highZone es NaN (undefined)
 - [x] CAUSA: Acceso a calibrationData sin operador opcional cuando puede ser null
 - [x] SOLUCIÓN: Usar calibrationData?.highZone || 20 para valores por defecto
-- [ ] Compilar APK con fix
+- [x] Compilar APK con fix
+
+## APK CON FIX DE NaN
+- [x] Build ID: 49cd5683-e98a-4c50-a015-3926d475fce8
+- [x] URL: https://expo.dev/accounts/muskersclimbing/projects/muskers_app/builds/49cd5683-e98a-4c50-a015-3926d475fce8
+- [x] Fix aplicado: calibrationData?.highZone || 20
+- [x] QR generado: /home/ubuntu/muskers_app/expo-qr-code.png
+
+
+## NUEVOS BUGS ENCONTRADOS
+- [x] Pájaro no se mueve visualmente (BirdY se calcula correctamente pero no se renderiza)
+- [x] Problema: useState + requestAnimationFrame no re-renderiza lo suficientemente rápido
+- [x] Solución: Usar Animated.Value para actualización nativa
+- [ ] calibrationData.highZone sigue siendo undefined (usa valor por defecto 20 en lugar de 12.3)
+- [ ] Necesita investigar por qué la calibración no guarda highZone correctamente
+- [ ] Compilar APK con Animated.Value
