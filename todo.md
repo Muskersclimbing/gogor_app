@@ -275,3 +275,14 @@
 - [x] Física se actualiza en cada frame (no solo cuando cambia currentForce)
 - [x] Sprites PNG con Image component
 - [x] QR: /home/ubuntu/apk_raf_qr.png
+
+
+## APK DE TEST CON DEBUG INFO
+- [x] Build ID: f200605e-fb2e-4c19-9da1-8154f43b3d9a
+- [x] URL: https://expo.dev/artifacts/eas/vTeEJfFEBw1HCfaEQP6CAw.apk
+- [x] Versión ultra-simple con debug info en pantalla
+- [x] Muestra: isPaused, currentForce, lowZone, birdY, frames
+- [x] Barra visual de fuerza en lado derecho
+- [x] Logs extensivos en consola
+- [x] QR: /home/ubuntu/apk_test_debug_qr.png
+- [x] OBJETIVO: Identificar si isPaused está en TRUE (causa más probable)
