@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { View, Text, TouchableOpacity, Platform, Alert, Dimensions, ImageBackground } from "react-native";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import * as Haptics from "expo-haptics";
@@ -118,6 +118,7 @@ export default function GameScreen() {
   const [calibrationData, setCalibrationData] = useState<CalibrationData | null>(null);
   const [calibrationForces, setCalibrationForces] = useState<number[]>([]);
   const [calibrationTime, setCalibrationTime] = useState(0);
+  const isCalibrating = useRef(false);
   
   // Estado del juego
   const [currentForce, setCurrentForce] = useState(0);
@@ -243,10 +244,8 @@ export default function GameScreen() {
     setCurrentForce(force);
 
     // Durante calibración, guardar todas las fuerzas
-    if (gamePhase === "calibration") {
-      if (calibrationTime > 0) {
-        setCalibrationForces((prev) => [...prev, force]);
-      }
+    if (isCalibrating.current) {
+      setCalibrationForces((prev) => [...prev, force]);
     }
 
     // Durante el juego, actualizar estadísticas
@@ -300,6 +299,7 @@ export default function GameScreen() {
       await tindeqService.startMeasurement();
 
       // Iniciar cronómetro de 5 segundos
+      isCalibrating.current = true;
       setCalibrationTime(5);
       setCalibrationForces([]);
 
@@ -341,6 +341,7 @@ export default function GameScreen() {
 
       console.log("[DEBUG] calibrationData:", calibration);
 
+      isCalibrating.current = false;
       setCalibrationData(calibration);
       setGamePhase("ready");
 

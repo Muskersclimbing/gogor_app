@@ -382,3 +382,11 @@
 - [x] Agregados logs de debug para diagnosticar
 - [x] Agregada protección contra array vacío
 - [ ] Compilar APK con logs de debug para ver qué pasa
+
+
+## APK FINAL CON REANIMATED
+- [x] Build ID: d9fc8ad5-639a-45a2-9319-74375e456dfe
+- [x] URL: https://expo.dev/accounts/muskersclimbing/projects/muskers_app/builds/d9fc8ad5-639a-45a2-9319-74375e456dfe
+- [x] Reescrito con react-native-reanimated (useSharedValue + useAnimatedStyle)
+- [x] Actualización en UI thread nativo
+- [x] QR generado: /home/ubuntu/muskers_app/expo-qr-code.png
