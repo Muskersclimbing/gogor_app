@@ -5,8 +5,6 @@ const SCREEN_WIDTH = Dimensions.get("window").width;
 const SCREEN_HEIGHT = Dimensions.get("window").height;
 
 const BIRD_SIZE = 50;
-const GRAVITY = 0.5;
-const JUMP_FORCE = -8;
 const OBSTACLE_WIDTH = 60;
 const OBSTACLE_GAP = 200;
 const OBSTACLE_SPEED = 3;
@@ -58,24 +56,21 @@ export function FlappyBirdGame({
   onGameOver,
 }: FlappyBirdGameProps) {
   const [birdY, setBirdY] = useState(SCREEN_HEIGHT / 2);
-  const [birdVelocity, setBirdVelocity] = useState(0);
   const [obstacles, setObstacles] = useState<Obstacle[]>([]);
   const [fruits, setFruits] = useState<Fruit[]>([]);
   
   const currentForceRef = useRef(0);
-  const lowZoneRef = useRef(0);
+  const highZoneRef = useRef(0);
   const isPausedRef = useRef(false);
   const birdYRef = useRef(SCREEN_HEIGHT / 2);
-  const birdVelocityRef = useRef(0);
   const obstaclesRef = useRef<Obstacle[]>([]);
   const fruitsRef = useRef<Fruit[]>([]);
   const gameOverCalledRef = useRef(false);
   
   useEffect(() => { currentForceRef.current = currentForce; }, [currentForce]);
-  useEffect(() => { lowZoneRef.current = lowZone; }, [lowZone]);
+  useEffect(() => { highZoneRef.current = highZone; }, [highZone]);
   useEffect(() => { isPausedRef.current = isPaused; }, [isPaused]);
   useEffect(() => { birdYRef.current = birdY; }, [birdY]);
-  useEffect(() => { birdVelocityRef.current = birdVelocity; }, [birdVelocity]);
   useEffect(() => { obstaclesRef.current = obstacles; }, [obstacles]);
   useEffect(() => { fruitsRef.current = fruits; }, [fruits]);
   
@@ -117,35 +112,20 @@ export function FlappyBirdGame({
         return;
       }
       
-      // ===== FÍSICA DEL PÁJARO =====
+      // ===== CONTROL DIRECTO DEL PÁJARO =====
+      // Mapeo lineal: 0 kg = abajo, highZone kg = arriba
       const force = currentForceRef.current;
-      const low = lowZoneRef.current;
-      let velocity = birdVelocityRef.current;
-      let y = birdYRef.current;
+      const maxForce = highZoneRef.current;
       
-      // Si aplicas fuerza por encima de lowZone, el pájaro salta
-      if (force > low) {
-        velocity = JUMP_FORCE;
-      } else {
-        // Gravedad constante
-        velocity += GRAVITY;
-      }
+      // Calcular porcentaje de fuerza (0-1)
+      const forcePercent = Math.max(0, Math.min(1, force / maxForce));
       
-      // Actualizar posición
-      y += velocity;
+      // Mapear a posición Y (invertido: 0% = abajo, 100% = arriba)
+      const minY = 50; // Tope superior
+      const maxY = SCREEN_HEIGHT - BIRD_SIZE - 50; // Tope inferior
+      const targetY = maxY - (forcePercent * (maxY - minY));
       
-      // Límites de pantalla
-      if (y < 0) {
-        y = 0;
-        velocity = 0;
-      }
-      if (y > SCREEN_HEIGHT - BIRD_SIZE) {
-        y = SCREEN_HEIGHT - BIRD_SIZE;
-        velocity = 0;
-      }
-      
-      setBirdY(y);
-      setBirdVelocity(velocity);
+      setBirdY(targetY);
       
       // ===== ACTUALIZAR OBSTÁCULOS =====
       const updatedObstacles = obstaclesRef.current.map(obs => ({
@@ -259,9 +239,9 @@ export function FlappyBirdGame({
       {/* Debug info */}
       <View style={{ position: "absolute", top: 10, left: 10, backgroundColor: "rgba(0,0,0,0.7)", padding: 8, borderRadius: 5, zIndex: 1000 }}>
         <Text style={{ color: "white", fontSize: 11 }}>Force: {currentForce.toFixed(1)} kg</Text>
-        <Text style={{ color: "white", fontSize: 11 }}>Low: {lowZone.toFixed(1)} kg</Text>
+        <Text style={{ color: "white", fontSize: 11 }}>Max: {highZone.toFixed(1)} kg</Text>
+        <Text style={{ color: "white", fontSize: 11 }}>%: {((currentForce / highZone) * 100).toFixed(0)}%</Text>
         <Text style={{ color: "white", fontSize: 11 }}>BirdY: {birdY.toFixed(0)}</Text>
-        <Text style={{ color: "white", fontSize: 11 }}>Velocity: {birdVelocity.toFixed(1)}</Text>
       </View>
       
       {/* Obstáculos */}

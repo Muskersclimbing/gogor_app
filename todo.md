@@ -326,3 +326,13 @@
 - [x] Revisar lógica de mapeo de fuerza a posición Y
 - [x] SOLUCIÓN: Cambiar a física simple de Flappy Bird (gravedad + salto cuando force > lowZone)
 - [ ] Compilar nuevo APK
+
+
+## MECÁNICA CORRECTA DEL JUEGO
+- [x] Pájaro NO debe saltar
+- [x] Control directo: fuerza aplicada = altura del pájaro
+- [x] 0% fuerza = parte baja de la pantalla
+- [x] 100% fuerza (máximo calibrado) = parte alta de la pantalla
+- [x] Mapeo lineal entre fuerza actual y posición Y
+- [x] Sin gravedad, sin saltos, solo control directo proporcional
+- [ ] Compilar APK final
