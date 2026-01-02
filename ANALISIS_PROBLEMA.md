@@ -184,3 +184,42 @@ He creado una versión ultra-simple de FlappyBirdGame que:
 **Si isPaused está en FALSE pero el pájaro no se mueve**:
 - El problema está en el game loop o en setBirdY
 - Pero al menos sabré que isPlaying funciona
+
+
+## HALLAZGO DEFINITIVO DEL USUARIO
+
+**Reporte del usuario con APK de test:**
+- Cuadrado verde visible ✓
+- isPaused: FALSE ✓
+- Force: marca correctamente ✓
+- Frames: avanzando continuamente ✓
+
+**CONCLUSIÓN**:
+- El game loop funciona correctamente
+- currentForce llega correctamente
+- isPaused está en FALSE (no es el problema)
+- El problema es que `setBirdY` se llama pero la UI NO se actualiza
+
+**CAUSA RAÍZ**:
+React Native no está re-renderizando cuando cambia `birdY` en el estado.
+
+Posibles causas:
+1. El `setInterval` captura el closure de `setBirdY` y no actualiza correctamente
+2. React Native optimiza y no re-renderiza porque el cambio es muy frecuente
+3. El componente View con `top: birdY` no se actualiza aunque birdY cambie
+
+**SOLUCIÓN**:
+Usar `Animated.Value` de React Native (no Reanimated) para la posición del pájaro.
+`Animated.Value` se actualiza directamente en el thread nativo sin pasar por React.
+
+```typescript
+const birdY = useRef(new Animated.Value(SCREEN_HEIGHT / 2)).current;
+
+// En el game loop:
+birdY.setValue(newY); // Actualización directa, sin setState
+
+// En el render:
+<Animated.View style={{ top: birdY }} />
+```
+
+Esto garantiza que la posición se actualice visualmente en cada frame.

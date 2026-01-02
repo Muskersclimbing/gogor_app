@@ -286,3 +286,12 @@
 - [x] Logs extensivos en consola
 - [x] QR: /home/ubuntu/apk_test_debug_qr.png
 - [x] OBJETIVO: Identificar si isPaused está en TRUE (causa más probable)
+
+
+## APK FINAL CON ANIMATED.VALUE
+- [x] Build ID: 5c543a85-354e-4c61-af45-dbe2b10b9109
+- [x] URL: https://expo.dev/artifacts/eas/cpgzbquo5S2atMBkx8UJ9z.apk
+- [x] Usa Animated.Value para posición del pájaro (actualización nativa directa)
+- [x] Soluciona el problema de setState que no actualizaba la UI
+- [x] QR: /home/ubuntu/apk_final_animated_qr.png
+- [x] ESTE APK DEBERÍA FUNCIONAR CORRECTAMENTE
