@@ -390,3 +390,11 @@
 - [x] Reescrito con react-native-reanimated (useSharedValue + useAnimatedStyle)
 - [x] Actualización en UI thread nativo
 - [x] QR generado: /home/ubuntu/muskers_app/expo-qr-code.png
+
+
+## CAMBIO - Eliminar game over por colisión
+- [x] El pájaro NO debe morir al chocar con bloques
+- [x] El juego debe avanzar continuamente
+- [x] Solo se cuentan las frutas recolectadas
+- [x] Quitar llamada a onGameOver() en colisiones con obstáculos
+- [ ] Compilar APK final

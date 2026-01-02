@@ -154,21 +154,9 @@ export function FlappyBirdGame({
         return visible;
       });
       
-      // Colisiones
+      // Colisiones con obstáculos eliminadas - el juego avanza continuamente
       const birdX = 50;
       const currentBirdY = birdY.value;
-      
-      for (const obs of obstacles) {
-        if (birdX + BIRD_SIZE > obs.x && birdX < obs.x + OBSTACLE_WIDTH) {
-          if (currentBirdY < obs.gapY || currentBirdY + BIRD_SIZE > obs.gapY + OBSTACLE_GAP) {
-            if (!gameOverCalled) {
-              setGameOverCalled(true);
-              onGameOver();
-            }
-            return;
-          }
-        }
-      }
       
       for (const fruit of fruits) {
         if (!fruit.collected) {
