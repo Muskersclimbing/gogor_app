@@ -243,8 +243,10 @@ export default function GameScreen() {
     setCurrentForce(force);
 
     // Durante calibración, guardar todas las fuerzas
-    if (gamePhase === "calibration" && calibrationTime > 0) {
-      setCalibrationForces((prev) => [...prev, force]);
+    if (gamePhase === "calibration") {
+      if (calibrationTime > 0) {
+        setCalibrationForces((prev) => [...prev, force]);
+      }
     }
 
     // Durante el juego, actualizar estadísticas
@@ -312,10 +314,22 @@ export default function GameScreen() {
       // Detener medición
       await tindeqService.stopMeasurement();
 
+      console.log("[DEBUG] Fuerzas capturadas:", calibrationForces.length);
+      console.log("[DEBUG] Muestra:", calibrationForces.slice(0, 5));
+
+      // Protección contra array vacío
+      if (calibrationForces.length === 0) {
+        Alert.alert("Error", "No se capturaron datos de fuerza durante la calibración.");
+        setCalibrationTime(0);
+        return;
+      }
+
       // Calcular fuerza máxima sostenida (promedio del 80% superior)
       const sortedForces = [...calibrationForces].sort((a, b) => b - a);
-      const top20Percent = sortedForces.slice(0, Math.ceil(sortedForces.length * 0.2));
+      const top20Percent = sortedForces.slice(0, Math.max(1, Math.ceil(sortedForces.length * 0.2)));
       const maxForce = top20Percent.reduce((sum, f) => sum + f, 0) / top20Percent.length;
+
+      console.log("[DEBUG] maxForce calculado:", maxForce);
 
       // Calcular zonas (0-33%, 33-66%, 66-100%)
       const calibration: CalibrationData = {
@@ -324,6 +338,8 @@ export default function GameScreen() {
         mediumZone: maxForce * 0.66,
         highZone: maxForce,
       };
+
+      console.log("[DEBUG] calibrationData:", calibration);
 
       setCalibrationData(calibration);
       setGamePhase("ready");

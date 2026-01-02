@@ -365,4 +365,20 @@
 - [x] Solución: Usar Animated.Value para actualización nativa
 - [ ] calibrationData.highZone sigue siendo undefined (usa valor por defecto 20 en lugar de 12.3)
 - [ ] Necesita investigar por qué la calibración no guarda highZone correctamente
-- [ ] Compilar APK con Animated.Value
+- [x] Compilar APK con Animated.Value
+
+## APK FINAL CON ANIMATED.VALUE
+- [x] Build ID: 0e7f90ae-6709-4e8e-840c-1c50587fe976
+- [x] URL: https://expo.dev/accounts/muskersclimbing/projects/muskers_app/builds/0e7f90ae-6709-4e8e-840c-1c50587fe976
+- [x] Pájaro ahora usa Animated.Value para actualización en tiempo real
+- [x] QR generado: /home/ubuntu/muskers_app/expo-qr-code.png
+
+
+## BUG CRÍTICO - Calibración devuelve NaN
+- [x] Después de calibrar 5 segundos, muestra "Tu fuerza máxima: NaN kg"
+- [x] Esto causa que highZone sea NaN y use valor por defecto de 20kg
+- [x] El pájaro no se mueve porque los cálculos están basados en datos incorrectos
+- [x] Problema: calibrationForces está vacío (0 / 0 = NaN)
+- [x] Agregados logs de debug para diagnosticar
+- [x] Agregada protección contra array vacío
+- [ ] Compilar APK con logs de debug para ver qué pasa
