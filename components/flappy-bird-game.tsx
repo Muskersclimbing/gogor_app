@@ -115,7 +115,7 @@ export function FlappyBirdGame({
       // ===== CONTROL DIRECTO DEL PÁJARO =====
       // Mapeo lineal: 0 kg = abajo, highZone kg = arriba
       const force = currentForceRef.current;
-      const maxForce = highZoneRef.current;
+      const maxForce = highZoneRef.current || 20; // Valor por defecto si no hay calibración
       
       // Calcular porcentaje de fuerza (0-1)
       const forcePercent = Math.max(0, Math.min(1, force / maxForce));

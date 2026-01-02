@@ -335,4 +335,19 @@
 - [x] 100% fuerza (máximo calibrado) = parte alta de la pantalla
 - [x] Mapeo lineal entre fuerza actual y posición Y
 - [x] Sin gravedad, sin saltos, solo control directo proporcional
-- [ ] Compilar APK final
+- [x] Compilar APK final
+
+## APK FINAL CON CONTROL DIRECTO
+- [x] Build ID: cb870df7-d63f-4a27-aa8a-63a2dcc3b337
+- [x] URL: https://expo.dev/accounts/muskersclimbing/projects/muskers_app/builds/cb870df7-d63f-4a27-aa8a-63a2dcc3b337
+- [x] Control directo implementado: forcePercent = force / maxForce → targetY
+- [x] QR generado: /home/ubuntu/muskers_app/expo-qr-code.png
+
+
+## BUG - Pájaro sigue pegado arriba con control directo
+- [x] A pesar de implementar forcePercent = force / maxForce, el pájaro está pegado arriba
+- [x] Agregar debug extensivo para ver valores reales
+- [x] PROBLEMA ENCONTRADO: calibrationData.highZone es NaN (undefined)
+- [x] CAUSA: Acceso a calibrationData sin operador opcional cuando puede ser null
+- [x] SOLUCIÓN: Usar calibrationData?.highZone || 20 para valores por defecto
+- [ ] Compilar APK con fix

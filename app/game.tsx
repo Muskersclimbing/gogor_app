@@ -638,8 +638,8 @@ export default function GameScreen() {
             {/* Juego Flappy Bird */}
             <FlappyBirdGame
               currentForce={currentForce}
-              lowZone={calibrationData.lowZone}
-              highZone={calibrationData.highZone}
+              lowZone={calibrationData?.lowZone || 6.6}
+              highZone={calibrationData?.highZone || 20}
               onFruitCollected={handleFruitCollected}
               onGameOver={handleCollision}
               isPaused={!isPlaying}
