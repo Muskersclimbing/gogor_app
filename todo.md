@@ -312,7 +312,17 @@
 - [x] Agregar frutos visibles y sprites PNG
 - [ ] Compilar APK final y probar con Tindeq real
 
-## APK EN COMPILACIÓN
-- [ ] Build iniciado con versión mínima funcional
-- [ ] Objetivo: Verificar que el pájaro responde a la fuerza ANTES de agregar complejidad
-- [ ] Si funciona, agregar gradualmente: sprites → obstáculos → frutos → colisiones
+## APK MÍNIMO FUNCIONAL COMPILADO
+- [x] Build ID: 0981af6c-e06d-42ec-95da-d8154cc829c4
+- [x] URL: https://expo.dev/accounts/muskersclimbing/projects/muskers_app/builds/0981af6c-e06d-42ec-95da-d8154cc829c4
+- [x] Versión mínima con mecánica Crane-inspired
+- [x] Pájaro + obstáculos + frutos con colisiones
+- [x] Game loop con requestAnimationFrame (60 FPS)
+- [x] useRef para capturar valores actualizados
+
+
+## BUG CRÍTICO - Pájaro pegado arriba
+- [x] Pájaro se queda pegado en la parte superior todo el tiempo
+- [x] Revisar lógica de mapeo de fuerza a posición Y
+- [x] SOLUCIÓN: Cambiar a física simple de Flappy Bird (gravedad + salto cuando force > lowZone)
+- [ ] Compilar nuevo APK
