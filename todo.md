@@ -397,4 +397,26 @@
 - [x] El juego debe avanzar continuamente
 - [x] Solo se cuentan las frutas recolectadas
 - [x] Quitar llamada a onGameOver() en colisiones con obstáculos
+- [x] Compilar APK final
+
+## APK FINAL FUNCIONAL
+- [x] Build ID: 043e19b4-6228-411c-a8de-634359c30858
+- [x] URL: https://expo.dev/accounts/muskersclimbing/projects/muskers_app/builds/043e19b4-6228-411c-a8de-634359c30858
+- [x] Pájaro se mueve con fuerza del Tindeq ✅
+- [x] Calibración funciona correctamente ✅
+- [x] Juego avanza continuamente sin game over ✅
+- [x] QR generado: /home/ubuntu/muskers_app/expo-qr-code.png
+
+
+## BUGS REPORTADOS
+- [x] Pájaro pasa por encima de bloques sin colisionar
+- [x] Cuando choca, el juego debe pausar hasta que encuentre el hueco
+- [x] Frutas aparecen sobre bloques (deben estar solo en el hueco)
+- [x] Timer termina a los 56-58 segundos en lugar de 60
+
+## FIXES APLICADOS
+- [x] Física de colisión: juego se pausa cuando choca, continúa cuando encuentra hueco
+- [x] Frutas siempre en el centro del hueco (gapY + OBSTACLE_GAP / 2)
+- [x] Timer corregido: cambiado `prev <= 1` a `prev <= 0` para contar 60 segundos completos
+- [x] Pájaro se vuelve rojo cuando colisiona (indicador visual)
 - [ ] Compilar APK final

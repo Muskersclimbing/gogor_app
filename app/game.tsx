@@ -184,7 +184,7 @@ export default function GameScreen() {
       
       if (modeConfig.duration > 0) {
         setTimeRemaining((prev) => {
-          if (prev <= 1) {
+          if (prev <= 0) {
             handleGameEnd();
             return 0;
           }
