@@ -295,3 +295,24 @@
 - [x] Soluciona el problema de setState que no actualizaba la UI
 - [x] QR: /home/ubuntu/apk_final_animated_qr.png
 - [x] ESTE APK DEBERÍA FUNCIONAR CORRECTAMENTE
+
+
+## BUGS REPORTADOS - APK FINAL NO FUNCIONA
+- [ ] Pájaro quieto (no responde a fuerza del Tindeq)
+- [ ] Frutas casi no se ven
+- [ ] Pájaro no choca contra los bloques (colisiones no funcionan)
+- [ ] Usuario ha gastado dinero en plan de Expo sin resultado funcional
+- [ ] ÚLTIMA OPORTUNIDAD: Copiar estructura exacta de Crane LiveChart.swift
+
+
+## NUEVO ENFOQUE - Versión Mínima Funcional (Crane-inspired)
+- [x] Analizar LiveChart.swift de Crane para entender actualización de UI en tiempo real
+- [x] Crear versión MÍNIMA: solo pájaro que sube/baja con fuerza (sin obstáculos, sin sprites)
+- [x] Agregar obstáculos y colisiones funcionales
+- [x] Agregar frutos visibles y sprites PNG
+- [ ] Compilar APK final y probar con Tindeq real
+
+## APK EN COMPILACIÓN
+- [ ] Build iniciado con versión mínima funcional
+- [ ] Objetivo: Verificar que el pájaro responde a la fuerza ANTES de agregar complejidad
+- [ ] Si funciona, agregar gradualmente: sprites → obstáculos → frutos → colisiones

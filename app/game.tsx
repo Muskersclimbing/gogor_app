@@ -639,10 +639,9 @@ export default function GameScreen() {
             <FlappyBirdGame
               currentForce={currentForce}
               lowZone={calibrationData.lowZone}
-              midZone={calibrationData.mediumZone}
               highZone={calibrationData.highZone}
               onFruitCollected={handleFruitCollected}
-              onCollision={handleCollision}
+              onGameOver={handleCollision}
               isPaused={!isPlaying}
             />
           </View>
