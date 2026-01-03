@@ -419,4 +419,26 @@
 - [x] Frutas siempre en el centro del hueco (gapY + OBSTACLE_GAP / 2)
 - [x] Timer corregido: cambiado `prev <= 1` a `prev <= 0` para contar 60 segundos completos
 - [x] Pájaro se vuelve rojo cuando colisiona (indicador visual)
+- [x] Compilar APK final
+
+## APK CON TODOS LOS FIXES
+- [x] Build ID: ec33ece4-08ac-48f3-8caa-9c41dc926f61
+- [x] URL: https://expo.dev/accounts/muskersclimbing/projects/muskers_app/builds/ec33ece4-08ac-48f3-8caa-9c41dc926f61
+- [x] Física de colisión funcional ✅
+- [x] Frutas solo en huecos ✅
+- [x] Timer 60 segundos completos ✅
+- [x] QR generado: /home/ubuntu/muskers_app/expo-qr-code.png
+
+
+## NUEVOS BUGS REPORTADOS
+- [ ] Colisión detectada por la derecha (cuando ya pasó el bloque) - solo debe colisionar por la izquierda
+- [ ] Pájaro cae dentro del bloque si suelta fuerza encima del borde superior
+- [x] Timer de 3 minutos termina a 1:05 - CAUSA: termina al recoger 15 frutas (fruitGoal)
+
+## CAMBIOS A IMPLEMENTAR
+- [x] Timer: eliminar condición de fruitGoal, solo terminar por tiempo
+- [x] Patrones de frutas: isométrico (3-4 misma altura), dinámico (alterna alta/baja), progresivo (sube/baja gradual)
+- [x] Distribución: 40% alta (65-100%), 30% media (35-65%), 30% baja (0-35%)
+- [x] Colisión: solo por izquierda (birdX < obs.x + OBSTACLE_WIDTH)
+- [x] Física anti-caída: empuja pájaro fuera del bloque si está dentro
 - [ ] Compilar APK final

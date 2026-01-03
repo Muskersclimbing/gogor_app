@@ -456,10 +456,8 @@ export default function GameScreen() {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     }
 
-    // Verificar si se alcanzó el objetivo
-    if (fruitsCollected + 1 >= modeConfig.fruitGoal && modeConfig.duration > 0) {
-      handleGameEnd();
-    }
+    // Las frutas solo suman puntos, no terminan el juego
+    // El juego solo termina cuando se acaba el tiempo
   };
 
   const handleCollision = () => {
