@@ -78,14 +78,21 @@ export function FlappyBirdGame({
     // Generar frutas para cada obstáculo
     const initialFruits: Fruit[] = [];
     initialObstacles.forEach((obs, index) => {
-      fruitPatternRef.current.percentages.forEach((pct, fruitIndex) => {
+      // Generar 3-4 frutas por obstáculo en diferentes zonas de fuerza
+      const fruitCount = 3 + Math.floor(Math.random() * 2); // 3 o 4 frutas
+      for (let i = 0; i < fruitCount; i++) {
+        // Distribuir en toda la altura de la pantalla (excepto márgenes)
+        const minY = 50;
+        const maxY = SCREEN_HEIGHT - 50;
+        const randomY = minY + Math.random() * (maxY - minY);
+        
         initialFruits.push({
-          id: index * 10 + fruitIndex,
+          id: index * 10 + i,
           x: obs.x + OBSTACLE_WIDTH / 2,
-          y: obs.gapY + OBSTACLE_GAP * pct,
+          y: randomY,
           collected: false,
         });
-      });
+      }
     });
     setFruits(initialFruits);
   }, []);
@@ -251,12 +258,19 @@ export function FlappyBirdGame({
               
               // Generar frutas para el nuevo obstáculo
               setFruits(prevFruits => {
-                const newFruits = fruitPatternRef.current.percentages.map((pct, index) => ({
-                  id: fruitIdCounter++,
-                  x: newObs.x + OBSTACLE_WIDTH / 2,
-                  y: newObs.gapY + OBSTACLE_GAP * pct,
-                  collected: false,
-                }));
+                const fruitCount = 3 + Math.floor(Math.random() * 2); // 3 o 4 frutas
+                const newFruits: Fruit[] = [];
+                for (let i = 0; i < fruitCount; i++) {
+                  const minY = 50;
+                  const maxY = SCREEN_HEIGHT - 50;
+                  const randomY = minY + Math.random() * (maxY - minY);
+                  newFruits.push({
+                    id: fruitIdCounter++,
+                    x: newObs.x + OBSTACLE_WIDTH / 2,
+                    y: randomY,
+                    collected: false,
+                  });
+                }
                 return [...prevFruits, ...newFruits];
               });
             }

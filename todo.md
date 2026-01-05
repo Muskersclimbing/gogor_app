@@ -937,3 +937,22 @@
 - [x] Eliminada limitación del game loop
 - [x] Sin bucles de JS, todo en UI thread
 - [ ] Compilar APK
+
+## APK CON USEANIMATEDREACTION - UI THREAD
+- [x] Build ID: ff67e331-b06e-49b8-af79-be6beb78bccf
+- [x] URL: https://expo.dev/accounts/muskersclimbing/projects/muskers_app/builds/ff67e331-b06e-49b8-af79-be6beb78bccf
+- [x] useAnimatedReaction en UI thread ✅
+- [x] Monitorea birdY.value en tiempo real ✅
+- [x] Cancela animación y corrige INMEDIATAMENTE ✅
+- [x] obstaclesShared para acceso desde worklet ✅
+- [x] Sin bucles de JS ✅
+- [x] QR: /home/ubuntu/muskers_app/expo-qr-code.png
+
+## FRUTAS DISTRIBUIDAS POR TODA LA PANTALLA (5 ENE 2026)
+- [x] Modificada generación de frutas
+- [x] 3-4 frutas por obstáculo (aleatorio)
+- [x] Distribuidas en toda la altura de la pantalla
+- [x] Posición Y aleatoria entre 50 y SCREEN_HEIGHT-50
+- [x] Ya no alineadas verticalmente en el hueco
+- [x] Actualizado en inicialización y game loop
+- [ ] Compilar APK
