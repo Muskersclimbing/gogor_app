@@ -441,4 +441,25 @@
 - [x] Distribución: 40% alta (65-100%), 30% media (35-65%), 30% baja (0-35%)
 - [x] Colisión: solo por izquierda (birdX < obs.x + OBSTACLE_WIDTH)
 - [x] Física anti-caída: empuja pájaro fuera del bloque si está dentro
-- [ ] Compilar APK final
+- [x] Compilar APK final
+
+## APK FINAL CON PATRONES DE FRUTAS
+- [x] Build ID: 397475e5-47cc-4da1-bf84-38b2796eab03
+- [x] URL: https://expo.dev/accounts/muskersclimbing/projects/muskers_app/builds/397475e5-47cc-4da1-bf84-38b2796eab03
+- [x] Timer corregido (3 min completos) ✅
+- [x] Patrones de frutas para ejercicio variado ✅
+- [x] Colisión mejorada + física anti-caída ✅
+- [x] QR generado: /home/ubuntu/muskers_app/expo-qr-code.png
+
+
+## BUGS DE COLISIÓN REPORTADOS (3 ENE 2026)
+- [x] "Magnetismo" en bordes de bloques - pájaro se pega a extremos superior/inferior
+- [x] Pájaro se monta parcialmente sobre bloque por la derecha
+- [x] Colisión debe ser SOLO en parte frontal (izquierda) del pájaro, no arriba/abajo/derecha
+- [x] Eliminar física anti-caída que causa el enganche
+
+## FIX APLICADO
+- [x] Eliminada física anti-caída (líneas 189-196 antiguas)
+- [x] Colisión solo detecta parte frontal: birdFrontX >= obs.x - 5 && birdFrontX <= obs.x + OBSTACLE_WIDTH
+- [x] Sin empujes ni magnetismo, solo pausa/continua
+- [ ] Compilar APK para probar

@@ -177,24 +177,23 @@ export function FlappyBirdGame({
       const birdX = 50;
       const currentBirdY = birdY.value;
       
-      // Detectar colisión SOLO cuando entra por la izquierda
+      // Detectar colisión SOLO en la parte FRONTAL (izquierda) del pájaro
       let colliding = false;
       for (const obs of obstacles) {
-        // Solo verificar si el pájaro está DELANTE del obstáculo (no si ya lo pasó)
-        if (birdX < obs.x + OBSTACLE_WIDTH && birdX + BIRD_SIZE > obs.x) {
-          // Verificar si está en la zona de bloque (no en el hueco)
+        // Verificar si el pájaro está cerca del obstáculo
+        const birdFrontX = birdX; // Parte frontal del pájaro
+        const birdBackX = birdX + BIRD_SIZE; // Parte trasera
+        
+        // Solo colisionar si la PARTE FRONTAL está tocando el obstáculo
+        // Y el pájaro NO ha pasado completamente el obstáculo
+        if (birdFrontX < obs.x + OBSTACLE_WIDTH && birdBackX > obs.x) {
+          // Verificar si la parte frontal está en zona de bloque (no en el hueco)
           if (currentBirdY < obs.gapY || currentBirdY + BIRD_SIZE > obs.gapY + OBSTACLE_GAP) {
-            colliding = true;
-            
-            // Física anti-caída: empujar el pájaro fuera del bloque
-            if (currentBirdY < obs.gapY) {
-              // Está en el bloque superior, empujar hacia abajo
-              birdY.value = Math.max(currentBirdY, obs.gapY - BIRD_SIZE - 5);
-            } else {
-              // Está en el bloque inferior, empujar hacia arriba
-              birdY.value = Math.min(currentBirdY, obs.gapY + OBSTACLE_GAP + 5);
+            // Solo colisionar si la PARTE FRONTAL está entrando al bloque
+            if (birdFrontX >= obs.x - 5 && birdFrontX <= obs.x + OBSTACLE_WIDTH) {
+              colliding = true;
+              break;
             }
-            break;
           }
         }
       }
