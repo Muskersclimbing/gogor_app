@@ -462,4 +462,22 @@
 - [x] Eliminada física anti-caída (líneas 189-196 antiguas)
 - [x] Colisión solo detecta parte frontal: birdFrontX >= obs.x - 5 && birdFrontX <= obs.x + OBSTACLE_WIDTH
 - [x] Sin empujes ni magnetismo, solo pausa/continua
+- [x] Compilar APK para probar
+
+## APK CON COLISIÓN CORREGIDA
+- [x] Build ID: aa697aef-ac79-42df-9a95-04b506e26cd8
+- [x] URL: https://expo.dev/accounts/muskersclimbing/projects/muskers_app/builds/aa697aef-ac79-42df-9a95-04b506e26cd8
+- [x] Sin magnetismo en bordes ✅
+- [x] Colisión solo frontal ✅
+- [x] QR generado: /home/ubuntu/muskers_app/expo-qr-code.png
+
+
+## NUEVOS BUGS (4 ENE 2026)
+- [x] Colisión detecta dentro del bloque, no en el borde - pájaro se monta sobre bloque
+- [x] Frutas aparecen sobre bloques (deben estar solo en huecos)
+
+## FIXES APLICADOS
+- [x] Colisión: cambiado de `obs.x + OBSTACLE_WIDTH` a `obs.x + 10` (solo primeros 10px del borde)
+- [x] Frutas: agregado Math.max(0.1, Math.min(0.9, ...)) para forzar rango 10-90% del hueco
+- [x] Patrón dinámico: cambiado de 0.8/0.2 a 0.75/0.25 para más margen
 - [ ] Compilar APK para probar

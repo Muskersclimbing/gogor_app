@@ -135,20 +135,21 @@ export function FlappyBirdGame({
     switch (pattern) {
       case "isometric":
         // Todas las frutas a la misma altura
-        return gapY + gapHeight * baseHeight;
+        return gapY + gapHeight * Math.max(0.1, Math.min(0.9, baseHeight));
       
       case "dynamic":
         // Alterna entre alta y baja
         const isHigh = fruitCounterRef.current % 2 === 0;
-        return gapY + gapHeight * (isHigh ? 0.8 : 0.2);
+        return gapY + gapHeight * (isHigh ? 0.75 : 0.25);
       
       case "progressive":
         // Sube o baja gradualmente
         const progress = fruitCounterRef.current / count;
-        return gapY + gapHeight * (baseHeight + (progress - 0.5) * 0.4);
+        const progressHeight = baseHeight + (progress - 0.5) * 0.4;
+        return gapY + gapHeight * Math.max(0.1, Math.min(0.9, progressHeight));
       
       default:
-        return gapY + gapHeight / 2;
+        return gapY + gapHeight * 0.5;
     }
   }
   
@@ -189,8 +190,9 @@ export function FlappyBirdGame({
         if (birdFrontX < obs.x + OBSTACLE_WIDTH && birdBackX > obs.x) {
           // Verificar si la parte frontal está en zona de bloque (no en el hueco)
           if (currentBirdY < obs.gapY || currentBirdY + BIRD_SIZE > obs.gapY + OBSTACLE_GAP) {
-            // Solo colisionar si la PARTE FRONTAL está entrando al bloque
-            if (birdFrontX >= obs.x - 5 && birdFrontX <= obs.x + OBSTACLE_WIDTH) {
+            // Solo colisionar si la PARTE FRONTAL está tocando el BORDE del bloque
+            // Detectar solo en los primeros 10px del bloque, no en todo su ancho
+            if (birdFrontX >= obs.x - 5 && birdFrontX <= obs.x + 10) {
               colliding = true;
               break;
             }
