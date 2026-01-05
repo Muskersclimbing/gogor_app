@@ -206,7 +206,7 @@ export function FlappyBirdGame({
     } else {
       birdY.value = withTiming(targetY, { duration: 100 });
     }
-  }, [currentForce, highZone, isPaused]);
+  }, [currentForce, highZone, isPaused, obstacles]);
   
   // Calcular y enviar estadísticas al finalizar
   useEffect(() => {

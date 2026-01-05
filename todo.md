@@ -707,3 +707,19 @@
 - [x] Esto elimina parpadeo porque no hay conflicto entre empuje y actualización
 - [ ] Compilar APK final
 - [ ] Verificar frutas sobre bloques
+
+## APK CON SOLUCIÓN FINAL SIN PARPADEO
+- [x] Build ID: 12755e1a-b13c-4d3e-a086-880ee50e063c
+- [x] URL: https://expo.dev/accounts/muskersclimbing/projects/muskers_app/builds/12755e1a-b13c-4d3e-a086-880ee50e063c
+- [x] Sin parpadeo en bordes horizontales ✅
+- [x] Pájaro no invade interior de bloques ✅
+- [x] Colisión frontal pausa correctamente ✅
+- [x] QR: /home/ubuntu/muskers_app/expo-qr-code.png
+
+## FIX INVASIÓN HORIZONTAL - AGREGAR OBSTACLES A DEPENDENCIAS (5 ENE 2026)
+- [x] Problema: pájaro invade desde borde horizontal cuando obstáculo se mueve hacia él
+- [x] Causa: useEffect solo se ejecuta cuando cambia currentForce, no cuando se mueven obstáculos
+- [x] Solución: agregar `obstacles` a dependencias del useEffect
+- [x] Ahora se re-ejecuta cada vez que los obstáculos se mueven
+- [x] Limita la posición continuamente, no solo cuando cambia la fuerza
+- [ ] Compilar APK para probar
