@@ -499,4 +499,24 @@
 - [x] Tracking de fuerza mejorado: FlappyBirdGame ahora trackea maxForce y avgForce
 - [x] Callback onForceStats agregado para pasar estadísticas a game.tsx
 - [x] Pantalla de resultados ya mostraba correctamente las estadísticas (no requería cambios)
+- [x] Compilar APK para probar
+
+## APK CON COLISIÓN HORIZONTAL Y ESTADÍSTICAS
+- [x] Build ID: 63b0f93d-ef9a-4825-9115-5e2a60c7a50a
+- [x] URL: https://expo.dev/accounts/muskersclimbing/projects/muskers_app/builds/63b0f93d-ef9a-4825-9115-5e2a60c7a50a
+- [x] Colisión en bordes horizontales ✅
+- [x] Estadísticas de fuerza en resultados ✅
+- [x] QR generado: /home/ubuntu/muskers_app/expo-qr-code.png
+
+
+## BUG COLISIÓN FRONTAL (4 ENE 2026)
+- [x] Pájaro invade interior de bloques excepto en extremos verticales
+- [x] Colisión frontal solo funciona en extremos donde se une con el hueco
+- [x] Color rojo indica colisión correctamente, pero no detiene el avance
+- [x] Necesita revisar lógica de colisión frontal (líneas 205-212)
+
+## FIX COLISIÓN FRONTAL
+- [x] Eliminada restricción de primeros 10px (obs.x + 10)
+- [x] Colisión frontal ahora detecta en TODO el ancho del bloque
+- [x] Lógica simplificada: si está en rango horizontal Y en zona de bloque → colisión
 - [ ] Compilar APK para probar

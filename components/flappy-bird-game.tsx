@@ -212,25 +212,25 @@ export function FlappyBirdGame({
         const inObstacleXRange = birdBackX > obs.x && birdFrontX < obs.x + OBSTACLE_WIDTH;
         
         if (inObstacleXRange) {
-          // Verificar colisión con bloque SUPERIOR (arriba del hueco)
-          if (birdTopY < obs.gapY && birdBottomY > obs.gapY - 5) {
-            colliding = true;
-            break;
-          }
+          // Verificar si el pájaro está en zona de bloque (no en el hueco)
+          const inBlockZone = birdTopY < obs.gapY || birdBottomY > obs.gapY + OBSTACLE_GAP;
           
-          // Verificar colisión con bloque INFERIOR (abajo del hueco)
-          if (birdBottomY > obs.gapY + OBSTACLE_GAP && birdTopY < obs.gapY + OBSTACLE_GAP + 5) {
-            colliding = true;
-            break;
-          }
-          
-          // Verificar colisión FRONTAL (entrando al bloque por la izquierda)
-          if (birdFrontX >= obs.x - 5 && birdFrontX <= obs.x + 10) {
-            // Está en zona de bloque (no en el hueco)
-            if (birdTopY < obs.gapY || birdBottomY > obs.gapY + OBSTACLE_GAP) {
+          if (inBlockZone) {
+            // Colisión con bloque SUPERIOR (arriba del hueco)
+            if (birdTopY < obs.gapY && birdBottomY > obs.gapY - 5) {
               colliding = true;
               break;
             }
+            
+            // Colisión con bloque INFERIOR (abajo del hueco)
+            if (birdBottomY > obs.gapY + OBSTACLE_GAP && birdTopY < obs.gapY + OBSTACLE_GAP + 5) {
+              colliding = true;
+              break;
+            }
+            
+            // Colisión FRONTAL (en cualquier punto del bloque)
+            colliding = true;
+            break;
           }
         }
       }
