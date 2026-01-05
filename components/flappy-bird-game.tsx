@@ -200,7 +200,7 @@ export function FlappyBirdGame({
       const birdX = 50;
       const currentBirdY = birdY.value;
       
-      // Detectar colisión con bloques (frontal + bordes horizontales)
+      // Detectar colisión con bloques y EMPUJAR al pájaro fuera
       let colliding = false;
       for (const obs of obstacles) {
         const birdFrontX = birdX;
@@ -213,22 +213,32 @@ export function FlappyBirdGame({
         
         if (inObstacleXRange) {
           // Verificar si el pájaro está en zona de bloque (no en el hueco)
-          const inBlockZone = birdTopY < obs.gapY || birdBottomY > obs.gapY + OBSTACLE_GAP;
+          const inTopBlock = birdBottomY > obs.gapY - BIRD_SIZE && birdTopY < obs.gapY;
+          const inBottomBlock = birdTopY < obs.gapY + OBSTACLE_GAP + BIRD_SIZE && birdBottomY > obs.gapY + OBSTACLE_GAP;
           
-          if (inBlockZone) {
-            // Colisión con bloque SUPERIOR (arriba del hueco)
-            if (birdTopY < obs.gapY && birdBottomY > obs.gapY - 5) {
-              colliding = true;
-              break;
+          if (inTopBlock) {
+            // Colisión con bloque SUPERIOR → empujar hacia abajo
+            colliding = true;
+            const pushDown = obs.gapY - birdTopY;
+            if (pushDown > 0) {
+              birdY.value = Math.min(SCREEN_HEIGHT - BIRD_SIZE, currentBirdY + pushDown);
             }
-            
-            // Colisión con bloque INFERIOR (abajo del hueco)
-            if (birdBottomY > obs.gapY + OBSTACLE_GAP && birdTopY < obs.gapY + OBSTACLE_GAP + 5) {
-              colliding = true;
-              break;
+            break;
+          }
+          
+          if (inBottomBlock) {
+            // Colisión con bloque INFERIOR → empujar hacia arriba
+            colliding = true;
+            const pushUp = birdBottomY - (obs.gapY + OBSTACLE_GAP);
+            if (pushUp > 0) {
+              birdY.value = Math.max(0, currentBirdY - pushUp);
             }
-            
-            // Colisión FRONTAL (en cualquier punto del bloque)
+            break;
+          }
+          
+          // Colisión FRONTAL (pájaro completamente dentro del bloque)
+          const fullyInBlock = birdTopY < obs.gapY || birdBottomY > obs.gapY + OBSTACLE_GAP;
+          if (fullyInBlock) {
             colliding = true;
             break;
           }

@@ -519,4 +519,19 @@
 - [x] Eliminada restricción de primeros 10px (obs.x + 10)
 - [x] Colisión frontal ahora detecta en TODO el ancho del bloque
 - [x] Lógica simplificada: si está en rango horizontal Y en zona de bloque → colisión
+- [x] Compilar APK para probar
+
+## APK FINAL CON COLISIÓN FRONTAL CORREGIDA
+- [x] Build ID: a090288b-6250-407e-b5a6-d5b0c2b0ea3a
+- [x] URL: https://expo.dev/accounts/muskersclimbing/projects/muskers_app/builds/a090288b-6250-407e-b5a6-d5b0c2b0ea3a
+- [x] Colisión frontal en todo el ancho ✅
+- [x] Pájaro no invade interior de bloques ✅
+- [x] QR generado: /home/ubuntu/muskers_app/expo-qr-code.png
+
+## FIX COLISIÓN HORIZONTAL Y TRASERA (5 ENE 2026)
+- [x] Problema: colisión horizontal/trasera detecta pero pájaro invade interior del bloque
+- [x] Solución: Agregar lógica de empuje (push) cuando el pájaro invade bloques
+  - Bloque superior → empujar hacia abajo (birdY += pushDown)
+  - Bloque inferior → empujar hacia arriba (birdY -= pushUp)
+- [x] Colisión frontal mantiene comportamiento correcto (pausa sin empuje)
 - [ ] Compilar APK para probar
