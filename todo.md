@@ -723,3 +723,33 @@
 - [x] Ahora se re-ejecuta cada vez que los obstáculos se mueven
 - [x] Limita la posición continuamente, no solo cuando cambia la fuerza
 - [ ] Compilar APK para probar
+
+## APK CON OBSTACLES EN DEPENDENCIAS
+- [x] Build ID: c694b863-2630-4614-b648-1b1477bed4a3
+- [x] URL: https://expo.dev/accounts/muskersclimbing/projects/muskers_app/builds/c694b863-2630-4614-b648-1b1477bed4a3
+- [x] Limitación continua cuando obstáculos se mueven ✅
+- [x] Impide invasión horizontal ✅
+- [x] Sin parpadeo (asignación directa cuando limitado) ✅
+- [x] QR: /home/ubuntu/muskers_app/expo-qr-code.png
+
+## SOLUCIÓN DEFINITIVA - CORRECCIÓN PASIVA (5 ENE 2026)
+- [x] Problema anterior: limitación en useEffect empujaba automáticamente al hueco
+- [x] Solución:
+  1. Eliminada limitación del useEffect (vuelve a solo currentForce)
+  2. Corrección PASIVA en game loop: solo si invade >5px
+  3. Umbral de 5px evita parpadeo pero impide invasión profunda
+  4. visualCollision detecta cualquier colisión → pájaro rojo
+  5. colliding solo en frontal → pausa avance
+- [x] El pájaro NO se desliza solo al hueco
+- [ ] Compilar APK final
+
+## SOLUCIÓN REAL - PAUSAR EN CUALQUIER COLISIÓN (5 ENE 2026)
+- [x] Error anterior: solo pausaba en colisión frontal
+- [x] Solución correcta: PAUSAR en CUALQUIER colisión (igual que frontal)
+  - Detecta colisión (inTopBlock || inBottomBlock)
+  - Pausa avance de obstáculos (colliding = true)
+  - Muestra pájaro rojo (visualCollision = true)
+  - NO empuja al pájaro
+  - Usuario ajusta fuerza manualmente para salir
+- [x] Esto impide invasión SIN deslizamiento automático
+- [ ] Compilar APK final

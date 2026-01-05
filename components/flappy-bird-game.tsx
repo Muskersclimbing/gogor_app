@@ -176,37 +176,10 @@ export function FlappyBirdGame({
     
     const minY = 50;
     const maxY = SCREEN_HEIGHT - BIRD_SIZE - 50;
-    let targetY = maxY - (forcePercent * (maxY - minY));
-    let isLimited = false;
+    const targetY = maxY - (forcePercent * (maxY - minY));
     
-    // Limitar targetY para que no invada bloques horizontalmente
-    for (const obs of obstacles) {
-      const birdX = 50;
-      const birdRightX = birdX + BIRD_SIZE;
-      const birdLeftX = birdX;
-      
-      // Si el pájaro está en el rango horizontal del obstáculo
-      if (birdRightX > obs.x && birdLeftX < obs.x + OBSTACLE_WIDTH) {
-        // Limitar para que no entre en bloque superior
-        if (targetY < obs.gapY) {
-          targetY = obs.gapY;
-          isLimited = true;
-        }
-        // Limitar para que no entre en bloque inferior
-        if (targetY + BIRD_SIZE > obs.gapY + OBSTACLE_GAP) {
-          targetY = obs.gapY + OBSTACLE_GAP - BIRD_SIZE;
-          isLimited = true;
-        }
-      }
-    }
-    
-    // Si está limitado, usar asignación directa (sin animación) para evitar parpadeo
-    if (isLimited) {
-      birdY.value = targetY;
-    } else {
-      birdY.value = withTiming(targetY, { duration: 100 });
-    }
-  }, [currentForce, highZone, isPaused, obstacles]);
+    birdY.value = withTiming(targetY, { duration: 100 });
+  }, [currentForce, highZone, isPaused]);
   
   // Calcular y enviar estadísticas al finalizar
   useEffect(() => {
@@ -245,18 +218,10 @@ export function FlappyBirdGame({
           const inBottomBlock = birdBottomY > obs.gapY + OBSTACLE_GAP;
           
           if (inTopBlock || inBottomBlock) {
-            // Hay colisión con bloque
+            // Hay colisión con bloque → PAUSAR (igual que frontal)
             visualCollision = true;
-            
-            // Solo PAUSAR si es colisión FRONTAL (parte derecha entrando)
-            const isFrontalCollision = birdRightX > obs.x && birdRightX < obs.x + 10;
-            if (isFrontalCollision) {
-              colliding = true;
-              break;
-            }
-            
-            // Colisión horizontal: solo visual (rojo)
-            // La limitación de posición se maneja en el useEffect de currentForce
+            colliding = true;
+            break;
           }
         }
       }
