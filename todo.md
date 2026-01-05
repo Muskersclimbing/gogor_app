@@ -819,3 +819,21 @@
 - [x] Impide invasión SIN deslizamiento continuo
 - [x] cancelAnimation evita que withTiming siga empujando
 - [ ] Compilar APK
+
+## APK CON CANCELANIMATION
+- [x] Build ID: 05afc896-b6e8-4169-98e4-1acbfad32637
+- [x] URL: https://expo.dev/accounts/muskersclimbing/projects/muskers_app/builds/05afc896-b6e8-4169-98e4-1acbfad32637
+- [x] cancelAnimation detiene withTiming ✅
+- [x] Asignación directa al borde ✅
+- [x] Sin umbral (0px tolerancia) ✅
+- [x] NO invasión ✅
+- [x] NO deslizamiento ✅
+- [x] QR: /home/ubuntu/muskers_app/expo-qr-code.png
+
+## SOLUCIÓN SIN CORRECCIÓN AUTOMÁTICA (5 ENE 2026)
+- [x] Eliminada TODA corrección automática
+- [x] El pájaro puede invadir superficialmente (5-10px)
+- [x] El pájaro NO se desliza solo al hueco
+- [x] Detecta colisión → bloque rojo + pausa
+- [x] Usuario ajusta fuerza manualmente para salir
+- [ ] Compilar APK

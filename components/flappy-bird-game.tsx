@@ -227,27 +227,7 @@ export function FlappyBirdGame({
       }
       
       setCollidingObstacleId(collidingObsId); // Guardar ID del obstáculo que colisiona
-      
-      // Impedir invasión: cancelar animación y forzar al borde si invade
-      for (const obs of obstacles) {
-        const birdRightX = birdX + BIRD_SIZE;
-        const birdLeftX = birdX;
-        const birdTopY = currentBirdY;
-        const birdBottomY = currentBirdY + BIRD_SIZE;
-        
-        if (birdRightX > obs.x && birdLeftX < obs.x + OBSTACLE_WIDTH) {
-          // Si invade bloque superior
-          if (birdTopY < obs.gapY) {
-            cancelAnimation(birdY);
-            birdY.value = obs.gapY;
-          }
-          // Si invade bloque inferior
-          if (birdBottomY > obs.gapY + OBSTACLE_GAP) {
-            cancelAnimation(birdY);
-            birdY.value = obs.gapY + OBSTACLE_GAP - BIRD_SIZE;
-          }
-        }
-      }
+      // Sin corrección automática: el pájaro puede invadir superficialmente pero NO se desliza solo
       
       // Solo mover obstáculos si NO hay colisión
       if (!colliding) {
