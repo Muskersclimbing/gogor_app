@@ -763,3 +763,22 @@
   - Debug info muestra "COLISIÓN (Obs X)" cuando colisiona
 - [x] Pausa en cualquier colisión (frontal u horizontal)
 - [ ] Compilar APK final
+
+## APK CON BLOQUE ROJO
+- [x] Build ID: f47b4aea-8364-4b2b-bdb3-140e403a0f9f
+- [x] URL: https://expo.dev/accounts/muskersclimbing/projects/muskers_app/builds/f47b4aea-8364-4b2b-bdb3-140e403a0f9f
+- [x] Pájaro color dorado fijo ✅
+- [x] Bloque se vuelve rojo al colisionar ✅
+- [x] Pausa en cualquier colisión ✅
+- [x] QR: /home/ubuntu/muskers_app/expo-qr-code.png
+
+## SOLUCIÓN DEFINITIVA - PREVENIR INVASIÓN (5 ENE 2026)
+- [x] Problema: detectar colisión después no impedía invasión
+- [x] Solución: PREVENIR invasión ANTES de aplicar targetY
+  - En useEffect de currentForce, antes de withTiming
+  - Verifica si targetY invade algún obstáculo
+  - Si invade bloque superior: targetY = obs.gapY
+  - Si invade bloque inferior: targetY = obs.gapY + OBSTACLE_GAP - BIRD_SIZE
+  - Aplica targetY ya corregido
+- [x] El pájaro NUNCA puede entrar en el interior del bloque
+- [ ] Compilar APK final

@@ -176,10 +176,29 @@ export function FlappyBirdGame({
     
     const minY = 50;
     const maxY = SCREEN_HEIGHT - BIRD_SIZE - 50;
-    const targetY = maxY - (forcePercent * (maxY - minY));
+    let targetY = maxY - (forcePercent * (maxY - minY));
+    
+    // PREVENIR invasión: verificar si targetY invade algún obstáculo
+    const birdX = 50;
+    const birdRightX = birdX + BIRD_SIZE;
+    const birdLeftX = birdX;
+    
+    for (const obs of obstacles) {
+      // Si el pájaro está en el rango horizontal del obstáculo
+      if (birdRightX > obs.x && birdLeftX < obs.x + OBSTACLE_WIDTH) {
+        // Si targetY invade bloque superior, limitar al borde del hueco
+        if (targetY < obs.gapY) {
+          targetY = obs.gapY;
+        }
+        // Si targetY invade bloque inferior, limitar al borde del hueco
+        if (targetY + BIRD_SIZE > obs.gapY + OBSTACLE_GAP) {
+          targetY = obs.gapY + OBSTACLE_GAP - BIRD_SIZE;
+        }
+      }
+    }
     
     birdY.value = withTiming(targetY, { duration: 100 });
-  }, [currentForce, highZone, isPaused]);
+  }, [currentForce, highZone, isPaused, obstacles]);
   
   // Calcular y enviar estadísticas al finalizar
   useEffect(() => {
