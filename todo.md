@@ -672,3 +672,19 @@
   - Ahora frutas siempre aparecen en el hueco del último obstáculo
 
 - [ ] Compilar APK final
+
+## APK FINAL CON TODOS LOS FIXES
+- [x] Build ID: bfe15bf0-acb4-47d4-b7d8-19d1d0e14451
+- [x] URL: https://expo.dev/accounts/muskersclimbing/projects/muskers_app/builds/bfe15bf0-acb4-47d4-b7d8-19d1d0e14451
+- [x] Sin parpadeo en bordes horizontales ✅
+- [x] Frutas siempre en el hueco ✅
+- [x] Colisión frontal pausa correctamente ✅
+- [x] QR: /home/ubuntu/muskers_app/expo-qr-code.png
+
+## FIX INVASIÓN HORIZONTAL CON EMPUJE CONDICIONAL (5 ENE 2026)
+- [x] Problema: pájaro invade interior por lados horizontales
+- [x] Solución: empujar solo cuando invasión > 20px
+  - Invasión superficial (0-20px): solo visual (rojo), sin empuje
+  - Invasión profunda (>20px): empujar al borde del hueco
+- [x] Esto evita parpadeo en bordes pero impide invasión profunda
+- [ ] Compilar APK para probar

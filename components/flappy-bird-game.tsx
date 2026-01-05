@@ -228,8 +228,20 @@ export function FlappyBirdGame({
               break;
             }
             
-            // Colisión horizontal: solo visual (rojo), sin empuje para evitar parpadeo
-            // El usuario debe ajustar la fuerza manualmente
+            // Colisión horizontal: empujar solo si invade MUY dentro (>20px) para evitar parpadeo en bordes
+            if (inTopBlock) {
+              const invasionDepth = birdBottomY - obs.gapY;
+              if (invasionDepth > 20) {
+                // Invasión profunda → empujar hacia abajo
+                birdY.value = obs.gapY;
+              }
+            } else if (inBottomBlock) {
+              const invasionDepth = (obs.gapY + OBSTACLE_GAP) - birdTopY;
+              if (invasionDepth > 20) {
+                // Invasión profunda → empujar hacia arriba
+                birdY.value = obs.gapY + OBSTACLE_GAP - BIRD_SIZE;
+              }
+            }
           }
         }
       }
