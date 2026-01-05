@@ -176,9 +176,36 @@ export function FlappyBirdGame({
     
     const minY = 50;
     const maxY = SCREEN_HEIGHT - BIRD_SIZE - 50;
-    const targetY = maxY - (forcePercent * (maxY - minY));
+    let targetY = maxY - (forcePercent * (maxY - minY));
+    let isLimited = false;
     
-    birdY.value = withTiming(targetY, { duration: 100 });
+    // Limitar targetY para que no invada bloques horizontalmente
+    for (const obs of obstacles) {
+      const birdX = 50;
+      const birdRightX = birdX + BIRD_SIZE;
+      const birdLeftX = birdX;
+      
+      // Si el pájaro está en el rango horizontal del obstáculo
+      if (birdRightX > obs.x && birdLeftX < obs.x + OBSTACLE_WIDTH) {
+        // Limitar para que no entre en bloque superior
+        if (targetY < obs.gapY) {
+          targetY = obs.gapY;
+          isLimited = true;
+        }
+        // Limitar para que no entre en bloque inferior
+        if (targetY + BIRD_SIZE > obs.gapY + OBSTACLE_GAP) {
+          targetY = obs.gapY + OBSTACLE_GAP - BIRD_SIZE;
+          isLimited = true;
+        }
+      }
+    }
+    
+    // Si está limitado, usar asignación directa (sin animación) para evitar parpadeo
+    if (isLimited) {
+      birdY.value = targetY;
+    } else {
+      birdY.value = withTiming(targetY, { duration: 100 });
+    }
   }, [currentForce, highZone, isPaused]);
   
   // Calcular y enviar estadísticas al finalizar
@@ -228,20 +255,8 @@ export function FlappyBirdGame({
               break;
             }
             
-            // Colisión horizontal: empujar solo si invade MUY dentro (>20px) para evitar parpadeo en bordes
-            if (inTopBlock) {
-              const invasionDepth = birdBottomY - obs.gapY;
-              if (invasionDepth > 20) {
-                // Invasión profunda → empujar hacia abajo
-                birdY.value = obs.gapY;
-              }
-            } else if (inBottomBlock) {
-              const invasionDepth = (obs.gapY + OBSTACLE_GAP) - birdTopY;
-              if (invasionDepth > 20) {
-                // Invasión profunda → empujar hacia arriba
-                birdY.value = obs.gapY + OBSTACLE_GAP - BIRD_SIZE;
-              }
-            }
+            // Colisión horizontal: solo visual (rojo)
+            // La limitación de posición se maneja en el useEffect de currentForce
           }
         }
       }

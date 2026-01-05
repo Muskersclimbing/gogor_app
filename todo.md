@@ -688,3 +688,22 @@
   - Invasión profunda (>20px): empujar al borde del hueco
 - [x] Esto evita parpadeo en bordes pero impide invasión profunda
 - [ ] Compilar APK para probar
+
+## APK CON EMPUJE CONDICIONAL
+- [x] Build ID: 8bb65dce-763b-4752-864b-b743f569fd83
+- [x] URL: https://expo.dev/accounts/muskersclimbing/projects/muskers_app/builds/8bb65dce-763b-4752-864b-b743f569fd83
+- [x] Empuje solo cuando invasión > 20px ✅
+- [x] Sin parpadeo en bordes ✅
+- [x] Impide invasión profunda ✅
+- [x] QR: /home/ubuntu/muskers_app/expo-qr-code.png
+
+## SOLUCIÓN FINAL - LIMITAR EN USEEFFECT SIN PARPADEO (5 ENE 2026)
+- [x] Problema: empuje en game loop causaba parpadeo
+- [x] Solución: limitar targetY directamente en useEffect de currentForce
+  - Detecta si pájaro está en rango horizontal de obstáculo
+  - Limita targetY para que no invada bloques
+  - Si está limitado: asignación directa (birdY.value = targetY) sin animación
+  - Si no está limitado: withTiming normal para movimiento suave
+- [x] Esto elimina parpadeo porque no hay conflicto entre empuje y actualización
+- [ ] Compilar APK final
+- [ ] Verificar frutas sobre bloques
