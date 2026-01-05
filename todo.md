@@ -980,3 +980,12 @@
 - [x] Fuera: arriba o abajo del obstáculo (nunca sobre bloques)
 - [x] Actualizado en inicialización y game loop
 - [ ] Compilar APK
+
+## FRUTAS DISTRIBUIDAS LIBREMENTE (5 ENE 2026)
+- [x] X aleatoria en rango amplio (-150 a +400 desde obstáculo)
+- [x] Y aleatoria en toda la pantalla
+- [x] Verificación: en hueco O fuera de zona horizontal del obstáculo
+- [x] Máximo 10 intentos para encontrar posición válida
+- [x] Fallback: centro del hueco si no encuentra posición
+- [x] Actualizado en inicialización y game loop
+- [ ] Compilar APK

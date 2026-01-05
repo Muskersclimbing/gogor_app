@@ -78,30 +78,33 @@ export function FlappyBirdGame({
     // Generar frutas para cada obstáculo
     const initialFruits: Fruit[] = [];
     initialObstacles.forEach((obs, index) => {
-      // Generar 3-4 frutas por obstáculo en toda la pantalla (evitando bloques)
+      // Generar 3-4 frutas por obstáculo distribuidas libremente
       const fruitCount = 3 + Math.floor(Math.random() * 2); // 3 o 4 frutas
       for (let i = 0; i < fruitCount; i++) {
-        // Posición X aleatoria alrededor del obstáculo
-        const randomX = obs.x - 100 + Math.random() * (OBSTACLE_WIDTH + 200);
+        // Posición X aleatoria en rango amplio
+        const randomX = obs.x - 150 + Math.random() * 400;
         
-        // Posición Y aleatoria en toda la pantalla
-        let randomY;
-        const useGap = Math.random() < 0.5; // 50% en hueco, 50% fuera de zona de obstáculo
+        // Posición Y aleatoria en toda la pantalla (evitando bloques del obstáculo actual)
+        let randomY = obs.gapY + OBSTACLE_GAP / 2; // Valor por defecto
+        let attempts = 0;
+        let validPosition = false;
         
-        if (useGap) {
-          // En el hueco del obstáculo
-          const gapStart = obs.gapY;
-          const gapEnd = obs.gapY + OBSTACLE_GAP;
-          randomY = gapStart + Math.random() * (gapEnd - gapStart);
-        } else {
-          // Fuera de la zona del obstáculo (arriba o abajo)
-          if (Math.random() < 0.5) {
-            // Arriba del obstáculo
-            randomY = 50 + Math.random() * (obs.gapY - 100);
-          } else {
-            // Abajo del obstáculo
-            randomY = obs.gapY + OBSTACLE_GAP + 50 + Math.random() * (SCREEN_HEIGHT - obs.gapY - OBSTACLE_GAP - 100);
+        while (!validPosition && attempts < 10) {
+          randomY = 50 + Math.random() * (SCREEN_HEIGHT - 100);
+          
+          // Verificar si está en el hueco O fuera de la zona horizontal del obstáculo
+          const inGap = randomY >= obs.gapY && randomY <= obs.gapY + OBSTACLE_GAP;
+          const outsideObstacleX = randomX < obs.x || randomX > obs.x + OBSTACLE_WIDTH;
+          
+          if (inGap || outsideObstacleX) {
+            validPosition = true;
           }
+          attempts++;
+        }
+        
+        // Si no encontró posición válida, usar el hueco por defecto
+        if (!validPosition) {
+          randomY = obs.gapY + OBSTACLE_GAP / 2;
         }
         
         initialFruits.push({
@@ -279,27 +282,30 @@ export function FlappyBirdGame({
                 const fruitCount = 3 + Math.floor(Math.random() * 2); // 3 o 4 frutas
                 const newFruits: Fruit[] = [];
                 for (let i = 0; i < fruitCount; i++) {
-                  // Posición X aleatoria alrededor del obstáculo
-                  const randomX = newObs.x - 100 + Math.random() * (OBSTACLE_WIDTH + 200);
+                  // Posición X aleatoria en rango amplio
+                  const randomX = newObs.x - 150 + Math.random() * 400;
                   
-                  // Posición Y aleatoria en toda la pantalla
-                  let randomY;
-                  const useGap = Math.random() < 0.5; // 50% en hueco, 50% fuera
+                  // Posición Y aleatoria en toda la pantalla (evitando bloques)
+                  let randomY = newObs.gapY + OBSTACLE_GAP / 2; // Valor por defecto
+                  let attempts = 0;
+                  let validPosition = false;
                   
-                  if (useGap) {
-                    // En el hueco del obstáculo
-                    const gapStart = newObs.gapY;
-                    const gapEnd = newObs.gapY + OBSTACLE_GAP;
-                    randomY = gapStart + Math.random() * (gapEnd - gapStart);
-                  } else {
-                    // Fuera de la zona del obstáculo (arriba o abajo)
-                    if (Math.random() < 0.5) {
-                      // Arriba del obstáculo
-                      randomY = 50 + Math.random() * (newObs.gapY - 100);
-                    } else {
-                      // Abajo del obstáculo
-                      randomY = newObs.gapY + OBSTACLE_GAP + 50 + Math.random() * (SCREEN_HEIGHT - newObs.gapY - OBSTACLE_GAP - 100);
+                  while (!validPosition && attempts < 10) {
+                    randomY = 50 + Math.random() * (SCREEN_HEIGHT - 100);
+                    
+                    // Verificar si está en el hueco O fuera de la zona horizontal del obstáculo
+                    const inGap = randomY >= newObs.gapY && randomY <= newObs.gapY + OBSTACLE_GAP;
+                    const outsideObstacleX = randomX < newObs.x || randomX > newObs.x + OBSTACLE_WIDTH;
+                    
+                    if (inGap || outsideObstacleX) {
+                      validPosition = true;
                     }
+                    attempts++;
+                  }
+                  
+                  // Si no encontró posición válida, usar el hueco por defecto
+                  if (!validPosition) {
+                    randomY = newObs.gapY + OBSTACLE_GAP / 2;
                   }
                   
                   newFruits.push({
