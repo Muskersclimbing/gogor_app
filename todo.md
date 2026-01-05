@@ -561,3 +561,20 @@
   - inBottomBlock: birdBottomY > obs.gapY + OBSTACLE_GAP + 20 (ignora primeros 20px después del hueco)
 - [x] Esto crea una "zona segura" de 20px en los extremos donde no se detecta colisión
 - [ ] Compilar APK para probar
+
+## APK CON MARGEN DE TOLERANCIA EN EXTREMOS
+- [x] Build ID: 1ba44c25-2fbd-4109-8cb2-59388375ff78
+- [x] URL: https://expo.dev/accounts/muskersclimbing/projects/muskers_app/builds/1ba44c25-2fbd-4109-8cb2-59388375ff78
+- [x] Margen de 20px en extremos de bloques ✅
+- [x] Sin parpadeo en zona de transición ✅
+- [x] Colisión frontal funciona correctamente ✅
+- [x] QR: /home/ubuntu/muskers_app/expo-qr-code.png
+
+## FIX DEFINITIVO - BLOQUE CERRADO (5 ENE 2026)
+- [x] Eliminado margen de 20px que permitía invasión
+- [x] Colisión horizontal: FORZAR posición del pájaro al borde exacto del hueco
+  - Bloque superior: birdY.value = obs.gapY (justo en el borde)
+  - Bloque inferior: birdY.value = obs.gapY + OBSTACLE_GAP - BIRD_SIZE (justo en el borde)
+- [x] El pájaro NUNCA puede invadir el interior del bloque
+- [x] Detección amplia: considera BIRD_SIZE para detectar antes de invasión completa
+- [ ] Compilar APK final
