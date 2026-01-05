@@ -54,6 +54,9 @@ export function FlappyBirdGame({
   const forceReadings = useRef<number[]>([]);
   const maxForceRef = useRef<number>(0);
   
+  // Ref para acceder a obstacles sin ponerlo en dependencias
+  const obstaclesRef = useRef<Obstacle[]>([]);
+  
   // Patrón de frutas
   const fruitPatternRef = useRef<{ pattern: string; percentages: number[] }>({
     pattern: "random",
@@ -68,6 +71,7 @@ export function FlappyBirdGame({
       { id: 3, x: SCREEN_WIDTH + 600, gapY: Math.random() * (SCREEN_HEIGHT - OBSTACLE_GAP - 200) + 100 },
     ];
     setObstacles(initialObstacles);
+    obstaclesRef.current = initialObstacles; // Actualizar ref
     
     // Generar frutas para cada obstáculo
     const initialFruits: Fruit[] = [];
@@ -102,10 +106,26 @@ export function FlappyBirdGame({
     
     const minY = 50;
     const maxY = SCREEN_HEIGHT - BIRD_SIZE - 50;
-    const targetY = maxY - (forcePercent * (maxY - minY));
+    let targetY = maxY - (forcePercent * (maxY - minY));
     
-    // NO limitar targetY aquí - permitir que el pájaro se mueva libremente
-    // La invasión superficial es aceptable para evitar deslizamiento automático
+    // Limitar targetY usando obstaclesRef.current (sin ponerlo en dependencias)
+    const birdRightX = BIRD_X + BIRD_SIZE;
+    const birdLeftX = BIRD_X;
+    
+    for (const obs of obstaclesRef.current) {
+      // Si el pájaro está en el rango horizontal del obstáculo
+      if (birdRightX > obs.x && birdLeftX < obs.x + OBSTACLE_WIDTH) {
+        // Limitar para que no entre en bloque superior
+        if (targetY < obs.gapY) {
+          targetY = obs.gapY;
+        }
+        // Limitar para que no entre en bloque inferior
+        const birdBottomY = targetY + BIRD_SIZE;
+        if (birdBottomY > obs.gapY + OBSTACLE_GAP) {
+          targetY = obs.gapY + OBSTACLE_GAP - BIRD_SIZE;
+        }
+      }
+    }
     
     birdY.value = withTiming(targetY, { duration: 100 });
   }, [currentForce, highZone, isPaused]);
@@ -193,6 +213,9 @@ export function FlappyBirdGame({
         setObstacles(prev => {
           const updated = prev.map(obs => ({ ...obs, x: obs.x - OBSTACLE_SPEED }));
           const visible = updated.filter(obs => obs.x > -OBSTACLE_WIDTH);
+          
+          // Actualizar ref para que useEffect de posición pueda acceder sin dependencia
+          obstaclesRef.current = visible;
           
           // Generar nuevo obstáculo si es necesario
           if (visible.length < 3) {

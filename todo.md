@@ -878,3 +878,23 @@
 - [x] NO deslizamiento automático al hueco
 - [x] Frutas en hueco, se recogen por proximidad
 - [ ] Compilar APK
+
+## APK FINAL - SIN DESLIZAMIENTO AUTOMÁTICO
+- [x] Build ID: d84040cf-247a-4d83-b0f5-be390f3a204b
+- [x] URL: https://expo.dev/accounts/muskersclimbing/projects/muskers_app/builds/d84040cf-247a-4d83-b0f5-be390f3a204b
+- [x] SIN obstacles en dependencias ✅
+- [x] Posición actualiza solo con currentForce ✅
+- [x] Invasión superficial permitida ✅
+- [x] NO deslizamiento automático ✅
+- [x] Colisión frontal → pausa + rojo ✅
+- [x] QR: /home/ubuntu/muskers_app/expo-qr-code.png
+
+## SOLUCIÓN CON OBSTACLESREF (5 ENE 2026)
+- [x] Agregado obstaclesRef para acceder sin dependencia
+- [x] Limitación de targetY usando obstaclesRef.current
+- [x] SIN obstacles en dependencias del useEffect
+- [x] obstaclesRef se actualiza cada vez que obstacles cambia
+- [x] useEffect solo se ejecuta cuando currentForce cambia
+- [x] NO deslizamiento automático
+- [x] Respeta TODOS los bordes (frontal, horizontal)
+- [ ] Compilar APK
