@@ -553,3 +553,11 @@
   - Sin cálculos de pushDown/pushUp
 - [x] El usuario debe ajustar la fuerza manualmente para salir del bloque
 - [ ] Compilar APK para probar
+
+## FIX PARPADEO CON MARGEN DE TOLERANCIA (5 ENE 2026)
+- [x] Problema específico: parpadeo en últimos 20px de zona vertical del bloque
+- [x] Solución: Agregar EDGE_MARGIN de 20px en detección de colisión
+  - inTopBlock: birdTopY < obs.gapY - 20 (ignora últimos 20px antes del hueco)
+  - inBottomBlock: birdBottomY > obs.gapY + OBSTACLE_GAP + 20 (ignora primeros 20px después del hueco)
+- [x] Esto crea una "zona segura" de 20px en los extremos donde no se detecta colisión
+- [ ] Compilar APK para probar

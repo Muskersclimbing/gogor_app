@@ -213,11 +213,13 @@ export function FlappyBirdGame({
         
         if (inObstacleXRange) {
           // Verificar si el pájaro está en zona de bloque (no en el hueco)
-          const inTopBlock = birdTopY < obs.gapY;
-          const inBottomBlock = birdBottomY > obs.gapY + OBSTACLE_GAP;
+          // Agregar margen de 20px para evitar parpadeo en extremos
+          const EDGE_MARGIN = 20;
+          const inTopBlock = birdTopY < obs.gapY - EDGE_MARGIN;
+          const inBottomBlock = birdBottomY > obs.gapY + OBSTACLE_GAP + EDGE_MARGIN;
           
           if (inTopBlock || inBottomBlock) {
-            // Colisión detectada: pájaro en zona de bloque
+            // Colisión detectada: pájaro en zona de bloque (fuera del margen de extremos)
             colliding = true;
             break;
           }
