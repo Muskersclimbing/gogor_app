@@ -858,3 +858,23 @@
 - [x] Sin loops continuos que causen deslizamiento
 - [x] obstacles en dependencias para re-calcular límites
 - [ ] Compilar APK
+
+## APK CON JUEGO REESCRITO DESDE CERO
+- [x] Build ID: 4240ff0c-34e4-47cf-aa6f-344c0aac2b76
+- [x] URL: https://expo.dev/accounts/muskersclimbing/projects/muskers_app/builds/4240ff0c-34e4-47cf-aa6f-344c0aac2b76
+- [x] Código limpio desde cero ✅
+- [x] Lógica simple y clara ✅
+- [x] Limitación en useEffect (no en game loop) ✅
+- [x] Colisión frontal → pausa + bloque rojo ✅
+- [x] Frutas en hueco ✅
+- [x] QR: /home/ubuntu/muskers_app/expo-qr-code.png
+
+## REESCRITURA FINAL - SIN OBSTACLES EN DEPENDENCIAS (5 ENE 2026)
+- [x] Código completamente nuevo desde cero
+- [x] SIN obstacles en dependencias del useEffect
+- [x] Solo se actualiza posición cuando currentForce cambia
+- [x] NO hay limitación de targetY (invasión superficial permitida)
+- [x] Colisión frontal: primeros 20px del obstáculo → PAUSA + rojo
+- [x] NO deslizamiento automático al hueco
+- [x] Frutas en hueco, se recogen por proximidad
+- [ ] Compilar APK

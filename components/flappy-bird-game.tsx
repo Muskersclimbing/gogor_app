@@ -85,6 +85,7 @@ export function FlappyBirdGame({
   }, []);
 
   // Actualizar posición del pájaro según fuerza
+  // SIN obstacles en dependencias para evitar deslizamiento automático
   useEffect(() => {
     if (isPaused) return;
     
@@ -101,29 +102,13 @@ export function FlappyBirdGame({
     
     const minY = 50;
     const maxY = SCREEN_HEIGHT - BIRD_SIZE - 50;
-    let targetY = maxY - (forcePercent * (maxY - minY));
+    const targetY = maxY - (forcePercent * (maxY - minY));
     
-    // LIMITAR targetY para que no invada obstáculos horizontalmente
-    const birdRightX = BIRD_X + BIRD_SIZE;
-    const birdLeftX = BIRD_X;
-    
-    for (const obs of obstacles) {
-      // Si el pájaro está en el rango horizontal del obstáculo
-      if (birdRightX > obs.x && birdLeftX < obs.x + OBSTACLE_WIDTH) {
-        // Limitar para que no entre en bloque superior
-        if (targetY < obs.gapY) {
-          targetY = obs.gapY;
-        }
-        // Limitar para que no entre en bloque inferior
-        const birdBottomY = targetY + BIRD_SIZE;
-        if (birdBottomY > obs.gapY + OBSTACLE_GAP) {
-          targetY = obs.gapY + OBSTACLE_GAP - BIRD_SIZE;
-        }
-      }
-    }
+    // NO limitar targetY aquí - permitir que el pájaro se mueva libremente
+    // La invasión superficial es aceptable para evitar deslizamiento automático
     
     birdY.value = withTiming(targetY, { duration: 100 });
-  }, [currentForce, highZone, isPaused, obstacles]);
+  }, [currentForce, highZone, isPaused]);
   
   // Calcular y enviar estadísticas al finalizar
   useEffect(() => {
@@ -162,7 +147,7 @@ export function FlappyBirdGame({
           const inBottomBlock = birdBottomY > obs.gapY + OBSTACLE_GAP;
           
           if (inTopBlock || inBottomBlock) {
-            // Colisión FRONTAL: solo si la parte derecha está entrando
+            // Colisión FRONTAL: solo si la parte derecha está ENTRANDO (primeros 20px del obstáculo)
             const isFrontalCollision = birdRightX > obs.x && birdRightX < obs.x + 20;
             if (isFrontalCollision) {
               colliding = true;
@@ -246,7 +231,7 @@ export function FlappyBirdGame({
     }, 16);
     
     return () => clearInterval(interval);
-  }, [isPaused, collectedFruits, onFruitCollected]);
+  }, [isPaused, collectedFruits, onFruitCollected, obstacles]);
 
   // Estilo animado del pájaro
   const birdStyle = useAnimatedStyle(() => {
