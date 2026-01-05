@@ -221,10 +221,15 @@ export function FlappyBirdGame({
             // Hay colisión con bloque
             visualCollision = true;
             
-            // Solo PAUSAR si es colisión FRONTAL (parte delantera/derecha entrando)
-            // Detectar si la parte DERECHA del pájaro está en los primeros 10px del obstáculo
+            // PAUSAR en dos casos:
+            // 1. Colisión FRONTAL (parte derecha del pájaro entrando)
             const isFrontalCollision = birdRightX > obs.x && birdRightX < obs.x + 10;
-            if (isFrontalCollision) {
+            
+            // 2. Colisión HORIZONTAL (arriba/abajo contra bordes horizontales)
+            const isTopHorizontalCollision = inTopBlock && birdBottomY > obs.gapY - 10 && birdBottomY < obs.gapY;
+            const isBottomHorizontalCollision = inBottomBlock && birdTopY < obs.gapY + OBSTACLE_GAP + 10 && birdTopY > obs.gapY + OBSTACLE_GAP;
+            
+            if (isFrontalCollision || isTopHorizontalCollision || isBottomHorizontalCollision) {
               colliding = true;
               break;
             }

@@ -622,3 +622,17 @@
   - Solo colisión frontal (parte derecha entrando) PAUSA el avance
   - Resto de colisiones (arriba/abajo/trasera) solo visual (rojo)
 - [ ] Compilar APK final
+
+## COLISIÓN HORIZONTAL TAMBIÉN PAUSA (5 ENE 2026)
+- [x] Aclaración del usuario: colisión horizontal también debe pausar
+- [x] Implementación:
+  1. Colisión FRONTAL (parte derecha entrando) → PAUSA
+  2. Colisión HORIZONTAL superior (parte inferior del pájaro contra borde inferior del bloque superior) → PAUSA
+  3. Colisión HORIZONTAL inferior (parte superior del pájaro contra borde superior del bloque inferior) → PAUSA
+  4. Colisión TRASERA (parte izquierda, ya pasó) → Solo visual (rojo), NO pausa
+
+- [x] Detección horizontal con margen de 10px:
+  - isTopHorizontalCollision: birdBottomY entre (obs.gapY - 10) y obs.gapY
+  - isBottomHorizontalCollision: birdTopY entre obs.gapY + OBSTACLE_GAP y (obs.gapY + OBSTACLE_GAP + 10)
+
+- [ ] Compilar APK final
