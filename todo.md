@@ -597,3 +597,28 @@
   - Usuario ajusta fuerza manualmente para salir
 - [x] Sin empujes, sin márgenes, sin modificaciones de posición
 - [ ] Compilar APK y probar
+
+## LÓGICA CORRECTA DE COLISIÓN (5 ENE 2026)
+- [x] Requisitos clarificados por el usuario:
+  1. Colisión FRONTAL (izquierda del pájaro): PAUSA el avance
+  2. Colisión horizontal (arriba/abajo): Solo visual (rojo), NO pausa
+  3. Colisión trasera (derecha): Solo visual (rojo), NO pausa
+  4. Frutas: Solo en el hueco, nunca sobre bloques
+
+- [x] Implementación:
+  - visualCollision: detecta cualquier colisión → pájaro rojo
+  - colliding: solo colisión frontal (birdFrontX < obs.x + 10) → pausa avance
+  - setIsColliding(visualCollision) para color rojo
+  - if (!colliding) para pausar movimiento de obstáculos
+
+- [ ] Compilar APK final
+
+## CORRECCIÓN NOMENCLATURA (5 ENE 2026)
+- [x] Aclaración del usuario: parte delantera = derecha del pájaro (avanza hacia la derecha)
+- [x] Corrección en código:
+  - birdLeftX = birdX (parte trasera/izquierda)
+  - birdRightX = birdX + BIRD_SIZE (parte delantera/derecha)
+  - isFrontalCollision: birdRightX > obs.x && birdRightX < obs.x + 10
+  - Solo colisión frontal (parte derecha entrando) PAUSA el avance
+  - Resto de colisiones (arriba/abajo/trasera) solo visual (rojo)
+- [ ] Compilar APK final

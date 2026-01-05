@@ -200,32 +200,39 @@ export function FlappyBirdGame({
       const birdX = 50;
       const currentBirdY = birdY.value;
       
-      // Detectar colisión con bloques y EMPUJAR al pájaro fuera
+      // Detectar colisión: FRONTAL pausa, resto solo visual
       let colliding = false;
+      let visualCollision = false;
+      
       for (const obs of obstacles) {
-        const birdFrontX = birdX;
-        const birdBackX = birdX + BIRD_SIZE;
+        const birdLeftX = birdX; // Parte trasera (izquierda)
+        const birdRightX = birdX + BIRD_SIZE; // Parte delantera (derecha)
         const birdTopY = currentBirdY;
         const birdBottomY = currentBirdY + BIRD_SIZE;
         
         // Verificar si el pájaro está en el rango horizontal del obstáculo
-        const inObstacleXRange = birdBackX > obs.x && birdFrontX < obs.x + OBSTACLE_WIDTH;
+        const inObstacleXRange = birdRightX > obs.x && birdLeftX < obs.x + OBSTACLE_WIDTH;
         
         if (inObstacleXRange) {
-          // Verificar si el pájaro está en zona de bloque (no en el hueco)
-          // SIMPLE: solo detectar, NO modificar posición
           const inTopBlock = birdTopY < obs.gapY;
           const inBottomBlock = birdBottomY > obs.gapY + OBSTACLE_GAP;
           
           if (inTopBlock || inBottomBlock) {
-            // Colisión detectada: pausar juego
-            colliding = true;
-            break;
+            // Hay colisión con bloque
+            visualCollision = true;
+            
+            // Solo PAUSAR si es colisión FRONTAL (parte delantera/derecha entrando)
+            // Detectar si la parte DERECHA del pájaro está en los primeros 10px del obstáculo
+            const isFrontalCollision = birdRightX > obs.x && birdRightX < obs.x + 10;
+            if (isFrontalCollision) {
+              colliding = true;
+              break;
+            }
           }
         }
       }
       
-      setIsColliding(colliding);
+      setIsColliding(visualCollision); // Mostrar rojo si hay cualquier colisión
       
       // Solo mover obstáculos si NO hay colisión
       if (!colliding) {
