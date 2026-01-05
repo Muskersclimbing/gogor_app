@@ -973,3 +973,10 @@
 - [x] Ya no aparecen sobre bloques
 - [x] Actualizado en inicialización y game loop
 - [ ] Compilar APK
+
+## FRUTAS EN TODA LA PANTALLA EVITANDO BLOQUES (5 ENE 2026)
+- [x] Frutas con X aleatoria (no solo centro del obstáculo)
+- [x] 50% en hueco, 50% fuera de zona de obstáculo
+- [x] Fuera: arriba o abajo del obstáculo (nunca sobre bloques)
+- [x] Actualizado en inicialización y game loop
+- [ ] Compilar APK

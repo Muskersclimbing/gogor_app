@@ -78,17 +78,35 @@ export function FlappyBirdGame({
     // Generar frutas para cada obstáculo
     const initialFruits: Fruit[] = [];
     initialObstacles.forEach((obs, index) => {
-      // Generar 3-4 frutas por obstáculo SOLO en el hueco
+      // Generar 3-4 frutas por obstáculo en toda la pantalla (evitando bloques)
       const fruitCount = 3 + Math.floor(Math.random() * 2); // 3 o 4 frutas
       for (let i = 0; i < fruitCount; i++) {
-        // Distribuir SOLO en el hueco del obstáculo
-        const gapStart = obs.gapY;
-        const gapEnd = obs.gapY + OBSTACLE_GAP;
-        const randomY = gapStart + Math.random() * (gapEnd - gapStart);
+        // Posición X aleatoria alrededor del obstáculo
+        const randomX = obs.x - 100 + Math.random() * (OBSTACLE_WIDTH + 200);
+        
+        // Posición Y aleatoria en toda la pantalla
+        let randomY;
+        const useGap = Math.random() < 0.5; // 50% en hueco, 50% fuera de zona de obstáculo
+        
+        if (useGap) {
+          // En el hueco del obstáculo
+          const gapStart = obs.gapY;
+          const gapEnd = obs.gapY + OBSTACLE_GAP;
+          randomY = gapStart + Math.random() * (gapEnd - gapStart);
+        } else {
+          // Fuera de la zona del obstáculo (arriba o abajo)
+          if (Math.random() < 0.5) {
+            // Arriba del obstáculo
+            randomY = 50 + Math.random() * (obs.gapY - 100);
+          } else {
+            // Abajo del obstáculo
+            randomY = obs.gapY + OBSTACLE_GAP + 50 + Math.random() * (SCREEN_HEIGHT - obs.gapY - OBSTACLE_GAP - 100);
+          }
+        }
         
         initialFruits.push({
           id: index * 10 + i,
-          x: obs.x + OBSTACLE_WIDTH / 2,
+          x: randomX,
           y: randomY,
           collected: false,
         });
@@ -261,13 +279,32 @@ export function FlappyBirdGame({
                 const fruitCount = 3 + Math.floor(Math.random() * 2); // 3 o 4 frutas
                 const newFruits: Fruit[] = [];
                 for (let i = 0; i < fruitCount; i++) {
-                  // Distribuir SOLO en el hueco del obstáculo
-                  const gapStart = newObs.gapY;
-                  const gapEnd = newObs.gapY + OBSTACLE_GAP;
-                  const randomY = gapStart + Math.random() * (gapEnd - gapStart);
+                  // Posición X aleatoria alrededor del obstáculo
+                  const randomX = newObs.x - 100 + Math.random() * (OBSTACLE_WIDTH + 200);
+                  
+                  // Posición Y aleatoria en toda la pantalla
+                  let randomY;
+                  const useGap = Math.random() < 0.5; // 50% en hueco, 50% fuera
+                  
+                  if (useGap) {
+                    // En el hueco del obstáculo
+                    const gapStart = newObs.gapY;
+                    const gapEnd = newObs.gapY + OBSTACLE_GAP;
+                    randomY = gapStart + Math.random() * (gapEnd - gapStart);
+                  } else {
+                    // Fuera de la zona del obstáculo (arriba o abajo)
+                    if (Math.random() < 0.5) {
+                      // Arriba del obstáculo
+                      randomY = 50 + Math.random() * (newObs.gapY - 100);
+                    } else {
+                      // Abajo del obstáculo
+                      randomY = newObs.gapY + OBSTACLE_GAP + 50 + Math.random() * (SCREEN_HEIGHT - newObs.gapY - OBSTACLE_GAP - 100);
+                    }
+                  }
+                  
                   newFruits.push({
                     id: fruitIdCounter++,
-                    x: newObs.x + OBSTACLE_WIDTH / 2,
+                    x: randomX,
                     y: randomY,
                     collected: false,
                   });
