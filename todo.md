@@ -651,3 +651,24 @@
   - visualCollision para mostrar pájaro rojo en cualquier colisión
 
 - [ ] Compilar APK final
+
+## APK FINAL CON LÓGICA CORRECTA
+- [x] Build ID: 6979d351-a3fd-46cb-81b6-0a22f47c6814
+- [x] URL: https://expo.dev/accounts/muskersclimbing/projects/muskers_app/builds/6979d351-a3fd-46cb-81b6-0a22f47c6814
+- [x] Colisión frontal PAUSA ✅
+- [x] Colisión horizontal EMPUJA (no pausa) ✅
+- [x] Pájaro nunca invade interior ✅
+- [x] QR: /home/ubuntu/muskers_app/expo-qr-code.png
+
+## FIXES FINALES (5 ENE 2026)
+- [x] Problema 1: Parpadeo en bordes horizontales
+  - Causa: empuje constante (birdY.value = ...) creaba bucle
+  - Solución: Eliminar empuje, solo mostrar rojo (visual)
+  - Usuario ajusta fuerza manualmente para salir
+
+- [x] Problema 2: Frutas sobre bloques
+  - Causa: generateFruitY usaba gapY aleatorio, no del obstáculo correspondiente
+  - Solución: Usar lastObstacle.gapY para generar frutas
+  - Ahora frutas siempre aparecen en el hueco del último obstáculo
+
+- [ ] Compilar APK final

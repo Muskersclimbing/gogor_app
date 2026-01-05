@@ -228,14 +228,8 @@ export function FlappyBirdGame({
               break;
             }
             
-            // EMPUJAR al pájaro si invade por arriba/abajo (NO pausar)
-            if (inTopBlock && birdBottomY > obs.gapY) {
-              // Invadiendo bloque superior → empujar hacia abajo
-              birdY.value = obs.gapY;
-            } else if (inBottomBlock && birdTopY < obs.gapY + OBSTACLE_GAP) {
-              // Invadiendo bloque inferior → empujar hacia arriba
-              birdY.value = obs.gapY + OBSTACLE_GAP - BIRD_SIZE;
-            }
+            // Colisión horizontal: solo visual (rojo), sin empuje para evitar parpadeo
+            // El usuario debe ajustar la fuerza manualmente
           }
         }
       }
@@ -270,16 +264,19 @@ export function FlappyBirdGame({
           if (visible.length < 3) {
             const last = visible[visible.length - 1];
             if (!last || last.x < SCREEN_WIDTH - 300) {
-              const gapY = Math.random() * (SCREEN_HEIGHT - OBSTACLE_GAP - 200) + 100;
-              const fruitY = generateFruitY(gapY, fruitIdCounter);
-              
-              visible.push({
-                id: fruitIdCounter++,
-                x: SCREEN_WIDTH + OBSTACLE_WIDTH / 2 - FRUIT_SIZE / 2,
-                y: fruitY,
-                type: FRUIT_TYPES[Math.floor(Math.random() * FRUIT_TYPES.length)],
-                collected: false,
-              });
+              // Usar el gapY del último obstáculo para asegurar que la fruta esté en el hueco
+              const lastObstacle = obstacles[obstacles.length - 1];
+              if (lastObstacle) {
+                const fruitY = generateFruitY(lastObstacle.gapY, fruitIdCounter);
+                
+                visible.push({
+                  id: fruitIdCounter++,
+                  x: SCREEN_WIDTH + OBSTACLE_WIDTH / 2 - FRUIT_SIZE / 2,
+                  y: fruitY,
+                  type: FRUIT_TYPES[Math.floor(Math.random() * FRUIT_TYPES.length)],
+                  collected: false,
+                });
+              }
             }
           }
           
