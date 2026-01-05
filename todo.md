@@ -636,3 +636,18 @@
   - isBottomHorizontalCollision: birdTopY entre obs.gapY + OBSTACLE_GAP y (obs.gapY + OBSTACLE_GAP + 10)
 
 - [ ] Compilar APK final
+
+## LÓGICA FINAL CORRECTA (5 ENE 2026)
+- [x] Requisitos finales del usuario:
+  1. Colisión FRONTAL (parte derecha entrando) → PAUSA el avance
+  2. Colisión horizontal (arriba/abajo) → EMPUJA al pájaro al borde del hueco, NO pausa
+  3. Colisión trasera (parte izquierda) → Ignora (ya pasó el obstáculo)
+  4. El pájaro NUNCA invade el interior del bloque
+
+- [x] Implementación:
+  - isFrontalCollision: birdRightX en primeros 10px del obstáculo → colliding = true
+  - Invasión superior: birdBottomY > obs.gapY → birdY.value = obs.gapY
+  - Invasión inferior: birdTopY < obs.gapY + OBSTACLE_GAP → birdY.value = obs.gapY + OBSTACLE_GAP - BIRD_SIZE
+  - visualCollision para mostrar pájaro rojo en cualquier colisión
+
+- [ ] Compilar APK final
