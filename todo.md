@@ -917,3 +917,23 @@
 - [x] Invasión profunda (>30px) corregida
 - [x] Umbral alto para evitar bucle de parpadeo/deslizamiento
 - [ ] Compilar APK
+
+## APK CON UMBRAL DE 30PX
+- [x] Build ID: efbc878f-9e08-40de-a3a0-279a65033aa9
+- [x] URL: https://expo.dev/accounts/muskersclimbing/projects/muskers_app/builds/efbc878f-9e08-40de-a3a0-279a65033aa9
+- [x] Limitación en game loop ✅
+- [x] Umbral de 30px ✅
+- [x] Invasión superficial permitida ✅
+- [x] Invasión profunda corregida ✅
+- [x] Colisión frontal → pausa + rojo ✅
+- [x] QR: /home/ubuntu/muskers_app/expo-qr-code.png
+
+## SOLUCIÓN CON USEANIMATEDREACTION (5 ENE 2026)
+- [x] Agregado useAnimatedReaction para monitorear birdY
+- [x] Limitación en UI thread (worklet), no en JS thread
+- [x] Detecta cuando birdY cruza el borde del bloque
+- [x] Cancela animación y corrige posición INMEDIATAMENTE
+- [x] obstaclesShared (shared value) para acceso desde worklet
+- [x] Eliminada limitación del game loop
+- [x] Sin bucles de JS, todo en UI thread
+- [ ] Compilar APK

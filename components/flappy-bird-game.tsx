@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from "react";
 import { View, Dimensions, Text } from "react-native";
-import Animated, { useSharedValue, useAnimatedStyle, withTiming } from "react-native-reanimated";
+import Animated, { useSharedValue, useAnimatedStyle, withTiming, useAnimatedReaction, cancelAnimation, runOnJS } from "react-native-reanimated";
 
 const SCREEN_WIDTH = Dimensions.get("window").width;
 const SCREEN_HEIGHT = Dimensions.get("window").height;
@@ -44,6 +44,7 @@ export function FlappyBirdGame({
   onForceStats,
 }: FlappyBirdGameProps) {
   const birdY = useSharedValue(SCREEN_HEIGHT / 2);
+  const obstaclesShared = useSharedValue<Obstacle[]>([]);
   
   const [obstacles, setObstacles] = useState<Obstacle[]>([]);
   const [fruits, setFruits] = useState<Fruit[]>([]);
@@ -72,6 +73,7 @@ export function FlappyBirdGame({
     ];
     setObstacles(initialObstacles);
     obstaclesRef.current = initialObstacles; // Actualizar ref
+    obstaclesShared.value = initialObstacles; // Actualizar shared value
     
     // Generar frutas para cada obstáculo
     const initialFruits: Fruit[] = [];
@@ -122,6 +124,40 @@ export function FlappyBirdGame({
       onForceStats({ avgForce, maxForce, minForce });
     }
   }, [isPaused, onForceStats]);
+  
+  // Reacción animada para limitar posición en UI thread (sin bucle de JS)
+  useAnimatedReaction(
+    () => birdY.value,
+    (currentY, previousY) => {
+      'worklet';
+      
+      if (previousY === null) return;
+      
+      const birdRightX = BIRD_X + BIRD_SIZE;
+      const birdLeftX = BIRD_X;
+      const birdTopY = currentY;
+      const birdBottomY = currentY + BIRD_SIZE;
+      
+      for (const obs of obstaclesShared.value) {
+        // Si el pájaro está en el rango horizontal del obstáculo
+        if (birdRightX > obs.x && birdLeftX < obs.x + OBSTACLE_WIDTH) {
+          // Si intenta entrar en bloque superior
+          if (birdTopY < obs.gapY && previousY >= obs.gapY) {
+            cancelAnimation(birdY);
+            birdY.value = obs.gapY;
+            return;
+          }
+          // Si intenta entrar en bloque inferior
+          if (birdBottomY > obs.gapY + OBSTACLE_GAP && previousY + BIRD_SIZE <= obs.gapY + OBSTACLE_GAP) {
+            cancelAnimation(birdY);
+            birdY.value = obs.gapY + OBSTACLE_GAP - BIRD_SIZE;
+            return;
+          }
+        }
+      }
+    },
+    []
+  );
 
   // Game loop: mover obstáculos, detectar colisiones, recoger frutas
   useEffect(() => {
@@ -163,26 +199,6 @@ export function FlappyBirdGame({
       
       setCollidingObstacleId(collidingObsId);
       
-      // Limitar posición SOLO si invade MUY dentro (más de 30px) para evitar bucle
-      for (const obs of obstacles) {
-        if (birdRightX > obs.x && birdLeftX < obs.x + OBSTACLE_WIDTH) {
-          // Si invade bloque superior MUY dentro
-          if (birdTopY < obs.gapY) {
-            const invasionDepth = obs.gapY - birdTopY;
-            if (invasionDepth > 30) {
-              birdY.value = obs.gapY;
-            }
-          }
-          // Si invade bloque inferior MUY dentro
-          if (birdBottomY > obs.gapY + OBSTACLE_GAP) {
-            const invasionDepth = birdBottomY - (obs.gapY + OBSTACLE_GAP);
-            if (invasionDepth > 30) {
-              birdY.value = obs.gapY + OBSTACLE_GAP - BIRD_SIZE;
-            }
-          }
-        }
-      }
-      
       // Recoger frutas
       setFruits(prev => {
         let newCollected = 0;
@@ -217,8 +233,9 @@ export function FlappyBirdGame({
           const updated = prev.map(obs => ({ ...obs, x: obs.x - OBSTACLE_SPEED }));
           const visible = updated.filter(obs => obs.x > -OBSTACLE_WIDTH);
           
-          // Actualizar ref para que useEffect de posición pueda acceder sin dependencia
+          // Actualizar ref y shared value
           obstaclesRef.current = visible;
+          obstaclesShared.value = visible;
           
           // Generar nuevo obstáculo si es necesario
           if (visible.length < 3) {
