@@ -578,3 +578,22 @@
 - [x] El pájaro NUNCA puede invadir el interior del bloque
 - [x] Detección amplia: considera BIRD_SIZE para detectar antes de invasión completa
 - [ ] Compilar APK final
+
+## APK DEFINITIVO - BLOQUE COMPLETAMENTE CERRADO
+- [x] Build ID: 2fd19689-8cdf-497e-8099-90776bc9bd8e
+- [x] URL: https://expo.dev/accounts/muskersclimbing/projects/muskers_app/builds/2fd19689-8cdf-497e-8099-90776bc9bd8e
+- [x] Pájaro NUNCA invade interior del bloque ✅
+- [x] Colisión frontal: pausa en el borde ✅
+- [x] Colisión horizontal: fuerza posición al borde del hueco ✅
+- [x] Colisión trasera: fuerza posición al borde del hueco ✅
+- [x] QR: /home/ubuntu/muskers_app/expo-qr-code.png
+
+## SOLUCIÓN SIMPLE - SIN MODIFICAR POSICIÓN (5 ENE 2026)
+- [x] Problema: modificar birdY.value causa parpadeo y comportamiento errático
+- [x] Solución SIMPLE: solo detectar colisión y pausar, SIN tocar birdY.value
+  - inTopBlock: birdTopY < obs.gapY
+  - inBottomBlock: birdBottomY > obs.gapY + OBSTACLE_GAP
+  - Si colisiona → colliding = true → pausa juego
+  - Usuario ajusta fuerza manualmente para salir
+- [x] Sin empujes, sin márgenes, sin modificaciones de posición
+- [ ] Compilar APK y probar
