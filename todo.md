@@ -753,3 +753,13 @@
   - Usuario ajusta fuerza manualmente para salir
 - [x] Esto impide invasión SIN deslizamiento automático
 - [ ] Compilar APK final
+
+## CAMBIO VISUAL - BLOQUE ROJO EN LUGAR DE PÁJARO (5 ENE 2026)
+- [x] Cambio solicitado: bloque se vuelve rojo al colisionar, no el pájaro
+- [x] Implementación:
+  - collidingObstacleId guarda el ID del obstáculo que colisiona
+  - Pájaro siempre color dorado (#FFD700)
+  - Obstáculo cambia a rojo (#FF0000) si su ID coincide con collidingObstacleId
+  - Debug info muestra "COLISIÓN (Obs X)" cuando colisiona
+- [x] Pausa en cualquier colisión (frontal u horizontal)
+- [ ] Compilar APK final

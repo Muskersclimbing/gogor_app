@@ -88,7 +88,7 @@ export function FlappyBirdGame({
   
   const [obstacles, setObstacles] = useState<Obstacle[]>([]);
   const [fruits, setFruits] = useState<Fruit[]>([]);
-  const [isColliding, setIsColliding] = useState(false);
+  const [collidingObstacleId, setCollidingObstacleId] = useState<number | null>(null);
   
   // Tracking de fuerza
   const forceReadings = useRef<number[]>([]);
@@ -200,9 +200,9 @@ export function FlappyBirdGame({
       const birdX = 50;
       const currentBirdY = birdY.value;
       
-      // Detectar colisión: FRONTAL pausa, resto solo visual
+      // Detectar colisión y guardar ID del obstáculo
       let colliding = false;
-      let visualCollision = false;
+      let collidingObsId: number | null = null;
       
       for (const obs of obstacles) {
         const birdLeftX = birdX; // Parte trasera (izquierda)
@@ -218,15 +218,15 @@ export function FlappyBirdGame({
           const inBottomBlock = birdBottomY > obs.gapY + OBSTACLE_GAP;
           
           if (inTopBlock || inBottomBlock) {
-            // Hay colisión con bloque → PAUSAR (igual que frontal)
-            visualCollision = true;
+            // Hay colisión con bloque → PAUSAR y marcar obstáculo
             colliding = true;
+            collidingObsId = obs.id;
             break;
           }
         }
       }
       
-      setIsColliding(visualCollision); // Mostrar rojo si hay cualquier colisión
+      setCollidingObstacleId(collidingObsId); // Guardar ID del obstáculo que colisiona
       
       // Solo mover obstáculos si NO hay colisión
       if (!colliding) {
@@ -302,14 +302,8 @@ export function FlappyBirdGame({
     };
   });
   
-  // Color del pájaro
-  const getBirdColor = () => {
-    if (isColliding) return "#FF0000"; // Rojo cuando choca
-    if (currentForce < lowZone * 0.5) return "#999";
-    if (currentForce < lowZone) return "#4CAF50";
-    if (currentForce < highZone) return "#FFC107";
-    return "#F44336";
-  };
+  // Color fijo del pájaro
+  const BIRD_COLOR = "#FFD700"; // Dorado
   
   return (
     <View style={{ flex: 1, backgroundColor: "#87CEEB" }}>
@@ -319,8 +313,8 @@ export function FlappyBirdGame({
         <Text style={{ color: "white", fontSize: 11 }}>Max: {highZone.toFixed(1)} kg</Text>
         <Text style={{ color: "white", fontSize: 11 }}>%: {((currentForce / highZone) * 100).toFixed(0)}%</Text>
         <Text style={{ color: "white", fontSize: 11 }}>BirdY: {birdY.value.toFixed(0)}</Text>
-        <Text style={{ color: isColliding ? "red" : "lime", fontSize: 11 }}>
-          {isColliding ? "COLISIÓN" : "OK"}
+        <Text style={{ color: collidingObstacleId !== null ? "red" : "lime", fontSize: 11 }}>
+          {collidingObstacleId !== null ? `COLISIÓN (Obs ${collidingObstacleId})` : "OK"}
         </Text>
         <Text style={{ color: "cyan", fontSize: 11 }}>
           Pattern: {fruitPatternRef.current.pattern}
@@ -328,34 +322,40 @@ export function FlappyBirdGame({
       </View>
       
       {/* Obstáculos */}
-      {obstacles.map(obs => (
-        <View key={obs.id}>
-          <View
-            style={{
-              position: "absolute",
-              left: obs.x,
-              top: 0,
-              width: OBSTACLE_WIDTH,
-              height: obs.gapY,
-              backgroundColor: "#8B4513",
-              borderWidth: 2,
-              borderColor: "#654321",
-            }}
-          />
-          <View
-            style={{
-              position: "absolute",
-              left: obs.x,
-              top: obs.gapY + OBSTACLE_GAP,
-              width: OBSTACLE_WIDTH,
-              height: SCREEN_HEIGHT - (obs.gapY + OBSTACLE_GAP),
-              backgroundColor: "#8B4513",
-              borderWidth: 2,
-              borderColor: "#654321",
-            }}
-          />
-        </View>
-      ))}
+      {obstacles.map(obs => {
+        const isColliding = obs.id === collidingObstacleId;
+        const obstacleColor = isColliding ? "#FF0000" : "#8B4513";
+        const borderColor = isColliding ? "#CC0000" : "#654321";
+        
+        return (
+          <View key={obs.id}>
+            <View
+              style={{
+                position: "absolute",
+                left: obs.x,
+                top: 0,
+                width: OBSTACLE_WIDTH,
+                height: obs.gapY,
+                backgroundColor: obstacleColor,
+                borderWidth: 2,
+                borderColor: borderColor,
+              }}
+            />
+            <View
+              style={{
+                position: "absolute",
+                left: obs.x,
+                top: obs.gapY + OBSTACLE_GAP,
+                width: OBSTACLE_WIDTH,
+                height: SCREEN_HEIGHT - (obs.gapY + OBSTACLE_GAP),
+                backgroundColor: obstacleColor,
+                borderWidth: 2,
+                borderColor: borderColor,
+              }}
+            />
+          </View>
+        );
+      })}
       
       {/* Frutas */}
       {fruits.map(fruit => (
@@ -386,7 +386,7 @@ export function FlappyBirdGame({
             top: 0,
             width: BIRD_SIZE,
             height: BIRD_SIZE,
-            backgroundColor: getBirdColor(),
+            backgroundColor: BIRD_COLOR,
             borderRadius: BIRD_SIZE / 2,
             borderWidth: 3,
             borderColor: "#000",
