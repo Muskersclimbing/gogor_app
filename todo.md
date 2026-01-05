@@ -837,3 +837,24 @@
 - [x] Detecta colisión → bloque rojo + pausa
 - [x] Usuario ajusta fuerza manualmente para salir
 - [ ] Compilar APK
+
+## APK SIN CORRECCIÓN AUTOMÁTICA
+- [x] Build ID: 03e2ff8d-6c1d-45f5-9d1f-46623f57b330
+- [x] URL: https://expo.dev/accounts/muskersclimbing/projects/muskers_app/builds/03e2ff8d-6c1d-45f5-9d1f-46623f57b330
+- [x] Sin corrección automática ✅
+- [x] Invasión superficial permitida (5-10px) ✅
+- [x] NO deslizamiento automático ✅
+- [x] Bloque rojo + pausa en colisión ✅
+- [x] QR: /home/ubuntu/muskers_app/expo-qr-code.png
+
+## REESCRITURA COMPLETA DEL JUEGO DESDE CERO (5 ENE 2026)
+- [x] Código limpio desde cero
+- [x] Lógica clara y simple:
+  1. Pájaro sube/baja según currentForce
+  2. targetY limitado ANTES de aplicarlo (en useEffect)
+  3. Colisión frontal: parte derecha entra en bloque → PAUSA + rojo
+  4. Colisión horizontal: limitación en useEffect impide invasión
+  5. Frutas: aparecen en hueco, se recogen al pasar
+- [x] Sin loops continuos que causen deslizamiento
+- [x] obstacles en dependencias para re-calcular límites
+- [ ] Compilar APK

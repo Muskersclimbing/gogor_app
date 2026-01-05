@@ -1,15 +1,15 @@
 import React, { useEffect, useState, useRef } from "react";
 import { View, Dimensions, Text } from "react-native";
-import Animated, { useSharedValue, useAnimatedStyle, withTiming, cancelAnimation } from "react-native-reanimated";
+import Animated, { useSharedValue, useAnimatedStyle, withTiming } from "react-native-reanimated";
 
 const SCREEN_WIDTH = Dimensions.get("window").width;
 const SCREEN_HEIGHT = Dimensions.get("window").height;
 
 const BIRD_SIZE = 50;
+const BIRD_X = 50; // Posición X fija del pájaro
 const OBSTACLE_WIDTH = 60;
 const OBSTACLE_GAP = 200;
 const OBSTACLE_SPEED = 3;
-const FRUIT_SIZE = 30;
 
 interface Obstacle {
   id: number;
@@ -21,7 +21,6 @@ interface Fruit {
   id: number;
   x: number;
   y: number;
-  type: string;
   collected: boolean;
 }
 
@@ -30,49 +29,9 @@ interface FlappyBirdGameProps {
   lowZone: number;
   highZone: number;
   isPaused: boolean;
-  onFruitCollected: () => void;
-  onGameOver: () => void;
-  onForceStats?: (maxForce: number, avgForce: number) => void;
-}
-
-const FRUIT_COLORS: Record<string, string> = {
-  watermelon: "#FF6B6B",
-  banana: "#FFE66D",
-  apple: "#FF0000",
-  orange: "#FFA500",
-  strawberry: "#FF1744",
-  cherry: "#C62828",
-  peach: "#FFAB91",
-  pear: "#AED581",
-  mandarin: "#FF9800",
-};
-
-const FRUIT_TYPES = Object.keys(FRUIT_COLORS);
-
-// Patrones de frutas
-type FruitPattern = "isometric" | "dynamic" | "progressive";
-
-function generateFruitPattern(): { pattern: FruitPattern; count: number; baseHeight: number } {
-  const patterns: FruitPattern[] = ["isometric", "dynamic", "progressive"];
-  const pattern = patterns[Math.floor(Math.random() * patterns.length)];
-  
-  // Distribución: 40% alta, 30% media, 30% baja
-  const rand = Math.random();
-  let baseHeight: number;
-  if (rand < 0.4) {
-    // Alta (65-100%)
-    baseHeight = 0.65 + Math.random() * 0.35;
-  } else if (rand < 0.7) {
-    // Media (35-65%)
-    baseHeight = 0.35 + Math.random() * 0.3;
-  } else {
-    // Baja (0-35%)
-    baseHeight = Math.random() * 0.35;
-  }
-  
-  const count = pattern === "isometric" ? 3 + Math.floor(Math.random() * 2) : 3; // 3-4 para isométrico, 3 para otros
-  
-  return { pattern, count, baseHeight };
+  onGameOver?: () => void;
+  onFruitCollected?: (count: number) => void;
+  onForceStats?: (stats: { avgForce: number; maxForce: number; minForce: number }) => void;
 }
 
 export function FlappyBirdGame({
@@ -80,8 +39,8 @@ export function FlappyBirdGame({
   lowZone,
   highZone,
   isPaused,
-  onFruitCollected,
   onGameOver,
+  onFruitCollected,
   onForceStats,
 }: FlappyBirdGameProps) {
   const birdY = useSharedValue(SCREEN_HEIGHT / 2);
@@ -89,77 +48,43 @@ export function FlappyBirdGame({
   const [obstacles, setObstacles] = useState<Obstacle[]>([]);
   const [fruits, setFruits] = useState<Fruit[]>([]);
   const [collidingObstacleId, setCollidingObstacleId] = useState<number | null>(null);
+  const [collectedFruits, setCollectedFruits] = useState(0);
   
   // Tracking de fuerza
   const forceReadings = useRef<number[]>([]);
   const maxForceRef = useRef<number>(0);
   
-  const fruitPatternRef = useRef(generateFruitPattern());
-  const fruitCounterRef = useRef(0);
-  
-  // Generar obstáculos y frutos iniciales
+  // Patrón de frutas
+  const fruitPatternRef = useRef<{ pattern: string; percentages: number[] }>({
+    pattern: "random",
+    percentages: [0.2, 0.4, 0.6, 0.8],
+  });
+
+  // Inicializar obstáculos
   useEffect(() => {
-    const initialObstacles: Obstacle[] = [];
-    const initialFruits: Fruit[] = [];
-    
-    for (let i = 0; i < 3; i++) {
-      const gapY = Math.random() * (SCREEN_HEIGHT - OBSTACLE_GAP - 200) + 100;
-      initialObstacles.push({
-        id: i,
-        x: SCREEN_WIDTH + i * 300,
-        gapY,
-      });
-      
-      // Generar fruta según patrón
-      const fruitY = generateFruitY(gapY, i);
-      initialFruits.push({
-        id: i,
-        x: SCREEN_WIDTH + i * 300 + OBSTACLE_WIDTH / 2 - FRUIT_SIZE / 2,
-        y: fruitY,
-        type: FRUIT_TYPES[Math.floor(Math.random() * FRUIT_TYPES.length)],
-        collected: false,
-      });
-    }
-    
+    const initialObstacles: Obstacle[] = [
+      { id: 1, x: SCREEN_WIDTH, gapY: Math.random() * (SCREEN_HEIGHT - OBSTACLE_GAP - 200) + 100 },
+      { id: 2, x: SCREEN_WIDTH + 300, gapY: Math.random() * (SCREEN_HEIGHT - OBSTACLE_GAP - 200) + 100 },
+      { id: 3, x: SCREEN_WIDTH + 600, gapY: Math.random() * (SCREEN_HEIGHT - OBSTACLE_GAP - 200) + 100 },
+    ];
     setObstacles(initialObstacles);
+    
+    // Generar frutas para cada obstáculo
+    const initialFruits: Fruit[] = [];
+    initialObstacles.forEach((obs, index) => {
+      fruitPatternRef.current.percentages.forEach((pct, fruitIndex) => {
+        initialFruits.push({
+          id: index * 10 + fruitIndex,
+          x: obs.x + OBSTACLE_WIDTH / 2,
+          y: obs.gapY + OBSTACLE_GAP * pct,
+          collected: false,
+        });
+      });
+    });
     setFruits(initialFruits);
   }, []);
-  
-  function generateFruitY(gapY: number, index: number): number {
-    const { pattern, count, baseHeight } = fruitPatternRef.current;
-    
-    // Si completamos el patrón, generar uno nuevo
-    if (fruitCounterRef.current >= count) {
-      fruitPatternRef.current = generateFruitPattern();
-      fruitCounterRef.current = 0;
-    }
-    
-    fruitCounterRef.current++;
-    
-    const gapHeight = OBSTACLE_GAP;
-    
-    switch (pattern) {
-      case "isometric":
-        // Todas las frutas a la misma altura
-        return gapY + gapHeight * Math.max(0.1, Math.min(0.9, baseHeight));
-      
-      case "dynamic":
-        // Alterna entre alta y baja
-        const isHigh = fruitCounterRef.current % 2 === 0;
-        return gapY + gapHeight * (isHigh ? 0.75 : 0.25);
-      
-      case "progressive":
-        // Sube o baja gradualmente
-        const progress = fruitCounterRef.current / count;
-        const progressHeight = baseHeight + (progress - 0.5) * 0.4;
-        return gapY + gapHeight * Math.max(0.1, Math.min(0.9, progressHeight));
-      
-      default:
-        return gapY + gapHeight * 0.5;
-    }
-  }
-  
-  // Actualizar posición del pájaro basado en currentForce
+
+  // Actualizar posición del pájaro según fuerza
   useEffect(() => {
     if (isPaused) return;
     
@@ -176,40 +101,59 @@ export function FlappyBirdGame({
     
     const minY = 50;
     const maxY = SCREEN_HEIGHT - BIRD_SIZE - 50;
-    const targetY = maxY - (forcePercent * (maxY - minY));
+    let targetY = maxY - (forcePercent * (maxY - minY));
+    
+    // LIMITAR targetY para que no invada obstáculos horizontalmente
+    const birdRightX = BIRD_X + BIRD_SIZE;
+    const birdLeftX = BIRD_X;
+    
+    for (const obs of obstacles) {
+      // Si el pájaro está en el rango horizontal del obstáculo
+      if (birdRightX > obs.x && birdLeftX < obs.x + OBSTACLE_WIDTH) {
+        // Limitar para que no entre en bloque superior
+        if (targetY < obs.gapY) {
+          targetY = obs.gapY;
+        }
+        // Limitar para que no entre en bloque inferior
+        const birdBottomY = targetY + BIRD_SIZE;
+        if (birdBottomY > obs.gapY + OBSTACLE_GAP) {
+          targetY = obs.gapY + OBSTACLE_GAP - BIRD_SIZE;
+        }
+      }
+    }
     
     birdY.value = withTiming(targetY, { duration: 100 });
-  }, [currentForce, highZone, isPaused]);
+  }, [currentForce, highZone, isPaused, obstacles]);
   
   // Calcular y enviar estadísticas al finalizar
   useEffect(() => {
     if (isPaused && onForceStats && forceReadings.current.length > 0) {
       const avgForce = forceReadings.current.reduce((a, b) => a + b, 0) / forceReadings.current.length;
-      onForceStats(maxForceRef.current, avgForce);
+      const maxForce = maxForceRef.current;
+      const minForce = Math.min(...forceReadings.current);
+      onForceStats({ avgForce, maxForce, minForce });
     }
   }, [isPaused, onForceStats]);
-  
-  // Game loop
+
+  // Game loop: mover obstáculos, detectar colisiones, recoger frutas
   useEffect(() => {
     if (isPaused) return;
     
-    let obstacleIdCounter = 3;
-    let fruitIdCounter = 3;
+    let obstacleIdCounter = 4;
+    let fruitIdCounter = 100;
     
     const interval = setInterval(() => {
-      const birdX = 50;
       const currentBirdY = birdY.value;
+      const birdRightX = BIRD_X + BIRD_SIZE;
+      const birdLeftX = BIRD_X;
+      const birdTopY = currentBirdY;
+      const birdBottomY = currentBirdY + BIRD_SIZE;
       
-      // Detectar colisión y guardar ID del obstáculo
+      // Detectar colisión FRONTAL (parte derecha del pájaro)
       let colliding = false;
       let collidingObsId: number | null = null;
       
       for (const obs of obstacles) {
-        const birdLeftX = birdX; // Parte trasera (izquierda)
-        const birdRightX = birdX + BIRD_SIZE; // Parte delantera (derecha)
-        const birdTopY = currentBirdY;
-        const birdBottomY = currentBirdY + BIRD_SIZE;
-        
         // Verificar si el pájaro está en el rango horizontal del obstáculo
         const inObstacleXRange = birdRightX > obs.x && birdLeftX < obs.x + OBSTACLE_WIDTH;
         
@@ -218,31 +162,74 @@ export function FlappyBirdGame({
           const inBottomBlock = birdBottomY > obs.gapY + OBSTACLE_GAP;
           
           if (inTopBlock || inBottomBlock) {
-            // Hay colisión con bloque → PAUSAR y marcar obstáculo
-            colliding = true;
-            collidingObsId = obs.id;
-            break;
+            // Colisión FRONTAL: solo si la parte derecha está entrando
+            const isFrontalCollision = birdRightX > obs.x && birdRightX < obs.x + 20;
+            if (isFrontalCollision) {
+              colliding = true;
+              collidingObsId = obs.id;
+              break;
+            }
           }
         }
       }
       
-      setCollidingObstacleId(collidingObsId); // Guardar ID del obstáculo que colisiona
-      // Sin corrección automática: el pájaro puede invadir superficialmente pero NO se desliza solo
+      setCollidingObstacleId(collidingObsId);
       
-      // Solo mover obstáculos si NO hay colisión
+      // Recoger frutas
+      setFruits(prev => {
+        let newCollected = 0;
+        const updated = prev.map(fruit => {
+          if (!fruit.collected) {
+            const fruitCenterX = fruit.x;
+            const fruitCenterY = fruit.y;
+            const distance = Math.sqrt(
+              Math.pow(BIRD_X + BIRD_SIZE / 2 - fruitCenterX, 2) +
+              Math.pow(currentBirdY + BIRD_SIZE / 2 - fruitCenterY, 2)
+            );
+            if (distance < 40) {
+              newCollected++;
+              return { ...fruit, collected: true };
+            }
+          }
+          return fruit;
+        });
+        
+        if (newCollected > 0) {
+          const newTotal = collectedFruits + newCollected;
+          setCollectedFruits(newTotal);
+          onFruitCollected?.(newTotal);
+        }
+        
+        return updated;
+      });
+      
+      // Solo mover obstáculos si NO hay colisión frontal
       if (!colliding) {
         setObstacles(prev => {
           const updated = prev.map(obs => ({ ...obs, x: obs.x - OBSTACLE_SPEED }));
           const visible = updated.filter(obs => obs.x > -OBSTACLE_WIDTH);
           
+          // Generar nuevo obstáculo si es necesario
           if (visible.length < 3) {
             const last = visible[visible.length - 1];
             if (!last || last.x < SCREEN_WIDTH - 300) {
               const gapY = Math.random() * (SCREEN_HEIGHT - OBSTACLE_GAP - 200) + 100;
-              visible.push({
+              const newObs = {
                 id: obstacleIdCounter++,
                 x: SCREEN_WIDTH,
                 gapY,
+              };
+              visible.push(newObs);
+              
+              // Generar frutas para el nuevo obstáculo
+              setFruits(prevFruits => {
+                const newFruits = fruitPatternRef.current.percentages.map((pct, index) => ({
+                  id: fruitIdCounter++,
+                  x: newObs.x + OBSTACLE_WIDTH / 2,
+                  y: newObs.gapY + OBSTACLE_GAP * pct,
+                  collected: false,
+                }));
+                return [...prevFruits, ...newFruits];
               });
             }
           }
@@ -250,60 +237,24 @@ export function FlappyBirdGame({
           return visible;
         });
         
-        setFruits(prev => {
-          const updated = prev.map(fruit => ({ ...fruit, x: fruit.x - OBSTACLE_SPEED }));
-          const visible = updated.filter(fruit => fruit.x > -FRUIT_SIZE);
-          
-          if (visible.length < 3) {
-            const last = visible[visible.length - 1];
-            if (!last || last.x < SCREEN_WIDTH - 300) {
-              // Usar el gapY del último obstáculo para asegurar que la fruta esté en el hueco
-              const lastObstacle = obstacles[obstacles.length - 1];
-              if (lastObstacle) {
-                const fruitY = generateFruitY(lastObstacle.gapY, fruitIdCounter);
-                
-                visible.push({
-                  id: fruitIdCounter++,
-                  x: SCREEN_WIDTH + OBSTACLE_WIDTH / 2 - FRUIT_SIZE / 2,
-                  y: fruitY,
-                  type: FRUIT_TYPES[Math.floor(Math.random() * FRUIT_TYPES.length)],
-                  collected: false,
-                });
-              }
-            }
-          }
-          
-          return visible;
-        });
+        // Mover frutas
+        setFruits(prev => 
+          prev.map(fruit => ({ ...fruit, x: fruit.x - OBSTACLE_SPEED }))
+            .filter(fruit => fruit.x > -50)
+        );
       }
-      
-      // Colisiones con frutas (siempre activas)
-      for (const fruit of fruits) {
-        if (!fruit.collected) {
-          const distance = Math.sqrt(
-            Math.pow(birdX + BIRD_SIZE / 2 - (fruit.x + FRUIT_SIZE / 2), 2) +
-            Math.pow(currentBirdY + BIRD_SIZE / 2 - (fruit.y + FRUIT_SIZE / 2), 2)
-          );
-          
-          if (distance < (BIRD_SIZE + FRUIT_SIZE) / 2) {
-            fruit.collected = true;
-            onFruitCollected();
-          }
-        }
-      }
-    }, 16); // ~60 FPS
+    }, 16);
     
     return () => clearInterval(interval);
-  }, [isPaused, obstacles, fruits]);
-  
-  // Estilo animado para el pájaro
+  }, [isPaused, collectedFruits, onFruitCollected]);
+
+  // Estilo animado del pájaro
   const birdStyle = useAnimatedStyle(() => {
     return {
       transform: [{ translateY: birdY.value }],
     };
   });
   
-  // Color fijo del pájaro
   const BIRD_COLOR = "#FFD700"; // Dorado
   
   return (
@@ -318,7 +269,7 @@ export function FlappyBirdGame({
           {collidingObstacleId !== null ? `COLISIÓN (Obs ${collidingObstacleId})` : "OK"}
         </Text>
         <Text style={{ color: "cyan", fontSize: 11 }}>
-          Pattern: {fruitPatternRef.current.pattern}
+          Frutas: {collectedFruits}
         </Text>
       </View>
       
@@ -365,14 +316,14 @@ export function FlappyBirdGame({
             key={fruit.id}
             style={{
               position: "absolute",
-              left: fruit.x,
-              top: fruit.y,
-              width: FRUIT_SIZE,
-              height: FRUIT_SIZE,
-              backgroundColor: FRUIT_COLORS[fruit.type],
-              borderRadius: FRUIT_SIZE / 2,
+              left: fruit.x - 15,
+              top: fruit.y - 15,
+              width: 30,
+              height: 30,
+              backgroundColor: "#FF6B6B",
+              borderRadius: 15,
               borderWidth: 2,
-              borderColor: "#000",
+              borderColor: "#FF0000",
             }}
           />
         )
@@ -383,7 +334,7 @@ export function FlappyBirdGame({
         style={[
           {
             position: "absolute",
-            left: 50,
+            left: BIRD_X,
             top: 0,
             width: BIRD_SIZE,
             height: BIRD_SIZE,
