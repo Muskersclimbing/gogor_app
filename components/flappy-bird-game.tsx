@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from "react";
 import { View, Dimensions, Text } from "react-native";
-import Animated, { useSharedValue, useAnimatedStyle, withTiming } from "react-native-reanimated";
+import Animated, { useSharedValue, useAnimatedStyle, withTiming, cancelAnimation } from "react-native-reanimated";
 
 const SCREEN_WIDTH = Dimensions.get("window").width;
 const SCREEN_HEIGHT = Dimensions.get("window").height;
@@ -228,7 +228,7 @@ export function FlappyBirdGame({
       
       setCollidingObstacleId(collidingObsId); // Guardar ID del obstáculo que colisiona
       
-      // Corregir invasión si el pájaro está dentro del bloque
+      // Impedir invasión: cancelar animación y forzar al borde si invade
       for (const obs of obstacles) {
         const birdRightX = birdX + BIRD_SIZE;
         const birdLeftX = birdX;
@@ -236,12 +236,14 @@ export function FlappyBirdGame({
         const birdBottomY = currentBirdY + BIRD_SIZE;
         
         if (birdRightX > obs.x && birdLeftX < obs.x + OBSTACLE_WIDTH) {
-          // Si invade bloque superior (más de 2px dentro)
-          if (birdTopY < obs.gapY && (obs.gapY - birdTopY) > 2) {
+          // Si invade bloque superior
+          if (birdTopY < obs.gapY) {
+            cancelAnimation(birdY);
             birdY.value = obs.gapY;
           }
-          // Si invade bloque inferior (más de 2px dentro)
-          if (birdBottomY > obs.gapY + OBSTACLE_GAP && (birdBottomY - (obs.gapY + OBSTACLE_GAP)) > 2) {
+          // Si invade bloque inferior
+          if (birdBottomY > obs.gapY + OBSTACLE_GAP) {
+            cancelAnimation(birdY);
             birdY.value = obs.gapY + OBSTACLE_GAP - BIRD_SIZE;
           }
         }

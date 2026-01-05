@@ -802,3 +802,20 @@
 - [x] El pájaro NO se desliza solo al hueco
 - [x] El pájaro NO invade interior del bloque
 - [ ] Compilar APK
+
+## APK CON CORRECCIÓN EN GAME LOOP
+- [x] Build ID: 1eaec9d0-3f35-412e-a6cf-dbc56889c55e
+- [x] URL: https://expo.dev/accounts/muskersclimbing/projects/muskers_app/builds/1eaec9d0-3f35-412e-a6cf-dbc56889c55e
+- [x] Corrección en game loop (no en useEffect) ✅
+- [x] Umbral de 2px para evitar parpadeo ✅
+- [x] NO deslizamiento automático ✅
+- [x] NO invasión profunda ✅
+- [x] QR: /home/ubuntu/muskers_app/expo-qr-code.png
+
+## SOLUCIÓN FINAL - CANCELANIMATION (5 ENE 2026)
+- [x] Usar cancelAnimation para detener animación en curso
+- [x] Asignación directa a birdY.value al borde del hueco
+- [x] Sin umbral (0px tolerancia)
+- [x] Impide invasión SIN deslizamiento continuo
+- [x] cancelAnimation evita que withTiming siga empujando
+- [ ] Compilar APK
