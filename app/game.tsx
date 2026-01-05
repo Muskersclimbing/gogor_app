@@ -658,6 +658,10 @@ export default function GameScreen() {
               onFruitCollected={handleFruitCollected}
               onGameOver={handleCollision}
               isPaused={!isPlaying}
+              onForceStats={(maxForce, avgForce) => {
+                setMaxForceReached(maxForce);
+                setAverageForce(avgForce);
+              }}
             />
           </View>
         )}

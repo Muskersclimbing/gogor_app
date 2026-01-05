@@ -480,4 +480,23 @@
 - [x] Colisión: cambiado de `obs.x + OBSTACLE_WIDTH` a `obs.x + 10` (solo primeros 10px del borde)
 - [x] Frutas: agregado Math.max(0.1, Math.min(0.9, ...)) para forzar rango 10-90% del hueco
 - [x] Patrón dinámico: cambiado de 0.8/0.2 a 0.75/0.25 para más margen
+- [x] Compilar APK para probar
+
+## APK FINAL CON COLISIÓN EN BORDE Y FRUTAS EN HUECOS
+- [x] Build ID: cdb3e6db-3838-4824-af53-636d8e72c372
+- [x] URL: https://expo.dev/accounts/muskersclimbing/projects/muskers_app/builds/cdb3e6db-3838-4824-af53-636d8e72c372
+- [x] Colisión en borde (no dentro) ✅
+- [x] Frutas siempre en huecos ✅
+- [x] QR generado: /home/ubuntu/muskers_app/expo-qr-code.png
+
+
+## NUEVOS BUGS (4 ENE 2026 - TARDE)
+- [x] Pájaro no colisiona con bordes horizontales (arriba/abajo) de bloques - solo detecta frontal
+- [x] Estadísticas finales no muestran fuerza máxima ni fuerza promedio
+
+## FIXES APLICADOS (4 ENE - TARDE)
+- [x] Colisión en bordes horizontales: detecta cuando pájaro toca parte superior/inferior de bloques
+- [x] Tracking de fuerza mejorado: FlappyBirdGame ahora trackea maxForce y avgForce
+- [x] Callback onForceStats agregado para pasar estadísticas a game.tsx
+- [x] Pantalla de resultados ya mostraba correctamente las estadísticas (no requería cambios)
 - [ ] Compilar APK para probar

@@ -32,6 +32,7 @@ interface FlappyBirdGameProps {
   isPaused: boolean;
   onFruitCollected: () => void;
   onGameOver: () => void;
+  onForceStats?: (maxForce: number, avgForce: number) => void;
 }
 
 const FRUIT_COLORS: Record<string, string> = {
@@ -81,12 +82,17 @@ export function FlappyBirdGame({
   isPaused,
   onFruitCollected,
   onGameOver,
+  onForceStats,
 }: FlappyBirdGameProps) {
   const birdY = useSharedValue(SCREEN_HEIGHT / 2);
   
   const [obstacles, setObstacles] = useState<Obstacle[]>([]);
   const [fruits, setFruits] = useState<Fruit[]>([]);
   const [isColliding, setIsColliding] = useState(false);
+  
+  // Tracking de fuerza
+  const forceReadings = useRef<number[]>([]);
+  const maxForceRef = useRef<number>(0);
   
   const fruitPatternRef = useRef(generateFruitPattern());
   const fruitCounterRef = useRef(0);
@@ -157,6 +163,14 @@ export function FlappyBirdGame({
   useEffect(() => {
     if (isPaused) return;
     
+    // Trackear fuerza
+    if (currentForce > 0) {
+      forceReadings.current.push(currentForce);
+      if (currentForce > maxForceRef.current) {
+        maxForceRef.current = currentForce;
+      }
+    }
+    
     const maxForce = highZone || 20;
     const forcePercent = Math.max(0, Math.min(1, currentForce / maxForce));
     
@@ -166,6 +180,14 @@ export function FlappyBirdGame({
     
     birdY.value = withTiming(targetY, { duration: 100 });
   }, [currentForce, highZone, isPaused]);
+  
+  // Calcular y enviar estadísticas al finalizar
+  useEffect(() => {
+    if (isPaused && onForceStats && forceReadings.current.length > 0) {
+      const avgForce = forceReadings.current.reduce((a, b) => a + b, 0) / forceReadings.current.length;
+      onForceStats(maxForceRef.current, avgForce);
+    }
+  }, [isPaused, onForceStats]);
   
   // Game loop
   useEffect(() => {
@@ -178,21 +200,34 @@ export function FlappyBirdGame({
       const birdX = 50;
       const currentBirdY = birdY.value;
       
-      // Detectar colisión SOLO en la parte FRONTAL (izquierda) del pájaro
+      // Detectar colisión con bloques (frontal + bordes horizontales)
       let colliding = false;
       for (const obs of obstacles) {
-        // Verificar si el pájaro está cerca del obstáculo
-        const birdFrontX = birdX; // Parte frontal del pájaro
-        const birdBackX = birdX + BIRD_SIZE; // Parte trasera
+        const birdFrontX = birdX;
+        const birdBackX = birdX + BIRD_SIZE;
+        const birdTopY = currentBirdY;
+        const birdBottomY = currentBirdY + BIRD_SIZE;
         
-        // Solo colisionar si la PARTE FRONTAL está tocando el obstáculo
-        // Y el pájaro NO ha pasado completamente el obstáculo
-        if (birdFrontX < obs.x + OBSTACLE_WIDTH && birdBackX > obs.x) {
-          // Verificar si la parte frontal está en zona de bloque (no en el hueco)
-          if (currentBirdY < obs.gapY || currentBirdY + BIRD_SIZE > obs.gapY + OBSTACLE_GAP) {
-            // Solo colisionar si la PARTE FRONTAL está tocando el BORDE del bloque
-            // Detectar solo en los primeros 10px del bloque, no en todo su ancho
-            if (birdFrontX >= obs.x - 5 && birdFrontX <= obs.x + 10) {
+        // Verificar si el pájaro está en el rango horizontal del obstáculo
+        const inObstacleXRange = birdBackX > obs.x && birdFrontX < obs.x + OBSTACLE_WIDTH;
+        
+        if (inObstacleXRange) {
+          // Verificar colisión con bloque SUPERIOR (arriba del hueco)
+          if (birdTopY < obs.gapY && birdBottomY > obs.gapY - 5) {
+            colliding = true;
+            break;
+          }
+          
+          // Verificar colisión con bloque INFERIOR (abajo del hueco)
+          if (birdBottomY > obs.gapY + OBSTACLE_GAP && birdTopY < obs.gapY + OBSTACLE_GAP + 5) {
+            colliding = true;
+            break;
+          }
+          
+          // Verificar colisión FRONTAL (entrando al bloque por la izquierda)
+          if (birdFrontX >= obs.x - 5 && birdFrontX <= obs.x + 10) {
+            // Está en zona de bloque (no en el hueco)
+            if (birdTopY < obs.gapY || birdBottomY > obs.gapY + OBSTACLE_GAP) {
               colliding = true;
               break;
             }
