@@ -176,29 +176,10 @@ export function FlappyBirdGame({
     
     const minY = 50;
     const maxY = SCREEN_HEIGHT - BIRD_SIZE - 50;
-    let targetY = maxY - (forcePercent * (maxY - minY));
-    
-    // PREVENIR invasión: verificar si targetY invade algún obstáculo
-    const birdX = 50;
-    const birdRightX = birdX + BIRD_SIZE;
-    const birdLeftX = birdX;
-    
-    for (const obs of obstacles) {
-      // Si el pájaro está en el rango horizontal del obstáculo
-      if (birdRightX > obs.x && birdLeftX < obs.x + OBSTACLE_WIDTH) {
-        // Si targetY invade bloque superior, limitar al borde del hueco
-        if (targetY < obs.gapY) {
-          targetY = obs.gapY;
-        }
-        // Si targetY invade bloque inferior, limitar al borde del hueco
-        if (targetY + BIRD_SIZE > obs.gapY + OBSTACLE_GAP) {
-          targetY = obs.gapY + OBSTACLE_GAP - BIRD_SIZE;
-        }
-      }
-    }
+    const targetY = maxY - (forcePercent * (maxY - minY));
     
     birdY.value = withTiming(targetY, { duration: 100 });
-  }, [currentForce, highZone, isPaused, obstacles]);
+  }, [currentForce, highZone, isPaused]);
   
   // Calcular y enviar estadísticas al finalizar
   useEffect(() => {
@@ -246,6 +227,25 @@ export function FlappyBirdGame({
       }
       
       setCollidingObstacleId(collidingObsId); // Guardar ID del obstáculo que colisiona
+      
+      // Corregir invasión si el pájaro está dentro del bloque
+      for (const obs of obstacles) {
+        const birdRightX = birdX + BIRD_SIZE;
+        const birdLeftX = birdX;
+        const birdTopY = currentBirdY;
+        const birdBottomY = currentBirdY + BIRD_SIZE;
+        
+        if (birdRightX > obs.x && birdLeftX < obs.x + OBSTACLE_WIDTH) {
+          // Si invade bloque superior (más de 2px dentro)
+          if (birdTopY < obs.gapY && (obs.gapY - birdTopY) > 2) {
+            birdY.value = obs.gapY;
+          }
+          // Si invade bloque inferior (más de 2px dentro)
+          if (birdBottomY > obs.gapY + OBSTACLE_GAP && (birdBottomY - (obs.gapY + OBSTACLE_GAP)) > 2) {
+            birdY.value = obs.gapY + OBSTACLE_GAP - BIRD_SIZE;
+          }
+        }
+      }
       
       // Solo mover obstáculos si NO hay colisión
       if (!colliding) {

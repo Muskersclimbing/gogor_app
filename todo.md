@@ -782,3 +782,23 @@
   - Aplica targetY ya corregido
 - [x] El pájaro NUNCA puede entrar en el interior del bloque
 - [ ] Compilar APK final
+
+## APK CON PREVENCIÓN DE INVASIÓN
+- [x] Build ID: 545e2d55-1a99-45bd-96c3-772b91020156
+- [x] URL: https://expo.dev/accounts/muskersclimbing/projects/muskers_app/builds/545e2d55-1a99-45bd-96c3-772b91020156
+- [x] Prevención ANTES de aplicar targetY ✅
+- [x] Pájaro NUNCA invade interior del bloque ✅
+- [x] Bloque se vuelve rojo al colisionar ✅
+- [x] Pausa en cualquier colisión ✅
+- [x] QR: /home/ubuntu/muskers_app/expo-qr-code.png
+
+## FIX DESLIZAMIENTO AUTOMÁTICO - CORRECCIÓN EN GAME LOOP (5 ENE 2026)
+- [x] Problema: obstacles en dependencias causaba deslizamiento automático
+- [x] Solución:
+  - Quitar obstacles de dependencias del useEffect
+  - Mover corrección de invasión al game loop
+  - Solo corregir si invade MÁS de 2px (umbral para evitar bucle)
+  - Corrección en game loop (cada 16ms) en lugar de useEffect continuo
+- [x] El pájaro NO se desliza solo al hueco
+- [x] El pájaro NO invade interior del bloque
+- [ ] Compilar APK
