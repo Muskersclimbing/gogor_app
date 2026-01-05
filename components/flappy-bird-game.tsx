@@ -213,32 +213,11 @@ export function FlappyBirdGame({
         
         if (inObstacleXRange) {
           // Verificar si el pájaro está en zona de bloque (no en el hueco)
-          const inTopBlock = birdBottomY > obs.gapY - BIRD_SIZE && birdTopY < obs.gapY;
-          const inBottomBlock = birdTopY < obs.gapY + OBSTACLE_GAP + BIRD_SIZE && birdBottomY > obs.gapY + OBSTACLE_GAP;
+          const inTopBlock = birdTopY < obs.gapY;
+          const inBottomBlock = birdBottomY > obs.gapY + OBSTACLE_GAP;
           
-          if (inTopBlock) {
-            // Colisión con bloque SUPERIOR → empujar hacia abajo
-            colliding = true;
-            const pushDown = obs.gapY - birdTopY;
-            if (pushDown > 0) {
-              birdY.value = Math.min(SCREEN_HEIGHT - BIRD_SIZE, currentBirdY + pushDown);
-            }
-            break;
-          }
-          
-          if (inBottomBlock) {
-            // Colisión con bloque INFERIOR → empujar hacia arriba
-            colliding = true;
-            const pushUp = birdBottomY - (obs.gapY + OBSTACLE_GAP);
-            if (pushUp > 0) {
-              birdY.value = Math.max(0, currentBirdY - pushUp);
-            }
-            break;
-          }
-          
-          // Colisión FRONTAL (pájaro completamente dentro del bloque)
-          const fullyInBlock = birdTopY < obs.gapY || birdBottomY > obs.gapY + OBSTACLE_GAP;
-          if (fullyInBlock) {
+          if (inTopBlock || inBottomBlock) {
+            // Colisión detectada: pájaro en zona de bloque
             colliding = true;
             break;
           }

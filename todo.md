@@ -535,3 +535,21 @@
   - Bloque inferior → empujar hacia arriba (birdY -= pushUp)
 - [x] Colisión frontal mantiene comportamiento correcto (pausa sin empuje)
 - [ ] Compilar APK para probar
+
+## APK CON FIX DE COLISIÓN HORIZONTAL
+- [x] Build ID: 36f506d9-f928-4d9f-9a90-5ee99359d6fb
+- [x] URL: https://expo.dev/accounts/muskersclimbing/projects/muskers_app/builds/36f506d9-f928-4d9f-9a90-5ee99359d6fb
+- [x] Empuje hacia abajo cuando invade bloque superior ✅
+- [x] Empuje hacia arriba cuando invade bloque inferior ✅
+- [x] Colisión frontal sin empuje (pausa) ✅
+- [x] QR: /home/ubuntu/muskers_app/expo-qr-code.png
+
+## FIX PARPADEO EN EXTREMOS DE BLOQUES (5 ENE 2026)
+- [x] Problema: pájaro parpadea y se desliza solo cuando colisiona cerca de extremos horizontales
+- [x] Causa: lógica de empuje creaba bucle de empuje/detección continuo
+- [x] Solución: Eliminar empuje automático, solo detectar colisión y pausar
+  - inTopBlock: birdTopY < obs.gapY (simple)
+  - inBottomBlock: birdBottomY > obs.gapY + OBSTACLE_GAP (simple)
+  - Sin cálculos de pushDown/pushUp
+- [x] El usuario debe ajustar la fuerza manualmente para salir del bloque
+- [ ] Compilar APK para probar
