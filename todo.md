@@ -898,3 +898,22 @@
 - [x] NO deslizamiento automático
 - [x] Respeta TODOS los bordes (frontal, horizontal)
 - [ ] Compilar APK
+
+## APK CON OBSTACLESREF - SOLUCIÓN DEFINITIVA
+- [x] Build ID: 6b1aa30a-5f1e-4b3a-ae75-c61940383f69
+- [x] URL: https://expo.dev/accounts/muskersclimbing/projects/muskers_app/builds/6b1aa30a-5f1e-4b3a-ae75-c61940383f69
+- [x] obstaclesRef para acceder sin dependencia ✅
+- [x] Limitación de targetY con ref ✅
+- [x] useEffect solo ejecuta con currentForce ✅
+- [x] Respeta TODOS los bordes ✅
+- [x] NO deslizamiento automático ✅
+- [x] QR: /home/ubuntu/muskers_app/expo-qr-code.png
+
+## LIMITACIÓN EN GAME LOOP CON UMBRAL DE 30PX (5 ENE 2026)
+- [x] Eliminada limitación del useEffect
+- [x] Limitación en game loop con umbral de 30px
+- [x] Solo corrige si invade MUY dentro (>30px)
+- [x] Invasión superficial (0-30px) permitida
+- [x] Invasión profunda (>30px) corregida
+- [x] Umbral alto para evitar bucle de parpadeo/deslizamiento
+- [ ] Compilar APK

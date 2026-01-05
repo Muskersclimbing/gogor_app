@@ -106,26 +106,9 @@ export function FlappyBirdGame({
     
     const minY = 50;
     const maxY = SCREEN_HEIGHT - BIRD_SIZE - 50;
-    let targetY = maxY - (forcePercent * (maxY - minY));
+    const targetY = maxY - (forcePercent * (maxY - minY));
     
-    // Limitar targetY usando obstaclesRef.current (sin ponerlo en dependencias)
-    const birdRightX = BIRD_X + BIRD_SIZE;
-    const birdLeftX = BIRD_X;
-    
-    for (const obs of obstaclesRef.current) {
-      // Si el pájaro está en el rango horizontal del obstáculo
-      if (birdRightX > obs.x && birdLeftX < obs.x + OBSTACLE_WIDTH) {
-        // Limitar para que no entre en bloque superior
-        if (targetY < obs.gapY) {
-          targetY = obs.gapY;
-        }
-        // Limitar para que no entre en bloque inferior
-        const birdBottomY = targetY + BIRD_SIZE;
-        if (birdBottomY > obs.gapY + OBSTACLE_GAP) {
-          targetY = obs.gapY + OBSTACLE_GAP - BIRD_SIZE;
-        }
-      }
-    }
+    // NO limitar aquí - se limitará en game loop cuando detecte invasión real
     
     birdY.value = withTiming(targetY, { duration: 100 });
   }, [currentForce, highZone, isPaused]);
@@ -179,6 +162,26 @@ export function FlappyBirdGame({
       }
       
       setCollidingObstacleId(collidingObsId);
+      
+      // Limitar posición SOLO si invade MUY dentro (más de 30px) para evitar bucle
+      for (const obs of obstacles) {
+        if (birdRightX > obs.x && birdLeftX < obs.x + OBSTACLE_WIDTH) {
+          // Si invade bloque superior MUY dentro
+          if (birdTopY < obs.gapY) {
+            const invasionDepth = obs.gapY - birdTopY;
+            if (invasionDepth > 30) {
+              birdY.value = obs.gapY;
+            }
+          }
+          // Si invade bloque inferior MUY dentro
+          if (birdBottomY > obs.gapY + OBSTACLE_GAP) {
+            const invasionDepth = birdBottomY - (obs.gapY + OBSTACLE_GAP);
+            if (invasionDepth > 30) {
+              birdY.value = obs.gapY + OBSTACLE_GAP - BIRD_SIZE;
+            }
+          }
+        }
+      }
       
       // Recoger frutas
       setFruits(prev => {
