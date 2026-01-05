@@ -956,3 +956,20 @@
 - [x] Ya no alineadas verticalmente en el hueco
 - [x] Actualizado en inicialización y game loop
 - [ ] Compilar APK
+
+## APK CON FRUTAS DISTRIBUIDAS
+- [x] Build ID: 9abdf6cb-ab0e-4203-a8a2-c525dfc5f01f
+- [x] URL: https://expo.dev/accounts/muskersclimbing/projects/muskers_app/builds/9abdf6cb-ab0e-4203-a8a2-c525dfc5f01f
+- [x] Frutas distribuidas por toda la pantalla ✅
+- [x] 3-4 frutas por obstáculo ✅
+- [x] Posición Y aleatoria ✅
+- [x] Ya no alineadas verticalmente ✅
+- [x] QR: /home/ubuntu/muskers_app/expo-qr-code.png
+
+## FIX: FRUTAS SOLO EN HUECO (5 ENE 2026)
+- [x] Corregida generación de frutas
+- [x] Frutas SOLO en el hueco del obstáculo
+- [x] randomY entre gapStart y gapEnd
+- [x] Ya no aparecen sobre bloques
+- [x] Actualizado en inicialización y game loop
+- [ ] Compilar APK

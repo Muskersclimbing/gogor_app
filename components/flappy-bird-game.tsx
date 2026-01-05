@@ -78,13 +78,13 @@ export function FlappyBirdGame({
     // Generar frutas para cada obstáculo
     const initialFruits: Fruit[] = [];
     initialObstacles.forEach((obs, index) => {
-      // Generar 3-4 frutas por obstáculo en diferentes zonas de fuerza
+      // Generar 3-4 frutas por obstáculo SOLO en el hueco
       const fruitCount = 3 + Math.floor(Math.random() * 2); // 3 o 4 frutas
       for (let i = 0; i < fruitCount; i++) {
-        // Distribuir en toda la altura de la pantalla (excepto márgenes)
-        const minY = 50;
-        const maxY = SCREEN_HEIGHT - 50;
-        const randomY = minY + Math.random() * (maxY - minY);
+        // Distribuir SOLO en el hueco del obstáculo
+        const gapStart = obs.gapY;
+        const gapEnd = obs.gapY + OBSTACLE_GAP;
+        const randomY = gapStart + Math.random() * (gapEnd - gapStart);
         
         initialFruits.push({
           id: index * 10 + i,
@@ -261,9 +261,10 @@ export function FlappyBirdGame({
                 const fruitCount = 3 + Math.floor(Math.random() * 2); // 3 o 4 frutas
                 const newFruits: Fruit[] = [];
                 for (let i = 0; i < fruitCount; i++) {
-                  const minY = 50;
-                  const maxY = SCREEN_HEIGHT - 50;
-                  const randomY = minY + Math.random() * (maxY - minY);
+                  // Distribuir SOLO en el hueco del obstáculo
+                  const gapStart = newObs.gapY;
+                  const gapEnd = newObs.gapY + OBSTACLE_GAP;
+                  const randomY = gapStart + Math.random() * (gapEnd - gapStart);
                   newFruits.push({
                     id: fruitIdCounter++,
                     x: newObs.x + OBSTACLE_WIDTH / 2,
