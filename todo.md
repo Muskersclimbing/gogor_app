@@ -1048,3 +1048,19 @@
 - [x] Mostrar: Lecturas, Max, Avg en tiempo real
 - [ ] Compilar APK para probar
 - [ ] Verificar por qué las estadísticas siguen en 0
+
+## APK CON DEBUG VISIBLE
+- [x] Build ID: 905c6235-d05c-4a4a-b1aa-0f633b4e494c
+- [x] URL: https://expo.dev/accounts/muskersclimbing/projects/muskers_app/builds/905c6235-d05c-4a4a-b1aa-0f633b4e494c
+- [x] Contador de colisiones corregido (solo una vez por obstáculo) ✅
+- [x] Cuadro de debug visible en esquina inferior derecha ✅
+- [x] Muestra: Lecturas, Max, Avg en tiempo real ✅
+- [x] QR: /home/ubuntu/muskers_app/expo-qr-code.png
+
+## FIX ESTADÍSTICAS FINALES (6 ENE 2026)
+- [x] Identificar problema: navegación ocurre antes de actualizar stats
+- [x] Mover navegación a useEffect que se ejecuta cuando gamePhase === "finished"
+- [x] useEffect espera a que maxForceReached y averageForce se actualicen
+- [x] Agregar logs de debug para verificar valores antes de navegar
+- [ ] Compilar APK para probar
+- [ ] Verificar que estadísticas finales muestran valores correctos

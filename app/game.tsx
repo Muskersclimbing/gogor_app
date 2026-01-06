@@ -141,6 +141,30 @@ export default function GameScreen() {
 
   const currentScene = SCENES[modeConfig.scenes[currentSceneIndex]];
 
+  // Navegar a resultados cuando el juego termina
+  useEffect(() => {
+    if (gamePhase === "finished") {
+      console.log('[game.tsx] Navegando a resultados con:', {
+        maxForceReached,
+        averageForce,
+        fruitsCollected,
+        collisionCount,
+      });
+      
+      router.push({
+        pathname: "/results",
+        params: {
+          mode: gameMode,
+          maxForce: maxForceReached.toFixed(1),
+          avgForce: averageForce.toFixed(1),
+          timeElapsed: timeElapsed.toString(),
+          fruitsCollected: fruitsCollected.toString(),
+          collisions: collisionCount.toString(),
+        },
+      });
+    }
+  }, [gamePhase, maxForceReached, averageForce, fruitsCollected, collisionCount, timeElapsed]);
+
   // Verificar conexión al montar
   useEffect(() => {
     const connected = tindeqService.getIsConnected();
@@ -432,19 +456,6 @@ export default function GameScreen() {
       await tindeqService.stopMeasurement();
       setIsPlaying(false);
       setGamePhase("finished");
-      
-      // Navegar a resultados con estadísticas
-      router.push({
-        pathname: "/results",
-        params: {
-          mode: gameMode,
-          maxForce: maxForceReached.toFixed(1),
-          avgForce: averageForce.toFixed(1),
-          timeElapsed: timeElapsed.toString(),
-          fruitsCollected: fruitsCollected.toString(),
-          collisions: collisionCount.toString(),
-        },
-      });
 
     } catch (error) {
       console.error("Error finalizando juego:", error);
