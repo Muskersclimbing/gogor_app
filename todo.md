@@ -1097,3 +1097,11 @@
 - [x] useEffect verifica ambas condiciones: gamePhase === "finished" Y shouldNavigateToResults
 - [ ] Compilar APK para probar
 - [ ] Verificar que navega correctamente a estadísticas
+
+## FIX NAVEGACIÓN CON FORCE RERENDER (6 ENE 2026)
+- [x] Identificar problema: setTimeElapsed(prev => prev) no causa re-render
+- [x] Agregar estado forceRerender para forzar re-render
+- [x] Usar setForceRerender(prev => prev + 1) en onForceStats
+- [x] Agregar forceRerender a dependencias del useEffect
+- [ ] Compilar APK para probar
+- [ ] Verificar que navega correctamente a estadísticas

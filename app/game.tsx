@@ -135,6 +135,7 @@ export default function GameScreen() {
   const finalStatsRef = useRef({ maxForce: 0, avgForce: 0 });
   const shouldNavigateToResults = useRef(false);
   const gamePhaseRef = useRef<GamePhase>(gamePhase);
+  const [forceRerender, setForceRerender] = useState(0);
   
   // Estado de escenarios
   const [currentSceneIndex, setCurrentSceneIndex] = useState(0);
@@ -171,7 +172,7 @@ export default function GameScreen() {
       // Reset flag
       shouldNavigateToResults.current = false;
     }
-  }, [gamePhase, fruitsCollected, collisionCount, timeElapsed]);
+  }, [gamePhase, fruitsCollected, collisionCount, timeElapsed, forceRerender]);
 
   // Verificar conexión al montar
   useEffect(() => {
@@ -697,7 +698,7 @@ export default function GameScreen() {
                 // Activar navegación (el useEffect verificará si gamePhase === "finished")
                 shouldNavigateToResults.current = true;
                 // Forzar re-render del useEffect
-                setTimeElapsed(prev => prev);
+                setForceRerender(prev => prev + 1);
               }}
               onCollision={() => setCollisionCount(prev => prev + 1)}
             />
