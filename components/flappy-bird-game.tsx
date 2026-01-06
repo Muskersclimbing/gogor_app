@@ -32,6 +32,7 @@ interface FlappyBirdGameProps {
   onGameOver?: () => void;
   onFruitCollected?: (count: number) => void;
   onForceStats?: (stats: { avgForce: number; maxForce: number; minForce: number }) => void;
+  onCollision?: () => void;
 }
 
 export function FlappyBirdGame({
@@ -42,6 +43,7 @@ export function FlappyBirdGame({
   onGameOver,
   onFruitCollected,
   onForceStats,
+  onCollision,
 }: FlappyBirdGameProps) {
   const birdY = useSharedValue(SCREEN_HEIGHT / 2);
   const obstaclesShared = useSharedValue<Obstacle[]>([]);
@@ -78,8 +80,8 @@ export function FlappyBirdGame({
     // Generar frutas para cada obstáculo
     const initialFruits: Fruit[] = [];
     initialObstacles.forEach((obs, index) => {
-      // Generar 3-4 frutas por obstáculo distribuidas libremente
-      const fruitCount = 3 + Math.floor(Math.random() * 2); // 3 o 4 frutas
+      // Generar 1-2 frutas por obstáculo distribuidas libremente
+      const fruitCount = 1 + Math.floor(Math.random() * 2); // 1 o 2 frutas
       for (let i = 0; i < fruitCount; i++) {
         // Posición X aleatoria en rango amplio
         const randomX = obs.x - 150 + Math.random() * 400;
@@ -122,14 +124,6 @@ export function FlappyBirdGame({
   // SIN obstacles en dependencias para evitar deslizamiento automático
   useEffect(() => {
     if (isPaused) return;
-    
-    // Trackear fuerza
-    if (currentForce > 0) {
-      forceReadings.current.push(currentForce);
-      if (currentForce > maxForceRef.current) {
-        maxForceRef.current = currentForce;
-      }
-    }
     
     const maxForce = highZone || 20;
     const forcePercent = Math.max(0, Math.min(1, currentForce / maxForce));
@@ -195,6 +189,14 @@ export function FlappyBirdGame({
     let fruitIdCounter = 100;
     
     const interval = setInterval(() => {
+      // Trackear fuerza en cada frame
+      if (currentForce > 0) {
+        forceReadings.current.push(currentForce);
+        if (currentForce > maxForceRef.current) {
+          maxForceRef.current = currentForce;
+        }
+      }
+      
       const currentBirdY = birdY.value;
       const birdRightX = BIRD_X + BIRD_SIZE;
       const birdLeftX = BIRD_X;
@@ -219,6 +221,10 @@ export function FlappyBirdGame({
             if (isFrontalCollision) {
               colliding = true;
               collidingObsId = obs.id;
+              // Llamar callback de colisión
+              if (onCollision) {
+                onCollision();
+              }
               break;
             }
           }
@@ -279,7 +285,7 @@ export function FlappyBirdGame({
               
               // Generar frutas para el nuevo obstáculo
               setFruits(prevFruits => {
-                const fruitCount = 3 + Math.floor(Math.random() * 2); // 3 o 4 frutas
+                const fruitCount = 1 + Math.floor(Math.random() * 2); // 1 o 2 frutas
                 const newFruits: Fruit[] = [];
                 for (let i = 0; i < fruitCount; i++) {
                   // Posición X aleatoria en rango amplio
@@ -345,19 +351,6 @@ export function FlappyBirdGame({
   
   return (
     <View style={{ flex: 1, backgroundColor: "#87CEEB" }}>
-      {/* Debug info */}
-      <View style={{ position: "absolute", top: 10, left: 10, backgroundColor: "rgba(0,0,0,0.7)", padding: 8, borderRadius: 5, zIndex: 1000 }}>
-        <Text style={{ color: "white", fontSize: 11 }}>Force: {currentForce.toFixed(1)} kg</Text>
-        <Text style={{ color: "white", fontSize: 11 }}>Max: {highZone.toFixed(1)} kg</Text>
-        <Text style={{ color: "white", fontSize: 11 }}>%: {((currentForce / highZone) * 100).toFixed(0)}%</Text>
-        <Text style={{ color: "white", fontSize: 11 }}>BirdY: {birdY.value.toFixed(0)}</Text>
-        <Text style={{ color: collidingObstacleId !== null ? "red" : "lime", fontSize: 11 }}>
-          {collidingObstacleId !== null ? `COLISIÓN (Obs ${collidingObstacleId})` : "OK"}
-        </Text>
-        <Text style={{ color: "cyan", fontSize: 11 }}>
-          Frutas: {collectedFruits}
-        </Text>
-      </View>
       
       {/* Obstáculos */}
       {obstacles.map(obs => {

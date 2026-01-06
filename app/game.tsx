@@ -129,6 +129,7 @@ export default function GameScreen() {
   const [timeElapsed, setTimeElapsed] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
   const [fruitsCollected, setFruitsCollected] = useState(0);
+  const [collisionCount, setCollisionCount] = useState(0);
   
   // Estado de escenarios
   const [currentSceneIndex, setCurrentSceneIndex] = useState(0);
@@ -441,6 +442,7 @@ export default function GameScreen() {
           avgForce: averageForce.toFixed(1),
           timeElapsed: timeElapsed.toString(),
           fruitsCollected: fruitsCollected.toString(),
+          collisions: collisionCount.toString(),
         },
       });
 
@@ -662,6 +664,7 @@ export default function GameScreen() {
                 setMaxForceReached(stats.maxForce);
                 setAverageForce(stats.avgForce);
               }}
+              onCollision={() => setCollisionCount(prev => prev + 1)}
             />
           </View>
         )}

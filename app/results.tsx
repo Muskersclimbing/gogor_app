@@ -22,6 +22,8 @@ export default function ResultsScreen() {
     maxForce?: string;
     avgForce?: string;
     timeElapsed?: string;
+    fruitsCollected?: string;
+    collisions?: string;
   }>();
 
   const modeNames: Record<string, string> = {
@@ -34,6 +36,8 @@ export default function ResultsScreen() {
   const maxForce = parseFloat(params.maxForce || "0");
   const avgForce = parseFloat(params.avgForce || "0");
   const timeElapsed = parseInt(params.timeElapsed || "0", 10);
+  const fruitsCollected = parseInt(params.fruitsCollected || "0", 10);
+  const collisions = parseInt(params.collisions || "0", 10);
   const minutes = Math.floor(timeElapsed / 60);
   const seconds = timeElapsed % 60;
 
@@ -85,6 +89,16 @@ export default function ResultsScreen() {
           <View className="flex-row justify-between">
             <Text className="text-muted">Tiempo total</Text>
             <Text className="text-foreground font-semibold">{minutes}:{String(seconds).padStart(2, "0")} min</Text>
+          </View>
+          
+          <View className="flex-row justify-between">
+            <Text className="text-muted">Frutas recogidas</Text>
+            <Text className="text-foreground font-semibold">{fruitsCollected}</Text>
+          </View>
+          
+          <View className="flex-row justify-between">
+            <Text className="text-muted">Colisiones</Text>
+            <Text className="text-foreground font-semibold">{collisions}</Text>
           </View>
         </View>
       </View>

@@ -989,3 +989,28 @@
 - [x] Fallback: centro del hueco si no encuentra posición
 - [x] Actualizado en inicialización y game loop
 - [ ] Compilar APK
+
+## APK CON FRUTAS DISTRIBUIDAS LIBREMENTE
+- [x] Build ID: e9f41d76-ec74-44a2-9653-4915fced003c
+- [x] URL: https://expo.dev/accounts/muskersclimbing/projects/muskers_app/builds/e9f41d76-ec74-44a2-9653-4915fced003c
+- [x] Frutas en toda la pantalla ✅
+- [x] Verificación de posición válida ✅
+- [x] Evita bloques correctamente ✅
+- [x] QR: /home/ubuntu/muskers_app/expo-qr-code.png
+
+## FIX ESTADÍSTICAS Y CONTADOR (6 ENE 2026)
+- [x] Movido registro de fuerza al game loop (cada 16ms)
+- [x] Eliminado cuadro de debug que tapaba contador
+- [x] Contador de frutas ahora visible
+- [x] Fuerza máxima y promedio se registran correctamente
+- [ ] Compilar APK
+- [ ] Reducir frutas a 1-2 por obstáculo (en lugar de 3-4)
+
+## CAMBIOS COMPLETADOS (6 ENE 2026)
+- [x] Reducir frutas a 1-2 por obstáculo (en lugar de 3-4)
+- [x] Agregar contador de colisiones en FlappyBirdGame
+- [x] Agregar onCollision callback
+- [x] Incrementar collisionCount en game.tsx
+- [x] Pasar collisions a pantalla de resultados
+- [x] Mostrar frutas recogidas y colisiones en estadísticas finales
+- [ ] Compilar APK para probar
