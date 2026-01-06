@@ -1014,3 +1014,21 @@
 - [x] Pasar collisions a pantalla de resultados
 - [x] Mostrar frutas recogidas y colisiones en estadísticas finales
 - [ ] Compilar APK para probar
+
+## APK CON ESTADÍSTICAS CORREGIDAS
+- [x] Build ID: 8a3b2723-d25e-4cd3-85d1-ddcbdc0d4adc
+- [x] URL: https://expo.dev/accounts/muskersclimbing/projects/muskers_app/builds/8a3b2723-d25e-4cd3-85d1-ddcbdc0d4adc
+- [x] Registro de fuerza en game loop ✅
+- [x] Frutas reducidas a 1-2 ✅
+- [x] Contador de colisiones ✅
+- [x] Estadísticas completas ✅
+- [x] QR: /home/ubuntu/muskers_app/expo-qr-code.png
+
+## FIX CONTADOR Y ESTADÍSTICAS (6 ENE 2026 - PARTE 2)
+- [x] Eliminar total del contador de frutas (solo mostrar número recogido)
+- [x] Ocultar FruitProgressIndicator (4 fresas) en modos quick y total
+- [x] Mostrar FruitProgressIndicator solo en modo resistance
+- [x] Agregar debug logs para estadísticas de fuerza
+- [x] Quitar onForceStats de dependencias del useEffect
+- [ ] Compilar APK para probar
+- [ ] Verificar por qué Fuerza Max y Promedio están en 0

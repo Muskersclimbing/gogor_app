@@ -139,13 +139,25 @@ export function FlappyBirdGame({
   
   // Calcular y enviar estadísticas al finalizar
   useEffect(() => {
-    if (isPaused && onForceStats && forceReadings.current.length > 0) {
-      const avgForce = forceReadings.current.reduce((a, b) => a + b, 0) / forceReadings.current.length;
-      const maxForce = maxForceRef.current;
-      const minForce = Math.min(...forceReadings.current);
-      onForceStats({ avgForce, maxForce, minForce });
+    if (isPaused && onForceStats) {
+      const readings = forceReadings.current;
+      console.log('[FlappyBirdGame] Calculando estadísticas:', {
+        readingsCount: readings.length,
+        maxForceRef: maxForceRef.current,
+        firstReadings: readings.slice(0, 5),
+      });
+      
+      if (readings.length > 0) {
+        const avgForce = readings.reduce((a, b) => a + b, 0) / readings.length;
+        const maxForce = maxForceRef.current;
+        const minForce = Math.min(...readings);
+        console.log('[FlappyBirdGame] Enviando stats:', { avgForce, maxForce, minForce });
+        onForceStats({ avgForce, maxForce, minForce });
+      } else {
+        console.warn('[FlappyBirdGame] No hay lecturas de fuerza');
+      }
     }
-  }, [isPaused, onForceStats]);
+  }, [isPaused]);
   
   // Reacción animada para limitar posición en UI thread (sin bucle de JS)
   useAnimatedReaction(

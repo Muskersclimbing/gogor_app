@@ -599,20 +599,22 @@ export default function GameScreen() {
             <View className="absolute top-4 left-4 z-20">
               <View className="bg-[#F5E6D3]/90 rounded-2xl px-4 py-2">
                 <Text className="text-[#5C4A3A] text-2xl font-bold">
-                  {fruitsCollected}/{modeConfig.fruitGoal}
+                  {fruitsCollected}
                 </Text>
               </View>
             </View>
 
-            {/* UI Top Center: Indicador de progreso con fresas */}
-            <View className="absolute top-4 left-0 right-0 z-20 items-center">
-              <View className="bg-[#F5E6D3]/90 rounded-2xl px-4 py-2">
-                <FruitProgressIndicator
-                  collected={fruitsCollected}
-                  goal={modeConfig.fruitGoal}
-                />
+            {/* UI Top Center: Indicador de progreso con fresas (solo en modo resistencia) */}
+            {gameMode === "resistance" && (
+              <View className="absolute top-4 left-0 right-0 z-20 items-center">
+                <View className="bg-[#F5E6D3]/90 rounded-2xl px-4 py-2">
+                  <FruitProgressIndicator
+                    collected={fruitsCollected}
+                    goal={modeConfig.fruitGoal}
+                  />
+                </View>
               </View>
-            </View>
+            )}
 
             {/* UI Top Right: Fuerza actual */}
             <View className="absolute top-4 right-4 z-20">
