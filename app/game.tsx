@@ -131,6 +131,11 @@ export default function GameScreen() {
   const [fruitsCollected, setFruitsCollected] = useState(0);
   const [collisionCount, setCollisionCount] = useState(0);
   
+  // Refs para estadísticas finales (evitar problemas de timing con estados)
+  const finalStatsRef = useRef({ maxForce: 0, avgForce: 0 });
+  const shouldNavigateToResults = useRef(false);
+  const gamePhaseRef = useRef<GamePhase>(gamePhase);
+  
   // Estado de escenarios
   const [currentSceneIndex, setCurrentSceneIndex] = useState(0);
   const [isNightTransition, setIsNightTransition] = useState(false);
@@ -141,12 +146,12 @@ export default function GameScreen() {
 
   const currentScene = SCENES[modeConfig.scenes[currentSceneIndex]];
 
-  // Navegar a resultados cuando el juego termina
+  // Navegar a resultados cuando el juego termina Y las estadísticas están listas
   useEffect(() => {
-    if (gamePhase === "finished") {
-      console.log('[game.tsx] Navegando a resultados con:', {
-        maxForceReached,
-        averageForce,
+    if (shouldNavigateToResults.current && gamePhase === "finished") {
+      console.log('[game.tsx] Navegando a resultados con refs:', {
+        maxForce: finalStatsRef.current.maxForce,
+        avgForce: finalStatsRef.current.avgForce,
         fruitsCollected,
         collisionCount,
       });
@@ -155,15 +160,18 @@ export default function GameScreen() {
         pathname: "/results",
         params: {
           mode: gameMode,
-          maxForce: maxForceReached.toFixed(1),
-          avgForce: averageForce.toFixed(1),
+          maxForce: finalStatsRef.current.maxForce.toFixed(1),
+          avgForce: finalStatsRef.current.avgForce.toFixed(1),
           timeElapsed: timeElapsed.toString(),
           fruitsCollected: fruitsCollected.toString(),
           collisions: collisionCount.toString(),
         },
       });
+      
+      // Reset flag
+      shouldNavigateToResults.current = false;
     }
-  }, [gamePhase, maxForceReached, averageForce, fruitsCollected, collisionCount, timeElapsed]);
+  }, [gamePhase, fruitsCollected, collisionCount, timeElapsed]);
 
   // Verificar conexión al montar
   useEffect(() => {
@@ -369,6 +377,7 @@ export default function GameScreen() {
       isCalibrating.current = false;
       setCalibrationData(calibration);
       setGamePhase("ready");
+      gamePhaseRef.current = "ready";
 
       if (Platform.OS !== "web") {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
@@ -398,6 +407,7 @@ export default function GameScreen() {
 
       setIsPlaying(true);
       setGamePhase("playing");
+      gamePhaseRef.current = "playing";
       setMaxForceReached(0);
       setAverageForce(0);
       setForceHistory([]);
@@ -456,6 +466,7 @@ export default function GameScreen() {
       await tindeqService.stopMeasurement();
       setIsPlaying(false);
       setGamePhase("finished");
+      gamePhaseRef.current = "finished";
 
     } catch (error) {
       console.error("Error finalizando juego:", error);
@@ -674,8 +685,21 @@ export default function GameScreen() {
               onGameOver={handleCollision}
               isPaused={!isPlaying}
               onForceStats={(stats) => {
+                console.log('[game.tsx] onForceStats recibido:', stats);
+                // Guardar en estados para mostrar en UI
                 setMaxForceReached(stats.maxForce);
                 setAverageForce(stats.avgForce);
+                // Guardar en ref para navegación (evita problemas de timing)
+                finalStatsRef.current = {
+                  maxForce: stats.maxForce,
+                  avgForce: stats.avgForce,
+                };
+                // Activar navegación si el juego ya terminó
+                if (gamePhaseRef.current === "finished") {
+                  shouldNavigateToResults.current = true;
+                  // Forzar re-render del useEffect
+                  setTimeElapsed(prev => prev);
+                }
               }}
               onCollision={() => setCollisionCount(prev => prev + 1)}
             />

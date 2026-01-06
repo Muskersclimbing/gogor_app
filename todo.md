@@ -1064,3 +1064,21 @@
 - [x] Agregar logs de debug para verificar valores antes de navegar
 - [ ] Compilar APK para probar
 - [ ] Verificar que estadísticas finales muestran valores correctos
+
+## APK CON ESTADÍSTICAS FINALES CORREGIDAS
+- [x] Build ID: 69844028-d747-40f2-bad7-cfb2ca625015
+- [x] URL: https://expo.dev/accounts/muskersclimbing/projects/muskers_app/builds/69844028-d747-40f2-bad7-cfb2ca625015
+- [x] Navegación movida a useEffect que espera actualización de stats ✅
+- [x] maxForceReached y averageForce en dependencias ✅
+- [x] Logs de debug para verificar valores ✅
+- [x] QR: /home/ubuntu/muskers_app/expo-qr-code.png
+
+## FIX ESTADÍSTICAS CON REFS (6 ENE 2026)
+- [x] Identificar problema: estados no se actualizan a tiempo antes de navegar
+- [x] Crear finalStatsRef para guardar maxForce y avgForce
+- [x] Crear shouldNavigateToResults flag
+- [x] Crear gamePhaseRef para sincronizar con gamePhase
+- [x] Modificar onForceStats para guardar en ref y activar navegación
+- [x] Actualizar gamePhaseRef cada vez que se actualiza gamePhase
+- [ ] Compilar APK para probar
+- [ ] Verificar que estadísticas finales muestran valores correctos
