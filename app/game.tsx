@@ -694,12 +694,10 @@ export default function GameScreen() {
                   maxForce: stats.maxForce,
                   avgForce: stats.avgForce,
                 };
-                // Activar navegación si el juego ya terminó
-                if (gamePhaseRef.current === "finished") {
-                  shouldNavigateToResults.current = true;
-                  // Forzar re-render del useEffect
-                  setTimeElapsed(prev => prev);
-                }
+                // Activar navegación (el useEffect verificará si gamePhase === "finished")
+                shouldNavigateToResults.current = true;
+                // Forzar re-render del useEffect
+                setTimeElapsed(prev => prev);
               }}
               onCollision={() => setCollisionCount(prev => prev + 1)}
             />

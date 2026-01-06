@@ -1082,3 +1082,18 @@
 - [x] Actualizar gamePhaseRef cada vez que se actualiza gamePhase
 - [ ] Compilar APK para probar
 - [ ] Verificar que estadísticas finales muestran valores correctos
+
+## APK CON ESTADÍSTICAS USANDO REFS
+- [x] Build ID: 0d6942d9-ab1b-401a-8582-b7dd8a56bea5
+- [x] URL: https://expo.dev/accounts/muskersclimbing/projects/muskers_app/builds/0d6942d9-ab1b-401a-8582-b7dd8a56bea5
+- [x] finalStatsRef guarda valores correctos ✅
+- [x] shouldNavigateToResults activa navegación ✅
+- [x] gamePhaseRef sincroniza con gamePhase ✅
+- [x] QR: /home/ubuntu/muskers_app/expo-qr-code.png
+
+## FIX NAVEGACIÓN COLGADA (6 ENE 2026)
+- [x] Identificar problema: gamePhaseRef no está en "finished" cuando onForceStats se ejecuta
+- [x] Simplificar: activar shouldNavigateToResults siempre en onForceStats
+- [x] useEffect verifica ambas condiciones: gamePhase === "finished" Y shouldNavigateToResults
+- [ ] Compilar APK para probar
+- [ ] Verificar que navega correctamente a estadísticas
