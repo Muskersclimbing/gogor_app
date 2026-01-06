@@ -60,6 +60,9 @@ export function FlappyBirdGame({
   // Ref para acceder a obstacles sin ponerlo en dependencias
   const obstaclesRef = useRef<Obstacle[]>([]);
   
+  // Ref para trackear última colisión (evitar contar múltiples veces la misma)
+  const lastCollisionObstacleId = useRef<number | null>(null);
+  
   // Patrón de frutas
   const fruitPatternRef = useRef<{ pattern: string; percentages: number[] }>({
     pattern: "random",
@@ -233,8 +236,9 @@ export function FlappyBirdGame({
             if (isFrontalCollision) {
               colliding = true;
               collidingObsId = obs.id;
-              // Llamar callback de colisión
-              if (onCollision) {
+              // Llamar callback de colisión solo si es un obstáculo diferente al último
+              if (onCollision && lastCollisionObstacleId.current !== obs.id) {
+                lastCollisionObstacleId.current = obs.id;
                 onCollision();
               }
               break;
@@ -438,6 +442,13 @@ export function FlappyBirdGame({
           birdStyle,
         ]}
       />
+      
+      {/* Cuadro de debug */}
+      <View style={{ position: "absolute", bottom: 10, right: 10, backgroundColor: "rgba(0,0,0,0.7)", padding: 8, borderRadius: 5, zIndex: 1000 }}>
+        <Text style={{ color: "white", fontSize: 10 }}>Lecturas: {forceReadings.current.length}</Text>
+        <Text style={{ color: "white", fontSize: 10 }}>Max: {maxForceRef.current.toFixed(1)} kg</Text>
+        <Text style={{ color: "white", fontSize: 10 }}>Avg: {forceReadings.current.length > 0 ? (forceReadings.current.reduce((a, b) => a + b, 0) / forceReadings.current.length).toFixed(1) : "0.0"} kg</Text>
+      </View>
     </View>
   );
 }

@@ -1032,3 +1032,19 @@
 - [x] Quitar onForceStats de dependencias del useEffect
 - [ ] Compilar APK para probar
 - [ ] Verificar por qué Fuerza Max y Promedio están en 0
+
+## APK CON CONTADOR SIMPLIFICADO Y DEBUG
+- [x] Build ID: 70381421-b8d4-43a3-b6a4-c337fcf17fa4
+- [x] URL: https://expo.dev/accounts/muskersclimbing/projects/muskers_app/builds/70381421-b8d4-43a3-b6a4-c337fcf17fa4
+- [x] Contador sin total ✅
+- [x] FruitProgressIndicator solo en resistance ✅
+- [x] Debug logs para estadísticas ✅
+- [x] QR: /home/ubuntu/muskers_app/expo-qr-code.png
+
+## FIX COLISIONES Y DEBUG VISIBLE (6 ENE 2026)
+- [x] Agregar ref para trackear última colisión
+- [x] Modificar onCollision para contar solo una vez por obstáculo
+- [x] Agregar cuadro de debug visible en esquina inferior derecha
+- [x] Mostrar: Lecturas, Max, Avg en tiempo real
+- [ ] Compilar APK para probar
+- [ ] Verificar por qué las estadísticas siguen en 0
