@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef, forwardRef, useImperativeHandle } from "react";
 import { View, Dimensions, Text, Image } from "react-native";
-import { useAudioPlayer } from "expo-audio";
+import { Audio } from "expo-av";
 import Animated, { useSharedValue, useAnimatedStyle, withTiming, useAnimatedReaction, cancelAnimation, runOnJS } from "react-native-reanimated";
 
 const SCREEN_WIDTH = Dimensions.get("window").width;
@@ -85,7 +85,24 @@ export const FlappyBirdGame = forwardRef<FlappyBirdGameRef, FlappyBirdGameProps>
   const lastCollisionObstacleId = useRef<number | null>(null);
   
   // Audio player para sonido de recolección
-  const collectSound = useAudioPlayer(require("@/assets/audio/fruit_collect.wav"));
+  const collectSoundRef = useRef<any>(null);
+  
+  useEffect(() => {
+    const loadSound = async () => {
+      try {
+        await Audio.setAudioModeAsync({ playsInSilentModeIOS: true });
+        const { sound } = await Audio.Sound.createAsync(require("@/assets/audio/fruit_collect.wav"));
+        collectSoundRef.current = sound;
+      } catch (error) {
+        console.log("Error loading collect sound:", error);
+      }
+    };
+    loadSound();
+    
+    return () => {
+      collectSoundRef.current?.unloadAsync().catch(() => {});
+    };
+  }, []);
   
   // Patrón de frutas
   const fruitPatternRef = useRef<{ pattern: string; percentages: number[] }>({
@@ -322,12 +339,17 @@ export const FlappyBirdGame = forwardRef<FlappyBirdGameRef, FlappyBirdGameProps>
           setCollectedFruits(newTotal);
           onFruitCollected?.(newTotal);
           // Reproducir sonido de recolección
-          try {
-            collectSound.currentTime = 0; // Reiniciar desde el inicio
-            collectSound.play();
-          } catch (e) {
-            console.log("Error playing collect sound:", e);
-          }
+          runOnJS(() => {
+            try {
+              if (collectSoundRef.current) {
+                collectSoundRef.current.replayAsync().catch((e: any) => {
+                  console.log("Error playing collect sound:", e);
+                });
+              }
+            } catch (e) {
+              console.log("Error playing collect sound:", e);
+            }
+          })();
         }
         
         return updated;

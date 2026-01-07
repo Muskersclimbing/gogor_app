@@ -1148,3 +1148,8 @@
 - [x] Sonido de recolección no funciona - reiniciar audio antes de play
 - [x] Tiempo aparece en 0 cuando se completa la partida entera - calcular desde duración
 - [x] Fondo de paisaje no visible (está detrás, se ve fragmento en status bar) - eliminar overlay y transparencia completa
+
+
+## BUGS PENDIENTES - Build f220328a
+- [ ] Sonido de recolección no se escucha (collectSound.play() no funciona)
+- [ ] Fondo de paisaje no visible (solo fragmento en status bar, azul de fondo)
