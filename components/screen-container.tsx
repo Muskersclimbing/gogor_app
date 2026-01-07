@@ -51,8 +51,7 @@ export function ScreenContainer({
     <View
       className={cn(
         "flex-1",
-        "bg-background",
-        containerClassName
+        containerClassName || "bg-background"
       )}
       {...props}
     >

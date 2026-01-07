@@ -1113,3 +1113,43 @@
 - [x] useEffect se ejecuta cuando onForceStats se llama ✅
 - [x] Navegación a estadísticas debería funcionar ✅
 - [x] QR: /home/ubuntu/muskers_app/expo-qr-code.png
+
+
+## SEGUNDO ESCENARIO
+- [ ] Diseñar concepto del segundo escenario (bosque, desierto, noche, etc.)
+- [ ] Generar imagen de fondo para el segundo escenario
+- [ ] Implementar transición entre escenarios
+- [ ] Probar que ambos escenarios funcionan correctamente
+
+## SISTEMA DE INTERVALOS Y TRANSICIONES
+- [ ] Implementar cambio de escenario cada 90 segundos (1:30)
+- [ ] Implementar transición nocturna de 10 segundos entre escenarios
+- [ ] Durante descanso: sin frutas, sin obstáculos, mensaje "Descansa"
+- [ ] Después del descanso: nuevo escenario aleatorio
+- [ ] Aplicar a ambos modos (Rápido y Total)
+
+## SIMPLIFICACIÓN DEL JUEGO
+- [ ] Eliminar cambios de escenario (un solo escenario durante todo el juego)
+- [ ] Eliminar transiciones nocturnas completamente
+- [ ] Eliminar descansos entre intervalos
+- [ ] Juego continuo de principio a fin
+- [ ] Calibración con fondo estático (sin cambios)
+
+## PROBLEMAS VISUALES A CORREGIR
+- [x] Fondo azul sin paisaje - verificar carga de imágenes de escenario
+- [x] Frutas desproporcionales - ajustar tamaño individual de cada tipo
+- [x] Frutas sin color (solo línea) - verificar sprites PNG
+- [x] Pájaro estático cutre - reemplazar por GIF animado con aleteo
+- [ ] Agregar efecto de sonido al recolectar frutas
+
+
+## BUGS REPORTADOS - Build d596d938
+- [x] Pájaro muy pequeño - aumentar 50% el tamaño
+- [x] Sonido de recolección no funciona - reiniciar audio antes de play
+- [x] Tiempo aparece en 0 cuando se completa la partida entera - calcular desde duración
+- [x] Fondo de paisaje no visible (está detrás, se ve fragmento en status bar) - eliminar overlay y transparencia completa
+
+
+## BUGS PENDIENTES - Build f220328a
+- [ ] Sonido de recolección no se escucha (collectSound.play() no funciona)
+- [ ] Fondo de paisaje no visible (solo fragmento en status bar, azul de fondo)

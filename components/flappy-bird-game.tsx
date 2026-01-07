@@ -1,15 +1,31 @@
 import React, { useEffect, useState, useRef, forwardRef, useImperativeHandle } from "react";
 import { View, Dimensions, Text, Image } from "react-native";
+import { Audio } from "expo-av";
 import Animated, { useSharedValue, useAnimatedStyle, withTiming, useAnimatedReaction, cancelAnimation, runOnJS } from "react-native-reanimated";
 
 const SCREEN_WIDTH = Dimensions.get("window").width;
 const SCREEN_HEIGHT = Dimensions.get("window").height;
 
-const BIRD_SIZE = 50;
+const BIRD_SIZE = 75; // Aumentado 50% (era 50)
 const BIRD_X = 50; // Posición X fija del pájaro
 const OBSTACLE_WIDTH = 60;
 const OBSTACLE_GAP = 200;
 const OBSTACLE_SPEED = 3;
+
+type FruitType = "apple" | "banana" | "cherry" | "mandarin" | "orange" | "peach" | "pear" | "strawberry" | "watermelon";
+
+// Mapeo de tipos de fruta a imágenes
+const FRUIT_IMAGES: Record<FruitType, any> = {
+  apple: require("@/assets/sprites/apple.png"),
+  banana: require("@/assets/sprites/banana.png"),
+  cherry: require("@/assets/sprites/cherry.png"),
+  mandarin: require("@/assets/sprites/mandarin.png"),
+  orange: require("@/assets/sprites/orange.png"),
+  peach: require("@/assets/sprites/peach.png"),
+  pear: require("@/assets/sprites/pear.png"),
+  strawberry: require("@/assets/sprites/strawberry.png"),
+  watermelon: require("@/assets/sprites/watermelon.png"),
+};
 
 interface Obstacle {
   id: number;
@@ -22,7 +38,7 @@ interface Fruit {
   x: number;
   y: number;
   collected: boolean;
-  type: string;
+  type: FruitType;
 }
 
 interface FlappyBirdGameProps {
@@ -67,6 +83,26 @@ export const FlappyBirdGame = forwardRef<FlappyBirdGameRef, FlappyBirdGameProps>
   
   // Ref para trackear última colisión (evitar contar múltiples veces la misma)
   const lastCollisionObstacleId = useRef<number | null>(null);
+  
+  // Audio player para sonido de recolección
+  const collectSoundRef = useRef<any>(null);
+  
+  useEffect(() => {
+    const loadSound = async () => {
+      try {
+        await Audio.setAudioModeAsync({ playsInSilentModeIOS: true });
+        const { sound } = await Audio.Sound.createAsync(require("@/assets/audio/fruit_collect.wav"));
+        collectSoundRef.current = sound;
+      } catch (error) {
+        console.log("Error loading collect sound:", error);
+      }
+    };
+    loadSound();
+    
+    return () => {
+      collectSoundRef.current?.unloadAsync().catch(() => {});
+    };
+  }, []);
   
   // Patrón de frutas
   const fruitPatternRef = useRef<{ pattern: string; percentages: number[] }>({
@@ -117,7 +153,7 @@ export const FlappyBirdGame = forwardRef<FlappyBirdGameRef, FlappyBirdGameProps>
           randomY = obs.gapY + OBSTACLE_GAP / 2;
         }
         
-        const fruitTypes = ["apple", "banana", "cherry", "mandarin", "orange", "peach", "pear", "strawberry", "watermelon"];
+        const fruitTypes: FruitType[] = ["apple", "banana", "cherry", "mandarin", "orange", "peach", "pear", "strawberry", "watermelon"];
         const randomType = fruitTypes[Math.floor(Math.random() * fruitTypes.length)];
         
         initialFruits.push({
@@ -302,6 +338,18 @@ export const FlappyBirdGame = forwardRef<FlappyBirdGameRef, FlappyBirdGameProps>
           const newTotal = collectedFruits + newCollected;
           setCollectedFruits(newTotal);
           onFruitCollected?.(newTotal);
+          // Reproducir sonido de recolección
+          runOnJS(() => {
+            try {
+              if (collectSoundRef.current) {
+                collectSoundRef.current.replayAsync().catch((e: any) => {
+                  console.log("Error playing collect sound:", e);
+                });
+              }
+            } catch (e) {
+              console.log("Error playing collect sound:", e);
+            }
+          })();
         }
         
         return updated;
@@ -360,7 +408,7 @@ export const FlappyBirdGame = forwardRef<FlappyBirdGameRef, FlappyBirdGameProps>
                     randomY = newObs.gapY + OBSTACLE_GAP / 2;
                   }
                   
-                  const fruitTypes = ["apple", "banana", "cherry", "mandarin", "orange", "peach", "pear", "strawberry", "watermelon"];
+                  const fruitTypes: FruitType[] = ["apple", "banana", "cherry", "mandarin", "orange", "peach", "pear", "strawberry", "watermelon"];
                   const randomType = fruitTypes[Math.floor(Math.random() * fruitTypes.length)];
                   
                   newFruits.push({
@@ -400,7 +448,7 @@ export const FlappyBirdGame = forwardRef<FlappyBirdGameRef, FlappyBirdGameProps>
   const BIRD_COLOR = "#FFD700"; // Dorado
   
   return (
-    <View style={{ flex: 1, backgroundColor: "transparent" }}>
+    <View style={{ flex: 1, backgroundColor: "#87CEEB" }}>
       
       {/* Obstáculos */}
       {obstacles.map(obs => {
@@ -440,38 +488,43 @@ export const FlappyBirdGame = forwardRef<FlappyBirdGameRef, FlappyBirdGameProps>
       
       {/* Frutas */}
       {fruits.map(fruit => {
-        const fruitImages: Record<string, any> = {
-          apple: require("@/assets/sprites/apple.png"),
-          banana: require("@/assets/sprites/banana.png"),
-          cherry: require("@/assets/sprites/cherry.png"),
-          mandarin: require("@/assets/sprites/mandarin.png"),
-          orange: require("@/assets/sprites/orange.png"),
-          peach: require("@/assets/sprites/peach.png"),
-          pear: require("@/assets/sprites/pear.png"),
-          strawberry: require("@/assets/sprites/strawberry.png"),
-          watermelon: require("@/assets/sprites/watermelon.png"),
+        // Tamaños ajustados por tipo de fruta para mejor proporción
+        const fruitSizes: Record<FruitType, number> = {
+          watermelon: 40,
+          apple: 35,
+          orange: 35,
+          peach: 35,
+          pear: 35,
+          banana: 38,
+          mandarin: 32,
+          strawberry: 32,
+          cherry: 35,
         };
-        const fruitType = (fruit as any).type || "apple";
-        const fruitImage = fruitImages[fruitType] || fruitImages.apple;
+        const size = fruitSizes[fruit.type];
+        const halfSize = size / 2;
         
         return !fruit.collected && (
-          <Image
+          <View
             key={fruit.id}
-            source={fruitImage}
             style={{
               position: "absolute",
-              left: fruit.x - 20,
-              top: fruit.y - 20,
-              width: 40,
-              height: 40,
+              left: fruit.x - halfSize,
+              top: fruit.y - halfSize,
+              width: size,
+              height: size,
             }}
-          />
+          >
+            <Image
+              source={FRUIT_IMAGES[fruit.type]}
+              style={{ width: size, height: size }}
+              resizeMode="contain"
+            />
+          </View>
         );
       })}
       
       {/* Pájaro */}
-      <Animated.Image
-        source={require("@/assets/sprites/bird.png")}
+      <Animated.View
         style={[
           {
             position: "absolute",
@@ -483,14 +536,13 @@ export const FlappyBirdGame = forwardRef<FlappyBirdGameRef, FlappyBirdGameProps>
           },
           birdStyle,
         ]}
-      />
-      
-      {/* Cuadro de debug - esquina superior izquierda */}
-      <View style={{ position: "absolute", top: 10, left: 10, backgroundColor: "rgba(0,0,0,0.7)", padding: 8, borderRadius: 5, zIndex: 10 }}>
-        <Text style={{ color: "white", fontSize: 10 }}>Lecturas: {forceReadings.current.length}</Text>
-        <Text style={{ color: "white", fontSize: 10 }}>Max: {maxForceRef.current.toFixed(1)} kg</Text>
-        <Text style={{ color: "white", fontSize: 10 }}>Avg: {forceReadings.current.length > 0 ? (forceReadings.current.reduce((a, b) => a + b, 0) / forceReadings.current.length).toFixed(1) : "0.0"} kg</Text>
-      </View>
+      >
+        <Image
+          source={require("@/assets/sprites/bird.gif")}
+          style={{ width: BIRD_SIZE, height: BIRD_SIZE }}
+          resizeMode="contain"
+        />
+      </Animated.View>
     </View>
   );
 });
