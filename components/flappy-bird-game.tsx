@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef, forwardRef, useImperativeHandle } from "react";
-import { View, Dimensions, Text } from "react-native";
+import { View, Dimensions, Text, Image } from "react-native";
 import Animated, { useSharedValue, useAnimatedStyle, withTiming, useAnimatedReaction, cancelAnimation, runOnJS } from "react-native-reanimated";
 
 const SCREEN_WIDTH = Dimensions.get("window").width;
@@ -10,6 +10,21 @@ const BIRD_X = 50; // Posición X fija del pájaro
 const OBSTACLE_WIDTH = 60;
 const OBSTACLE_GAP = 200;
 const OBSTACLE_SPEED = 3;
+
+type FruitType = "apple" | "banana" | "cherry" | "mandarin" | "orange" | "peach" | "pear" | "strawberry" | "watermelon";
+
+// Mapeo de tipos de fruta a imágenes
+const FRUIT_IMAGES: Record<FruitType, any> = {
+  apple: require("@/assets/sprites/apple.png"),
+  banana: require("@/assets/sprites/banana.png"),
+  cherry: require("@/assets/sprites/cherry.png"),
+  mandarin: require("@/assets/sprites/mandarin.png"),
+  orange: require("@/assets/sprites/orange.png"),
+  peach: require("@/assets/sprites/peach.png"),
+  pear: require("@/assets/sprites/pear.png"),
+  strawberry: require("@/assets/sprites/strawberry.png"),
+  watermelon: require("@/assets/sprites/watermelon.png"),
+};
 
 interface Obstacle {
   id: number;
@@ -22,6 +37,7 @@ interface Fruit {
   x: number;
   y: number;
   collected: boolean;
+  type: FruitType;
 }
 
 interface FlappyBirdGameProps {
@@ -116,11 +132,15 @@ export const FlappyBirdGame = forwardRef<FlappyBirdGameRef, FlappyBirdGameProps>
           randomY = obs.gapY + OBSTACLE_GAP / 2;
         }
         
+        const fruitTypes: FruitType[] = ["apple", "banana", "cherry", "mandarin", "orange", "peach", "pear", "strawberry", "watermelon"];
+        const randomType = fruitTypes[Math.floor(Math.random() * fruitTypes.length)];
+        
         initialFruits.push({
           id: index * 10 + i,
           x: randomX,
           y: randomY,
           collected: false,
+          type: randomType,
         });
       }
     });
@@ -355,11 +375,15 @@ export const FlappyBirdGame = forwardRef<FlappyBirdGameRef, FlappyBirdGameProps>
                     randomY = newObs.gapY + OBSTACLE_GAP / 2;
                   }
                   
+                  const fruitTypes: FruitType[] = ["apple", "banana", "cherry", "mandarin", "orange", "peach", "pear", "strawberry", "watermelon"];
+                  const randomType = fruitTypes[Math.floor(Math.random() * fruitTypes.length)];
+                  
                   newFruits.push({
                     id: fruitIdCounter++,
                     x: randomX,
                     y: randomY,
                     collected: false,
+                    type: randomType,
                   });
                 }
                 return [...prevFruits, ...newFruits];
@@ -440,12 +464,14 @@ export const FlappyBirdGame = forwardRef<FlappyBirdGameRef, FlappyBirdGameProps>
               top: fruit.y - 15,
               width: 30,
               height: 30,
-              backgroundColor: "#FF6B6B",
-              borderRadius: 15,
-              borderWidth: 2,
-              borderColor: "#FF0000",
             }}
-          />
+          >
+            <Image
+              source={FRUIT_IMAGES[fruit.type]}
+              style={{ width: 30, height: 30 }}
+              resizeMode="contain"
+            />
+          </View>
         )
       ))}
       
@@ -458,15 +484,17 @@ export const FlappyBirdGame = forwardRef<FlappyBirdGameRef, FlappyBirdGameProps>
             top: 0,
             width: BIRD_SIZE,
             height: BIRD_SIZE,
-            backgroundColor: BIRD_COLOR,
-            borderRadius: BIRD_SIZE / 2,
-            borderWidth: 3,
-            borderColor: "#000",
             zIndex: 100,
           },
           birdStyle,
         ]}
-      />
+      >
+        <Image
+          source={require("@/assets/sprites/bird.png")}
+          style={{ width: BIRD_SIZE, height: BIRD_SIZE }}
+          resizeMode="contain"
+        />
+      </Animated.View>
     </View>
   );
 });

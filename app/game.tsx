@@ -73,16 +73,15 @@ const MODE_CONFIG: Record<GameMode, {
     title: "Calentamiento Rápido",
     duration: 180, // 3 minutos
     fruitGoal: 15,
-    scenes: [] as SceneName[], // Se asignará aleatoriamente
+    scenes: ["yosemite"] as SceneName[], // Un solo escenario fijo
     hasNightTransition: false,
   },
   total: {
     title: "Calentamiento Total",
     duration: 300, // 5 minutos
     fruitGoal: 25,
-    scenes: [] as SceneName[], // Se asignará aleatoriamente
-    hasNightTransition: true,
-    nightAt: 120, // Transición nocturna a los 2 minutos
+    scenes: ["yosemite"] as SceneName[], // Un solo escenario fijo
+    hasNightTransition: false, // Sin transiciones nocturnas
   },
 };
 
@@ -97,20 +96,8 @@ export default function GameScreen() {
   const params = useLocalSearchParams<{ mode?: string }>();
   const gameMode = (params.mode || "quick") as GameMode;
   
-  // Asignar escenarios aleatorios si no están definidos
-  const modeConfig = {
-    ...MODE_CONFIG[gameMode],
-    scenes: MODE_CONFIG[gameMode].scenes.length > 0 
-      ? MODE_CONFIG[gameMode].scenes 
-      : getRandomScenes(gameMode === "quick" ? 1 : 2),
-  };
-  
-  // Función para obtener escenarios aleatorios
-  function getRandomScenes(count: number): SceneName[] {
-    const allScenes: SceneName[] = ["yosemite", "monument_valley", "albarracin", "fontainebleau"];
-    const shuffled = [...allScenes].sort(() => Math.random() - 0.5);
-    return shuffled.slice(0, count);
-  }
+  // Un solo escenario fijo (yosemite)
+  const modeConfig = MODE_CONFIG[gameMode];
   
   // Servicio de audio
   const audioService = useAudioService();
@@ -143,10 +130,8 @@ export default function GameScreen() {
   const [forceRerender, setForceRerender] = useState(0);
   const flappyBirdRef = useRef<FlappyBirdGameRef>(null);
   
-  // Estado de escenarios
-  const [currentSceneIndex, setCurrentSceneIndex] = useState(0);
-  const [isNightTransition, setIsNightTransition] = useState(false);
-  const [nightTransitionTime, setNightTransitionTime] = useState(0);
+  // Estado de escenarios - un solo escenario fijo
+  const [currentSceneIndex] = useState(0); // Siempre 0, un solo escenario
   
   // Estado de resistencia
   const [lives, setLives] = useState(modeConfig.lives || 0);
@@ -195,16 +180,7 @@ export default function GameScreen() {
     if (!isPlaying) return;
 
     const timer = setInterval(() => {
-      setTimeElapsed((prev) => {
-        const newElapsed = prev + 1;
-        
-        // Verificar si es momento de cambiar de escenario (cada 90 segundos)
-        if (newElapsed > 0 && newElapsed % 90 === 0) {
-          startNightTransition();
-        }
-        
-        return newElapsed;
-      });
+      setTimeElapsed((prev) => prev + 1);
       
       if (modeConfig.duration > 0) {
         setTimeRemaining((prev) => {
@@ -239,24 +215,7 @@ export default function GameScreen() {
     return () => clearInterval(timer);
   }, [gamePhase, calibrationTime]);
 
-  // Cronómetro de transición nocturna (10 segundos)
-  useEffect(() => {
-    if (!isNightTransition || nightTransitionTime === 0) {
-      return;
-    }
-
-    const timer = setInterval(() => {
-      setNightTransitionTime((prev) => {
-        if (prev <= 1) {
-          endNightTransition();
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-
-    return () => clearInterval(timer);
-  }, [isNightTransition, nightTransitionTime]);
+  // Transiciones nocturnas eliminadas - juego continuo
 
   const handleForceData = (data: ForceData) => {
     const force = data.weight;
@@ -268,7 +227,7 @@ export default function GameScreen() {
     }
 
     // Durante el juego, actualizar estadísticas
-    if (gamePhase === "playing" && !isNightTransition) {
+    if (gamePhase === "playing") {
       if (force > maxForceReached) {
         setMaxForceReached(force);
       }
@@ -406,37 +365,7 @@ export default function GameScreen() {
     }
   };
 
-  const startNightTransition = () => {
-    setIsNightTransition(true);
-    setNightTransitionTime(10);
-    setIsPlaying(false);
-    
-    if (Platform.OS !== "web") {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    }
-  };
-
-  const endNightTransition = () => {
-    setIsNightTransition(false);
-    
-    // Seleccionar nuevo escenario aleatorio
-    const allScenes: SceneName[] = ["yosemite", "monument_valley", "albarracin", "fontainebleau"];
-    const currentScene = modeConfig.scenes[currentSceneIndex];
-    // Filtrar el escenario actual para evitar repetir
-    const availableScenes = allScenes.filter(s => s !== currentScene);
-    const randomIndex = Math.floor(Math.random() * availableScenes.length);
-    const newScene = availableScenes[randomIndex];
-    
-    // Actualizar modeConfig.scenes con el nuevo escenario
-    modeConfig.scenes[currentSceneIndex + 1] = newScene;
-    setCurrentSceneIndex((prev) => prev + 1);
-    
-    setIsPlaying(true);
-    
-    if (Platform.OS !== "web") {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    }
-  };
+  // Funciones de transición nocturna eliminadas - juego continuo
 
   const handleStopGame = async () => {
     // Detener música
@@ -548,7 +477,7 @@ export default function GameScreen() {
     ? Math.min(Math.max(((batteryVoltage - 3000) / 1200) * 100, 0), 100).toFixed(0)
     : "?";
 
-  const backgroundImage = isNightTransition ? currentScene.nightImage : currentScene.dayImage;
+  const backgroundImage = currentScene.dayImage; // Siempre imagen de día, sin transiciones nocturnas
 
   return (
     <ImageBackground
@@ -627,26 +556,8 @@ export default function GameScreen() {
           </View>
         )}
 
-        {/* FASE: TRANSICIÓN NOCTURNA */}
-        {isNightTransition && (
-          <View className="flex-1 justify-center items-center">
-            <View className="items-center">
-              <Text className="text-white text-6xl mb-4">🌙</Text>
-              <Text className="text-white text-3xl font-bold mb-2">
-                Descansa...
-              </Text>
-              <Text className="text-white/80 text-xl mb-8">
-                Respira profundo
-              </Text>
-              <Text className="text-white text-5xl font-bold">
-                {nightTransitionTime}
-              </Text>
-            </View>
-          </View>
-        )}
-
         {/* FASE: JUGANDO */}
-        {gamePhase === "playing" && !isNightTransition && calibrationData && (
+        {gamePhase === "playing" && calibrationData && (
           <View className="flex-1">
             {/* UI Top Left: Contador de frutos */}
             <View className="absolute top-4 left-4 z-20">

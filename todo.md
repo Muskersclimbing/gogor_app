@@ -1127,3 +1127,10 @@
 - [ ] Durante descanso: sin frutas, sin obstáculos, mensaje "Descansa"
 - [ ] Después del descanso: nuevo escenario aleatorio
 - [ ] Aplicar a ambos modos (Rápido y Total)
+
+## SIMPLIFICACIÓN DEL JUEGO
+- [ ] Eliminar cambios de escenario (un solo escenario durante todo el juego)
+- [ ] Eliminar transiciones nocturnas completamente
+- [ ] Eliminar descansos entre intervalos
+- [ ] Juego continuo de principio a fin
+- [ ] Calibración con fondo estático (sin cambios)
