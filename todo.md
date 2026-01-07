@@ -1120,3 +1120,10 @@
 - [ ] Generar imagen de fondo para el segundo escenario
 - [ ] Implementar transición entre escenarios
 - [ ] Probar que ambos escenarios funcionan correctamente
+
+## SISTEMA DE INTERVALOS Y TRANSICIONES
+- [ ] Implementar cambio de escenario cada 90 segundos (1:30)
+- [ ] Implementar transición nocturna de 10 segundos entre escenarios
+- [ ] Durante descanso: sin frutas, sin obstáculos, mensaje "Descansa"
+- [ ] Después del descanso: nuevo escenario aleatorio
+- [ ] Aplicar a ambos modos (Rápido y Total)

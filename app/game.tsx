@@ -195,7 +195,16 @@ export default function GameScreen() {
     if (!isPlaying) return;
 
     const timer = setInterval(() => {
-      setTimeElapsed((prev) => prev + 1);
+      setTimeElapsed((prev) => {
+        const newElapsed = prev + 1;
+        
+        // Verificar si es momento de cambiar de escenario (cada 90 segundos)
+        if (newElapsed > 0 && newElapsed % 90 === 0) {
+          startNightTransition();
+        }
+        
+        return newElapsed;
+      });
       
       if (modeConfig.duration > 0) {
         setTimeRemaining((prev) => {
@@ -206,15 +215,10 @@ export default function GameScreen() {
           return prev - 1;
         });
       }
-
-      // Verificar transición nocturna (solo en Total)
-      if (gameMode === "total" && timeElapsed === modeConfig.nightAt) {
-        startNightTransition();
-      }
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [isPlaying, timeElapsed]);
+  }, [isPlaying]);
 
   // Cronómetro de calibración (5 segundos)
   useEffect(() => {
@@ -414,7 +418,19 @@ export default function GameScreen() {
 
   const endNightTransition = () => {
     setIsNightTransition(false);
+    
+    // Seleccionar nuevo escenario aleatorio
+    const allScenes: SceneName[] = ["yosemite", "monument_valley", "albarracin", "fontainebleau"];
+    const currentScene = modeConfig.scenes[currentSceneIndex];
+    // Filtrar el escenario actual para evitar repetir
+    const availableScenes = allScenes.filter(s => s !== currentScene);
+    const randomIndex = Math.floor(Math.random() * availableScenes.length);
+    const newScene = availableScenes[randomIndex];
+    
+    // Actualizar modeConfig.scenes con el nuevo escenario
+    modeConfig.scenes[currentSceneIndex + 1] = newScene;
     setCurrentSceneIndex((prev) => prev + 1);
+    
     setIsPlaying(true);
     
     if (Platform.OS !== "web") {
