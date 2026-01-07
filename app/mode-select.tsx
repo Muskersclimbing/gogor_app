@@ -5,7 +5,7 @@ import * as Haptics from "expo-haptics";
 import { ScreenContainer } from "@/components/screen-container";
 import { useColors } from "@/hooks/use-colors";
 
-export type GameMode = "quick" | "total";
+export type GameMode = "quick" | "total" | "resistance";
 
 interface ModeCardProps {
   title: string;
@@ -104,6 +104,16 @@ export default function ModeSelectScreen() {
           description="Sesión completa de 5 minutos con 2 escenarios y transición nocturna. Calentamiento completo para una sesión de escalada."
           icon="🌄"
           mode="total"
+          onSelect={handleModeSelect}
+        />
+
+        {/* Modo: Resistencia */}
+        <ModeCard
+          title="Resistencia"
+          duration="3 vidas"
+          description="Desafío de resistencia con 3 vidas. Recorre los 4 escenarios icónicos con transiciones nocturnas. Pierdes una vida si no mantienes la zona objetivo."
+          icon="💪"
+          mode="resistance"
           onSelect={handleModeSelect}
         />
 

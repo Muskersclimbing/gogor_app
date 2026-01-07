@@ -23,7 +23,6 @@ export default function ResultsScreen() {
     avgForce?: string;
     timeElapsed?: string;
     fruitsCollected?: string;
-    completed?: string;
   }>();
 
   const modeNames: Record<string, string> = {
@@ -37,7 +36,6 @@ export default function ResultsScreen() {
   const avgForce = parseFloat(params.avgForce || "0");
   const timeElapsed = parseInt(params.timeElapsed || "0", 10);
   const fruitsCollected = parseInt(params.fruitsCollected || "0", 10);
-  const wasCompleted = params.completed === "true";
   const minutes = Math.floor(timeElapsed / 60);
   const seconds = timeElapsed % 60;
 
@@ -98,14 +96,12 @@ export default function ResultsScreen() {
         </View>
       </View>
 
-      {/* Mensaje motivacional - solo si completó el ejercicio */}
-      {wasCompleted && (
-        <View className="bg-success/10 border border-success/30 rounded-2xl p-4 mb-6">
-          <Text className="text-success text-center font-medium">
-            ✓ Excelente trabajo. Tus dedos están listos para escalar.
-          </Text>
-        </View>
-      )}
+      {/* Mensaje motivacional */}
+      <View className="bg-success/10 border border-success/30 rounded-2xl p-4 mb-6">
+        <Text className="text-success text-center font-medium">
+          ✓ Excelente trabajo. Tus dedos están listos para escalar.
+        </Text>
+      </View>
 
       {/* Botones */}
       <View className="gap-3">

@@ -13,7 +13,7 @@ import Animated, { FadeIn, FadeOut } from "react-native-reanimated";
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
 
-type GameMode = "quick" | "total";
+type GameMode = "quick" | "total" | "resistance";
 type GamePhase = "calibration" | "ready" | "playing" | "rest" | "finished";
 type SceneName = "yosemite" | "monument_valley" | "albarracin" | "fontainebleau";
 
@@ -28,26 +28,26 @@ const SCENES: Record<SceneName, SceneConfig> = {
   yosemite: {
     name: "yosemite",
     title: "Mountain",
-    dayImage: require("@/assets/images/yosemite-day.png"),
-    nightImage: require("@/assets/images/yosemite-night.png"),
+    dayImage: require("@/assets/backgrounds/mountain_illustration.png"),
+    nightImage: require("@/assets/backgrounds/mountain_illustration.png"),
   },
   monument_valley: {
     name: "monument_valley",
     title: "Desert",
-    dayImage: require("@/assets/images/utah-day.png"),
-    nightImage: require("@/assets/images/utah-night.png"),
+    dayImage: require("@/assets/backgrounds/desert_illustration.png"),
+    nightImage: require("@/assets/backgrounds/desert_illustration.png"),
   },
   albarracin: {
     name: "albarracin",
     title: "Valley",
-    dayImage: require("@/assets/images/albarracin-day.png"),
-    nightImage: require("@/assets/images/albarracin-night.png"),
+    dayImage: require("@/assets/backgrounds/valley_illustration.png"),
+    nightImage: require("@/assets/backgrounds/valley_illustration.png"),
   },
   fontainebleau: {
     name: "fontainebleau",
     title: "Forest",
-    dayImage: require("@/assets/images/fontainebleau-day.png"),
-    nightImage: require("@/assets/images/fontainebleau-night.png"),
+    dayImage: require("@/assets/backgrounds/forest_illustration.png"),
+    nightImage: require("@/assets/backgrounds/forest_illustration.png"),
   },
 };
 
@@ -73,15 +73,24 @@ const MODE_CONFIG: Record<GameMode, {
     title: "Calentamiento Rápido",
     duration: 180, // 3 minutos
     fruitGoal: 15,
-    scenes: ["yosemite"] as SceneName[], // Un solo escenario fijo
+    scenes: ["yosemite"] as SceneName[],
     hasNightTransition: false,
   },
   total: {
     title: "Calentamiento Total",
     duration: 300, // 5 minutos
     fruitGoal: 25,
-    scenes: ["yosemite"] as SceneName[], // Un solo escenario fijo
-    hasNightTransition: false, // Sin transiciones nocturnas
+    scenes: ["yosemite", "monument_valley"] as SceneName[],
+    hasNightTransition: true,
+    nightAt: 120, // Transición nocturna a los 2 minutos
+  },
+  resistance: {
+    title: "Resistencia",
+    duration: 0, // Sin límite de tiempo
+    fruitGoal: 999,
+    scenes: ["yosemite", "monument_valley", "albarracin", "fontainebleau"] as SceneName[],
+    hasNightTransition: true,
+    lives: 3,
   },
 };
 
@@ -95,8 +104,6 @@ export default function GameScreen() {
   const router = useRouter();
   const params = useLocalSearchParams<{ mode?: string }>();
   const gameMode = (params.mode || "quick") as GameMode;
-  
-  // Un solo escenario fijo (yosemite)
   const modeConfig = MODE_CONFIG[gameMode];
   
   // Servicio de audio
@@ -130,8 +137,10 @@ export default function GameScreen() {
   const [forceRerender, setForceRerender] = useState(0);
   const flappyBirdRef = useRef<FlappyBirdGameRef>(null);
   
-  // Estado de escenarios - un solo escenario fijo
-  const [currentSceneIndex] = useState(0); // Siempre 0, un solo escenario
+  // Estado de escenarios
+  const [currentSceneIndex, setCurrentSceneIndex] = useState(0);
+  const [isNightTransition, setIsNightTransition] = useState(false);
+  const [nightTransitionTime, setNightTransitionTime] = useState(0);
   
   // Estado de resistencia
   const [lives, setLives] = useState(modeConfig.lives || 0);
@@ -191,10 +200,15 @@ export default function GameScreen() {
           return prev - 1;
         });
       }
+
+      // Verificar transición nocturna (solo en Total)
+      if (gameMode === "total" && timeElapsed === modeConfig.nightAt) {
+        startNightTransition();
+      }
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [isPlaying]);
+  }, [isPlaying, timeElapsed]);
 
   // Cronómetro de calibración (5 segundos)
   useEffect(() => {
@@ -215,7 +229,24 @@ export default function GameScreen() {
     return () => clearInterval(timer);
   }, [gamePhase, calibrationTime]);
 
-  // Transiciones nocturnas eliminadas - juego continuo
+  // Cronómetro de transición nocturna (10 segundos)
+  useEffect(() => {
+    if (!isNightTransition || nightTransitionTime === 0) {
+      return;
+    }
+
+    const timer = setInterval(() => {
+      setNightTransitionTime((prev) => {
+        if (prev <= 1) {
+          endNightTransition();
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [isNightTransition, nightTransitionTime]);
 
   const handleForceData = (data: ForceData) => {
     const force = data.weight;
@@ -227,7 +258,7 @@ export default function GameScreen() {
     }
 
     // Durante el juego, actualizar estadísticas
-    if (gamePhase === "playing") {
+    if (gamePhase === "playing" && !isNightTransition) {
       if (force > maxForceReached) {
         setMaxForceReached(force);
       }
@@ -365,7 +396,25 @@ export default function GameScreen() {
     }
   };
 
-  // Funciones de transición nocturna eliminadas - juego continuo
+  const startNightTransition = () => {
+    setIsNightTransition(true);
+    setNightTransitionTime(10);
+    setIsPlaying(false);
+    
+    if (Platform.OS !== "web") {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
+  };
+
+  const endNightTransition = () => {
+    setIsNightTransition(false);
+    setCurrentSceneIndex((prev) => prev + 1);
+    setIsPlaying(true);
+    
+    if (Platform.OS !== "web") {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    }
+  };
 
   const handleStopGame = async () => {
     // Detener música
@@ -412,21 +461,14 @@ export default function GameScreen() {
       });
       
       // Navegar directamente con valores del ref
-      // completed=true solo si el tiempo llegó a 0 (ejercicio completo)
-      const wasCompleted = modeConfig.duration > 0 ? timeRemaining === 0 : false;
-      
-      // Calcular tiempo transcurrido correctamente
-      const finalTimeElapsed = wasCompleted ? modeConfig.duration : (modeConfig.duration - timeRemaining);
-      
       router.push({
         pathname: "/results",
         params: {
           mode: gameMode,
           maxForce: finalStatsRef.current.maxForce.toFixed(1),
           avgForce: finalStatsRef.current.avgForce.toFixed(1),
-          timeElapsed: finalTimeElapsed.toString(),
+          timeElapsed: timeElapsed.toString(),
           fruitsCollected: fruitsCollected.toString(),
-          completed: wasCompleted.toString(),
         },
       });
 
@@ -447,8 +489,7 @@ export default function GameScreen() {
   };
 
   const handleCollision = () => {
-    // Modo resistance eliminado
-    if (false) {
+    if (gameMode === "resistance") {
       setLives((prev) => {
         const newLives = prev - 1;
         if (newLives <= 0) {
@@ -480,7 +521,7 @@ export default function GameScreen() {
     ? Math.min(Math.max(((batteryVoltage - 3000) / 1200) * 100, 0), 100).toFixed(0)
     : "?";
 
-  const backgroundImage = currentScene.dayImage; // Siempre imagen de día, sin transiciones nocturnas
+  const backgroundImage = isNightTransition ? currentScene.nightImage : currentScene.dayImage;
 
   return (
     <ImageBackground
@@ -488,7 +529,10 @@ export default function GameScreen() {
       style={{ flex: 1 }}
       resizeMode="cover"
     >
-      <ScreenContainer className="flex-1" containerClassName="bg-transparent" safeAreaClassName="bg-transparent" edges={["top", "left", "right"]}>
+      {/* Overlay para mejorar legibilidad */}
+      <View className="absolute inset-0 bg-black/30" />
+
+      <ScreenContainer className="flex-1" containerClassName="bg-transparent" edges={["top", "left", "right"]}>
         {/* FASE: CALIBRACIÓN */}
         {gamePhase === "calibration" && (
           <View className="flex-1 justify-center items-center px-6">
@@ -556,8 +600,26 @@ export default function GameScreen() {
           </View>
         )}
 
+        {/* FASE: TRANSICIÓN NOCTURNA */}
+        {isNightTransition && (
+          <View className="flex-1 justify-center items-center">
+            <View className="items-center">
+              <Text className="text-white text-6xl mb-4">🌙</Text>
+              <Text className="text-white text-3xl font-bold mb-2">
+                Descansa...
+              </Text>
+              <Text className="text-white/80 text-xl mb-8">
+                Respira profundo
+              </Text>
+              <Text className="text-white text-5xl font-bold">
+                {nightTransitionTime}
+              </Text>
+            </View>
+          </View>
+        )}
+
         {/* FASE: JUGANDO */}
-        {gamePhase === "playing" && calibrationData && (
+        {gamePhase === "playing" && !isNightTransition && calibrationData && (
           <View className="flex-1">
             {/* UI Top Left: Contador de frutos */}
             <View className="absolute top-4 left-4 z-20">
@@ -568,8 +630,8 @@ export default function GameScreen() {
               </View>
             </View>
 
-            {/* UI Top Center: Indicador de progreso con fresas - DESHABILITADO */}
-            {false && (
+            {/* UI Top Center: Indicador de progreso con fresas (solo en modo resistencia) */}
+            {gameMode === "resistance" && (
               <View className="absolute top-4 left-0 right-0 z-20 items-center">
                 <View className="bg-[#F5E6D3]/90 rounded-2xl px-4 py-2">
                   <FruitProgressIndicator
