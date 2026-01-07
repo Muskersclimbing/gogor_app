@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useRef, forwardRef, useImperativeHandle } from "react";
 import { View, Dimensions, Text, Image } from "react-native";
+import { useAudioPlayer } from "expo-audio";
 import Animated, { useSharedValue, useAnimatedStyle, withTiming, useAnimatedReaction, cancelAnimation, runOnJS } from "react-native-reanimated";
 
 const SCREEN_WIDTH = Dimensions.get("window").width;
@@ -82,6 +83,9 @@ export const FlappyBirdGame = forwardRef<FlappyBirdGameRef, FlappyBirdGameProps>
   
   // Ref para trackear última colisión (evitar contar múltiples veces la misma)
   const lastCollisionObstacleId = useRef<number | null>(null);
+  
+  // Audio player para sonido de recolección
+  const collectSound = useAudioPlayer(require("@/assets/audio/fruit_collect.wav"));
   
   // Patrón de frutas
   const fruitPatternRef = useRef<{ pattern: string; percentages: number[] }>({
@@ -317,6 +321,8 @@ export const FlappyBirdGame = forwardRef<FlappyBirdGameRef, FlappyBirdGameProps>
           const newTotal = collectedFruits + newCollected;
           setCollectedFruits(newTotal);
           onFruitCollected?.(newTotal);
+          // Reproducir sonido de recolección
+          collectSound.play();
         }
         
         return updated;
@@ -454,26 +460,41 @@ export const FlappyBirdGame = forwardRef<FlappyBirdGameRef, FlappyBirdGameProps>
       })}
       
       {/* Frutas */}
-      {fruits.map(fruit => (
-        !fruit.collected && (
+      {fruits.map(fruit => {
+        // Tamaños ajustados por tipo de fruta para mejor proporción
+        const fruitSizes: Record<FruitType, number> = {
+          watermelon: 40,
+          apple: 35,
+          orange: 35,
+          peach: 35,
+          pear: 35,
+          banana: 38,
+          mandarin: 32,
+          strawberry: 32,
+          cherry: 35,
+        };
+        const size = fruitSizes[fruit.type];
+        const halfSize = size / 2;
+        
+        return !fruit.collected && (
           <View
             key={fruit.id}
             style={{
               position: "absolute",
-              left: fruit.x - 15,
-              top: fruit.y - 15,
-              width: 30,
-              height: 30,
+              left: fruit.x - halfSize,
+              top: fruit.y - halfSize,
+              width: size,
+              height: size,
             }}
           >
             <Image
               source={FRUIT_IMAGES[fruit.type]}
-              style={{ width: 30, height: 30 }}
+              style={{ width: size, height: size }}
               resizeMode="contain"
             />
           </View>
-        )
-      ))}
+        );
+      })}
       
       {/* Pájaro */}
       <Animated.View
@@ -490,7 +511,7 @@ export const FlappyBirdGame = forwardRef<FlappyBirdGameRef, FlappyBirdGameProps>
         ]}
       >
         <Image
-          source={require("@/assets/sprites/bird.png")}
+          source={require("@/assets/sprites/bird.gif")}
           style={{ width: BIRD_SIZE, height: BIRD_SIZE }}
           resizeMode="contain"
         />

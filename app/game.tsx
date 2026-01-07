@@ -28,26 +28,26 @@ const SCENES: Record<SceneName, SceneConfig> = {
   yosemite: {
     name: "yosemite",
     title: "Mountain",
-    dayImage: require("@/assets/backgrounds/mountain_illustration.png"),
-    nightImage: require("@/assets/backgrounds/mountain_illustration.png"),
+    dayImage: require("@/assets/images/yosemite-day.png"),
+    nightImage: require("@/assets/images/yosemite-night.png"),
   },
   monument_valley: {
     name: "monument_valley",
     title: "Desert",
-    dayImage: require("@/assets/backgrounds/desert_illustration.png"),
-    nightImage: require("@/assets/backgrounds/desert_illustration.png"),
+    dayImage: require("@/assets/images/utah-day.png"),
+    nightImage: require("@/assets/images/utah-night.png"),
   },
   albarracin: {
     name: "albarracin",
     title: "Valley",
-    dayImage: require("@/assets/backgrounds/valley_illustration.png"),
-    nightImage: require("@/assets/backgrounds/valley_illustration.png"),
+    dayImage: require("@/assets/images/albarracin-day.png"),
+    nightImage: require("@/assets/images/albarracin-night.png"),
   },
   fontainebleau: {
     name: "fontainebleau",
     title: "Forest",
-    dayImage: require("@/assets/backgrounds/forest_illustration.png"),
-    nightImage: require("@/assets/backgrounds/forest_illustration.png"),
+    dayImage: require("@/assets/images/fontainebleau-day.png"),
+    nightImage: require("@/assets/images/fontainebleau-night.png"),
   },
 };
 

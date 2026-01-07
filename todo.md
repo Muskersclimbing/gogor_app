@@ -1134,3 +1134,10 @@
 - [ ] Eliminar descansos entre intervalos
 - [ ] Juego continuo de principio a fin
 - [ ] Calibración con fondo estático (sin cambios)
+
+## PROBLEMAS VISUALES A CORREGIR
+- [x] Fondo azul sin paisaje - verificar carga de imágenes de escenario
+- [x] Frutas desproporcionales - ajustar tamaño individual de cada tipo
+- [x] Frutas sin color (solo línea) - verificar sprites PNG
+- [x] Pájaro estático cutre - reemplazar por GIF animado con aleteo
+- [ ] Agregar efecto de sonido al recolectar frutas
