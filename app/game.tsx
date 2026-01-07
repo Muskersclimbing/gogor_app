@@ -13,7 +13,7 @@ import Animated, { FadeIn, FadeOut } from "react-native-reanimated";
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
 
-type GameMode = "quick" | "total" | "resistance";
+type GameMode = "quick" | "total";
 type GamePhase = "calibration" | "ready" | "playing" | "rest" | "finished";
 type SceneName = "yosemite" | "monument_valley" | "albarracin" | "fontainebleau";
 
@@ -73,24 +73,16 @@ const MODE_CONFIG: Record<GameMode, {
     title: "Calentamiento Rápido",
     duration: 180, // 3 minutos
     fruitGoal: 15,
-    scenes: ["yosemite"] as SceneName[],
+    scenes: [] as SceneName[], // Se asignará aleatoriamente
     hasNightTransition: false,
   },
   total: {
     title: "Calentamiento Total",
     duration: 300, // 5 minutos
     fruitGoal: 25,
-    scenes: ["yosemite", "monument_valley"] as SceneName[],
+    scenes: [] as SceneName[], // Se asignará aleatoriamente
     hasNightTransition: true,
     nightAt: 120, // Transición nocturna a los 2 minutos
-  },
-  resistance: {
-    title: "Resistencia",
-    duration: 0, // Sin límite de tiempo
-    fruitGoal: 999,
-    scenes: ["yosemite", "monument_valley", "albarracin", "fontainebleau"] as SceneName[],
-    hasNightTransition: true,
-    lives: 3,
   },
 };
 
@@ -104,7 +96,21 @@ export default function GameScreen() {
   const router = useRouter();
   const params = useLocalSearchParams<{ mode?: string }>();
   const gameMode = (params.mode || "quick") as GameMode;
-  const modeConfig = MODE_CONFIG[gameMode];
+  
+  // Asignar escenarios aleatorios si no están definidos
+  const modeConfig = {
+    ...MODE_CONFIG[gameMode],
+    scenes: MODE_CONFIG[gameMode].scenes.length > 0 
+      ? MODE_CONFIG[gameMode].scenes 
+      : getRandomScenes(gameMode === "quick" ? 1 : 2),
+  };
+  
+  // Función para obtener escenarios aleatorios
+  function getRandomScenes(count: number): SceneName[] {
+    const allScenes: SceneName[] = ["yosemite", "monument_valley", "albarracin", "fontainebleau"];
+    const shuffled = [...allScenes].sort(() => Math.random() - 0.5);
+    return shuffled.slice(0, count);
+  }
   
   // Servicio de audio
   const audioService = useAudioService();
@@ -493,7 +499,8 @@ export default function GameScreen() {
   };
 
   const handleCollision = () => {
-    if (gameMode === "resistance") {
+    // Modo resistance eliminado
+    if (false) {
       setLives((prev) => {
         const newLives = prev - 1;
         if (newLives <= 0) {
@@ -634,8 +641,8 @@ export default function GameScreen() {
               </View>
             </View>
 
-            {/* UI Top Center: Indicador de progreso con fresas (solo en modo resistencia) */}
-            {gameMode === "resistance" && (
+            {/* UI Top Center: Indicador de progreso con fresas - DESHABILITADO */}
+            {false && (
               <View className="absolute top-4 left-0 right-0 z-20 items-center">
                 <View className="bg-[#F5E6D3]/90 rounded-2xl px-4 py-2">
                   <FruitProgressIndicator
