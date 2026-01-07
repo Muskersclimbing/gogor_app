@@ -415,13 +415,16 @@ export default function GameScreen() {
       // completed=true solo si el tiempo llegó a 0 (ejercicio completo)
       const wasCompleted = modeConfig.duration > 0 ? timeRemaining === 0 : false;
       
+      // Calcular tiempo transcurrido correctamente
+      const finalTimeElapsed = wasCompleted ? modeConfig.duration : (modeConfig.duration - timeRemaining);
+      
       router.push({
         pathname: "/results",
         params: {
           mode: gameMode,
           maxForce: finalStatsRef.current.maxForce.toFixed(1),
           avgForce: finalStatsRef.current.avgForce.toFixed(1),
-          timeElapsed: timeElapsed.toString(),
+          timeElapsed: finalTimeElapsed.toString(),
           fruitsCollected: fruitsCollected.toString(),
           completed: wasCompleted.toString(),
         },
@@ -485,10 +488,7 @@ export default function GameScreen() {
       style={{ flex: 1 }}
       resizeMode="cover"
     >
-      {/* Overlay para mejorar legibilidad */}
-      <View className="absolute inset-0 bg-black/30" />
-
-      <ScreenContainer className="flex-1" containerClassName="bg-transparent" edges={["top", "left", "right"]}>
+      <ScreenContainer className="flex-1" containerClassName="bg-transparent" safeAreaClassName="bg-transparent" edges={["top", "left", "right"]}>
         {/* FASE: CALIBRACIÓN */}
         {gamePhase === "calibration" && (
           <View className="flex-1 justify-center items-center px-6">

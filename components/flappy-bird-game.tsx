@@ -6,7 +6,7 @@ import Animated, { useSharedValue, useAnimatedStyle, withTiming, useAnimatedReac
 const SCREEN_WIDTH = Dimensions.get("window").width;
 const SCREEN_HEIGHT = Dimensions.get("window").height;
 
-const BIRD_SIZE = 50;
+const BIRD_SIZE = 75; // Aumentado 50% (era 50)
 const BIRD_X = 50; // Posición X fija del pájaro
 const OBSTACLE_WIDTH = 60;
 const OBSTACLE_GAP = 200;
@@ -322,7 +322,12 @@ export const FlappyBirdGame = forwardRef<FlappyBirdGameRef, FlappyBirdGameProps>
           setCollectedFruits(newTotal);
           onFruitCollected?.(newTotal);
           // Reproducir sonido de recolección
-          collectSound.play();
+          try {
+            collectSound.currentTime = 0; // Reiniciar desde el inicio
+            collectSound.play();
+          } catch (e) {
+            console.log("Error playing collect sound:", e);
+          }
         }
         
         return updated;

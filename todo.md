@@ -1141,3 +1141,10 @@
 - [x] Frutas sin color (solo línea) - verificar sprites PNG
 - [x] Pájaro estático cutre - reemplazar por GIF animado con aleteo
 - [ ] Agregar efecto de sonido al recolectar frutas
+
+
+## BUGS REPORTADOS - Build d596d938
+- [x] Pájaro muy pequeño - aumentar 50% el tamaño
+- [x] Sonido de recolección no funciona - reiniciar audio antes de play
+- [x] Tiempo aparece en 0 cuando se completa la partida entera - calcular desde duración
+- [x] Fondo de paisaje no visible (está detrás, se ve fragmento en status bar) - eliminar overlay y transparencia completa
