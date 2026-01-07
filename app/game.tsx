@@ -147,32 +147,7 @@ export default function GameScreen() {
 
   const currentScene = SCENES[modeConfig.scenes[currentSceneIndex]];
 
-  // Navegar a resultados cuando el juego termina Y las estadísticas están listas
-  useEffect(() => {
-    if (shouldNavigateToResults.current && gamePhase === "finished") {
-      console.log('[game.tsx] Navegando a resultados con refs:', {
-        maxForce: finalStatsRef.current.maxForce,
-        avgForce: finalStatsRef.current.avgForce,
-        fruitsCollected,
-        collisionCount,
-      });
-      
-      router.push({
-        pathname: "/results",
-        params: {
-          mode: gameMode,
-          maxForce: finalStatsRef.current.maxForce.toFixed(1),
-          avgForce: finalStatsRef.current.avgForce.toFixed(1),
-          timeElapsed: timeElapsed.toString(),
-          fruitsCollected: fruitsCollected.toString(),
-          collisions: collisionCount.toString(),
-        },
-      });
-      
-      // Reset flag
-      shouldNavigateToResults.current = false;
-    }
-  }, [gamePhase, fruitsCollected, collisionCount, timeElapsed, forceRerender]);
+  // ELIMINADO: useEffect de navegación - ahora se navega directamente desde handleGameEnd
 
   // Verificar conexión al montar
   useEffect(() => {
@@ -468,6 +443,29 @@ export default function GameScreen() {
       setIsPlaying(false);
       setGamePhase("finished");
       gamePhaseRef.current = "finished";
+
+      // Esperar 500ms para que onForceStats se ejecute y actualice finalStatsRef
+      await new Promise((resolve) => setTimeout(resolve, 500));
+
+      console.log('[game.tsx] Navegando a resultados con refs:', {
+        maxForce: finalStatsRef.current.maxForce,
+        avgForce: finalStatsRef.current.avgForce,
+        fruitsCollected,
+        collisionCount,
+      });
+      
+      // Navegar directamente con valores del ref
+      router.push({
+        pathname: "/results",
+        params: {
+          mode: gameMode,
+          maxForce: finalStatsRef.current.maxForce.toFixed(1),
+          avgForce: finalStatsRef.current.avgForce.toFixed(1),
+          timeElapsed: timeElapsed.toString(),
+          fruitsCollected: fruitsCollected.toString(),
+          collisions: collisionCount.toString(),
+        },
+      });
 
     } catch (error) {
       console.error("Error finalizando juego:", error);

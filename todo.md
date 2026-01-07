@@ -1105,3 +1105,11 @@
 - [x] Agregar forceRerender a dependencias del useEffect
 - [ ] Compilar APK para probar
 - [ ] Verificar que navega correctamente a estadísticas
+
+## APK CON FORCE RERENDER
+- [x] Build ID: 72c27fe0-d524-43e2-9956-831ec786715b
+- [x] URL: https://expo.dev/accounts/muskersclimbing/projects/muskers_app/builds/72c27fe0-d524-43e2-9956-831ec786715b
+- [x] forceRerender fuerza re-render del useEffect ✅
+- [x] useEffect se ejecuta cuando onForceStats se llama ✅
+- [x] Navegación a estadísticas debería funcionar ✅
+- [x] QR: /home/ubuntu/muskers_app/expo-qr-code.png
