@@ -444,8 +444,8 @@ export default function GameScreen() {
       setGamePhase("finished");
       gamePhaseRef.current = "finished";
 
-      // Esperar 500ms para que onForceStats se ejecute y actualice finalStatsRef
-      await new Promise((resolve) => setTimeout(resolve, 500));
+      // Esperar 1000ms para que onForceStats se ejecute y actualice finalStatsRef
+      await new Promise((resolve) => setTimeout(resolve, 1000));
 
       console.log('[game.tsx] Navegando a resultados con refs:', {
         maxForce: finalStatsRef.current.maxForce,

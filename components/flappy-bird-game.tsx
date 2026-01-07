@@ -140,11 +140,15 @@ export function FlappyBirdGame({
     birdY.value = withTiming(targetY, { duration: 100 });
   }, [currentForce, highZone, isPaused]);
   
-  // Calcular y enviar estadísticas al finalizar
+  // Ref para trackear estado anterior de isPaused
+  const wasPausedRef = useRef(isPaused);
+  
+  // Calcular y enviar estadísticas cuando el juego se pausa (termina)
   useEffect(() => {
-    if (isPaused && onForceStats) {
+    // Detectar cuando isPaused cambia de false a true (juego termina)
+    if (isPaused && !wasPausedRef.current && onForceStats) {
       const readings = forceReadings.current;
-      console.log('[FlappyBirdGame] Calculando estadísticas:', {
+      console.log('[FlappyBirdGame] Juego pausado - Calculando estadísticas:', {
         readingsCount: readings.length,
         maxForceRef: maxForceRef.current,
         firstReadings: readings.slice(0, 5),
@@ -160,7 +164,10 @@ export function FlappyBirdGame({
         console.warn('[FlappyBirdGame] No hay lecturas de fuerza');
       }
     }
-  }, [isPaused]);
+    
+    // Actualizar ref para próxima comparación
+    wasPausedRef.current = isPaused;
+  }, [isPaused, onForceStats]);
   
   // Reacción animada para limitar posición en UI thread (sin bucle de JS)
   useAnimatedReaction(
