@@ -129,7 +129,6 @@ export default function GameScreen() {
   const [timeElapsed, setTimeElapsed] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
   const [fruitsCollected, setFruitsCollected] = useState(0);
-  const [collisionCount, setCollisionCount] = useState(0);
   
   // Refs para estadísticas finales y referencia al componente del juego
   const finalStatsRef = useRef({ maxForce: 0, avgForce: 0 });
@@ -459,7 +458,6 @@ export default function GameScreen() {
         maxForce: finalStatsRef.current.maxForce,
         avgForce: finalStatsRef.current.avgForce,
         fruitsCollected,
-        collisionCount,
       });
       
       // Navegar directamente con valores del ref
@@ -471,7 +469,6 @@ export default function GameScreen() {
           avgForce: finalStatsRef.current.avgForce.toFixed(1),
           timeElapsed: timeElapsed.toString(),
           fruitsCollected: fruitsCollected.toString(),
-          collisions: collisionCount.toString(),
         },
       });
 
@@ -707,7 +704,7 @@ export default function GameScreen() {
                 // Forzar re-render del useEffect
                 setForceRerender(prev => prev + 1);
               }}
-              onCollision={() => setCollisionCount(prev => prev + 1)}
+              onCollision={() => {}}
             />
           </View>
         )}

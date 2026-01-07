@@ -468,12 +468,7 @@ export const FlappyBirdGame = forwardRef<FlappyBirdGameRef, FlappyBirdGameProps>
         ]}
       />
       
-      {/* Cuadro de debug */}
-      <View style={{ position: "absolute", bottom: 10, right: 10, backgroundColor: "rgba(0,0,0,0.7)", padding: 8, borderRadius: 5, zIndex: 1000 }}>
-        <Text style={{ color: "white", fontSize: 10 }}>Lecturas: {forceReadings.current.length}</Text>
-        <Text style={{ color: "white", fontSize: 10 }}>Max: {maxForceRef.current.toFixed(1)} kg</Text>
-        <Text style={{ color: "white", fontSize: 10 }}>Avg: {forceReadings.current.length > 0 ? (forceReadings.current.reduce((a, b) => a + b, 0) / forceReadings.current.length).toFixed(1) : "0.0"} kg</Text>
-      </View>
+
     </View>
   );
 });
