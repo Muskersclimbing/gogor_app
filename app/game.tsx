@@ -6,7 +6,7 @@ import * as Haptics from "expo-haptics";
 import { ScreenContainer } from "@/components/screen-container";
 import { useColors } from "@/hooks/use-colors";
 import { tindeqService, type ForceData, type CalibrationData } from "@/lib/tindeq-service";
-import { FlappyBirdGame } from "@/components/flappy-bird-game";
+import { FlappyBirdGame, type FlappyBirdGameRef } from "@/components/flappy-bird-game";
 import { FruitProgressIndicator } from "@/components/fruit-progress-indicator";
 import { useAudioService } from "@/lib/audio-service";
 import Animated, { FadeIn, FadeOut } from "react-native-reanimated";
@@ -131,11 +131,12 @@ export default function GameScreen() {
   const [fruitsCollected, setFruitsCollected] = useState(0);
   const [collisionCount, setCollisionCount] = useState(0);
   
-  // Refs para estadísticas finales (evitar problemas de timing con estados)
+  // Refs para estadísticas finales y referencia al componente del juego
   const finalStatsRef = useRef({ maxForce: 0, avgForce: 0 });
   const shouldNavigateToResults = useRef(false);
   const gamePhaseRef = useRef<GamePhase>(gamePhase);
   const [forceRerender, setForceRerender] = useState(0);
+  const flappyBirdRef = useRef<FlappyBirdGameRef>(null);
   
   // Estado de escenarios
   const [currentSceneIndex, setCurrentSceneIndex] = useState(0);
@@ -444,8 +445,15 @@ export default function GameScreen() {
       setGamePhase("finished");
       gamePhaseRef.current = "finished";
 
-      // Esperar 1000ms para que onForceStats se ejecute y actualice finalStatsRef
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      // Obtener estadísticas directamente del componente FlappyBirdGame
+      const stats = flappyBirdRef.current?.getStats() || { maxForce: 0, avgForce: 0, minForce: 0 };
+      console.log('[game.tsx] Estadísticas obtenidas de FlappyBirdGame:', stats);
+      
+      // Actualizar refs con los valores correctos
+      finalStatsRef.current = {
+        maxForce: stats.maxForce,
+        avgForce: stats.avgForce,
+      };
 
       console.log('[game.tsx] Navegando a resultados con refs:', {
         maxForce: finalStatsRef.current.maxForce,
@@ -677,6 +685,7 @@ export default function GameScreen() {
 
             {/* Juego Flappy Bird */}
             <FlappyBirdGame
+              ref={flappyBirdRef}
               currentForce={currentForce}
               lowZone={calibrationData?.lowZone || 6.6}
               highZone={calibrationData?.highZone || 20}

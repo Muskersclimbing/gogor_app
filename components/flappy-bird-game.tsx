@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState, useRef, forwardRef, useImperativeHandle } from "react";
 import { View, Dimensions, Text } from "react-native";
 import Animated, { useSharedValue, useAnimatedStyle, withTiming, useAnimatedReaction, cancelAnimation, runOnJS } from "react-native-reanimated";
 
@@ -35,7 +35,11 @@ interface FlappyBirdGameProps {
   onCollision?: () => void;
 }
 
-export function FlappyBirdGame({
+export interface FlappyBirdGameRef {
+  getStats: () => { avgForce: number; maxForce: number; minForce: number };
+}
+
+export const FlappyBirdGame = forwardRef<FlappyBirdGameRef, FlappyBirdGameProps>(({
   currentForce,
   lowZone,
   highZone,
@@ -44,7 +48,7 @@ export function FlappyBirdGame({
   onFruitCollected,
   onForceStats,
   onCollision,
-}: FlappyBirdGameProps) {
+}, ref) => {
   const birdY = useSharedValue(SCREEN_HEIGHT / 2);
   const obstaclesShared = useSharedValue<Obstacle[]>([]);
   
@@ -139,6 +143,20 @@ export function FlappyBirdGame({
     
     birdY.value = withTiming(targetY, { duration: 100 });
   }, [currentForce, highZone, isPaused]);
+  
+  // Exponer función getStats para que el padre pueda obtener estadísticas
+  useImperativeHandle(ref, () => ({
+    getStats: () => {
+      const readings = forceReadings.current;
+      if (readings.length > 0) {
+        const avgForce = readings.reduce((a, b) => a + b, 0) / readings.length;
+        const maxForce = maxForceRef.current;
+        const minForce = Math.min(...readings);
+        return { avgForce, maxForce, minForce };
+      }
+      return { avgForce: 0, maxForce: 0, minForce: 0 };
+    },
+  }));
   
   // Ref para trackear estado anterior de isPaused
   const wasPausedRef = useRef(isPaused);
@@ -458,4 +476,6 @@ export function FlappyBirdGame({
       </View>
     </View>
   );
-}
+});
+
+FlappyBirdGame.displayName = 'FlappyBirdGame';
