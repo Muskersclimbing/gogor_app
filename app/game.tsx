@@ -461,6 +461,9 @@ export default function GameScreen() {
       });
       
       // Navegar directamente con valores del ref
+      // completed=true solo si el tiempo llegó a 0 (ejercicio completo)
+      const wasCompleted = modeConfig.duration > 0 ? timeRemaining === 0 : false;
+      
       router.push({
         pathname: "/results",
         params: {
@@ -469,6 +472,7 @@ export default function GameScreen() {
           avgForce: finalStatsRef.current.avgForce.toFixed(1),
           timeElapsed: timeElapsed.toString(),
           fruitsCollected: fruitsCollected.toString(),
+          completed: wasCompleted.toString(),
         },
       });
 

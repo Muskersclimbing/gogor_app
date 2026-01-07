@@ -1113,3 +1113,10 @@
 - [x] useEffect se ejecuta cuando onForceStats se llama ✅
 - [x] Navegación a estadísticas debería funcionar ✅
 - [x] QR: /home/ubuntu/muskers_app/expo-qr-code.png
+
+
+## SEGUNDO ESCENARIO
+- [ ] Diseñar concepto del segundo escenario (bosque, desierto, noche, etc.)
+- [ ] Generar imagen de fondo para el segundo escenario
+- [ ] Implementar transición entre escenarios
+- [ ] Probar que ambos escenarios funcionan correctamente
