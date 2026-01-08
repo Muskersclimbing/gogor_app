@@ -161,8 +161,9 @@ export default function GameScreen() {
   
   // Inicializar timeRemaining cuando modeConfig cambie
   useEffect(() => {
-    setTimeRemaining(modeConfig.duration);
-  }, [modeConfig.duration]);
+    const duration = modeConfig?.duration || MODE_CONFIG.quick.duration;
+    setTimeRemaining(duration);
+  }, [modeConfig?.duration]);
   const [timeElapsed, setTimeElapsed] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
   const [fruitsCollected, setFruitsCollected] = useState(0);
@@ -174,8 +175,9 @@ export default function GameScreen() {
   
   // Inicializar finalTimeRemainingRef cuando modeConfig cambie
   useEffect(() => {
-    finalTimeRemainingRef.current = modeConfig.duration;
-  }, [modeConfig.duration]);
+    const duration = modeConfig?.duration || MODE_CONFIG.quick.duration;
+    finalTimeRemainingRef.current = duration;
+  }, [modeConfig?.duration]);
   const shouldNavigateToResults = useRef(false);
   const gamePhaseRef = useRef<GamePhase>(gamePhase);
   const [forceRerender, setForceRerender] = useState(0);

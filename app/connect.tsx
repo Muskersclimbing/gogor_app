@@ -95,7 +95,9 @@ export default function ConnectScreen() {
       // Navegar a la pantalla de calibración/juego con el modo seleccionado
       const gameParams: any = { mode: params.mode || "quick" };
       if (params.gameId) {
-        gameParams.gameId = params.gameId;
+        // Convertir gameId a string si es array (Expo Router a veces pasa arrays)
+        gameParams.gameId = Array.isArray(params.gameId) ? params.gameId[0] : params.gameId;
+        console.log("[DEBUG] Pasando gameId a game.tsx:", gameParams.gameId);
       }
       router.push({
         pathname: "/game",
