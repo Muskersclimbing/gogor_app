@@ -91,26 +91,31 @@ export const FlappyBirdGame = forwardRef<FlappyBirdGameRef, FlappyBirdGameProps>
   useEffect(() => {
     const loadSounds = async () => {
       try {
+        // Configurar modo de audio para permitir múltiples sonidos simultáneamente
         await Audio.setAudioModeAsync({ 
           playsInSilentModeIOS: true,
           staysActiveInBackground: true,
           shouldDuckAndroid: false,
+          allowsRecordingIOS: false,
+          interruptionModeIOS: 1, // ALLOW_DUCKING
+          interruptionModeAndroid: 1,
         });
         
-        // Cargar sonido de recolección
+        // Cargar sonido de recolección (SIN loop, se reproduce una sola vez)
         const { sound: collectSound } = await Audio.Sound.createAsync(
-          require("@/assets/audio/fruit_collect.wav")
+          require("@/assets/audio/fruit_collect.wav"),
+          { volume: 0.8, isLooping: false }
         );
         collectSoundRef.current = collectSound;
         
-        // Cargar música de fondo (Music is Math style)
+        // Cargar música de fondo (Music is Math style) - SIEMPRE en loop
         const { sound: bgMusic } = await Audio.Sound.createAsync(
           require("@/assets/audio/background_music.wav"),
           { isLooping: true, volume: 0.4 }
         );
         backgroundMusicRef.current = bgMusic;
         
-        // Reproducir música de fondo
+        // Reproducir música de fondo - NUNCA se pausa
         await bgMusic.playAsync();
       } catch (error) {
         console.log("Error loading sounds:", error);
@@ -119,10 +124,11 @@ export const FlappyBirdGame = forwardRef<FlappyBirdGameRef, FlappyBirdGameProps>
     loadSounds();
     
     return () => {
+      // Descargar sonidos pero NO pausar la música
       collectSoundRef.current?.unloadAsync().catch(() => {});
       backgroundMusicRef.current?.unloadAsync().catch(() => {});
     };
-  }, []);
+  }, [];
   
   // Patrón de frutas
   const fruitPatternRef = useRef<{ pattern: string; percentages: number[] }>({
@@ -358,13 +364,17 @@ export const FlappyBirdGame = forwardRef<FlappyBirdGameRef, FlappyBirdGameProps>
           const newTotal = collectedFruits + newCollected;
           setCollectedFruits(newTotal);
           onFruitCollected?.(newTotal);
-          // Reproducir sonido de recolección
+          // Reproducir sonido de recolección ENCIMA de la música de fondo
           runOnJS(() => {
             try {
               if (collectSoundRef.current) {
+                // Asegurar que la música de fondo sigue sonando
+                if (backgroundMusicRef.current) {
+                  backgroundMusicRef.current.playAsync().catch(() => {});
+                }
+                // Reproducir sonido de recolección
                 collectSoundRef.current.replayAsync().catch((e: any) => {
                   console.log('Error playing sound:', e);
-                  console.log("Error playing collect sound:", e);
                 });
               }
             } catch (e) {

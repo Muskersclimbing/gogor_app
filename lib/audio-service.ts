@@ -1,28 +1,31 @@
-import { useAudioPlayer, setAudioModeAsync } from 'expo-audio';
+import { Audio } from 'expo-av';
 import { useEffect, useRef } from 'react';
 import { Platform } from 'react-native';
 
 // Mapeo de música por escenario
 const SCENARIO_MUSIC = {
-  mountain: require('@/assets/music/ambient_drone.wav'),
-  forest: require('@/assets/music/ethereal_pad.wav'),
-  desert: require('@/assets/music/celestial_wash.wav'),
+  mountain: require('@/assets/audio/background_music.wav'),
+  forest: require('@/assets/audio/background_music.wav'),
+  desert: require('@/assets/audio/background_music.wav'),
 };
 
 const SUCCESS_SOUND = require('@/assets/audio/success.mp3');
 
 class AudioService {
-  private musicPlayer: ReturnType<typeof useAudioPlayer> | null = null;
-  private sfxPlayer: ReturnType<typeof useAudioPlayer> | null = null;
+  private musicSound: Audio.Sound | null = null;
+  private sfxSound: Audio.Sound | null = null;
   private initialized = false;
 
   async initialize() {
     if (this.initialized) return;
     
     try {
-      // Habilitar reproducción en modo silencioso (iOS)
-      await setAudioModeAsync({
-        playsInSilentMode: true,
+      // Configurar modo de audio para permitir múltiples sonidos simultáneamente
+      await Audio.setAudioModeAsync({
+        playsInSilentModeIOS: true,
+        staysActiveInBackground: true,
+        shouldDuckAndroid: false,
+        allowsRecordingIOS: false,
       });
       this.initialized = true;
     } catch (error) {
@@ -30,44 +33,53 @@ class AudioService {
     }
   }
 
-  setMusicPlayer(player: ReturnType<typeof useAudioPlayer>) {
-    this.musicPlayer = player;
-  }
-
-  setSfxPlayer(player: ReturnType<typeof useAudioPlayer>) {
-    this.sfxPlayer = player;
-  }
-
   async playMusic(scenario: 'mountain' | 'forest' | 'desert') {
-    if (!this.musicPlayer || Platform.OS === 'web') return;
+    if (Platform.OS === 'web') return;
     
     try {
+      // Si ya hay música, detenerla
+      if (this.musicSound) {
+        await this.musicSound.unloadAsync();
+      }
+
       const source = SCENARIO_MUSIC[scenario];
-      this.musicPlayer.replace(source);
-      this.musicPlayer.loop = true;
-      this.musicPlayer.volume = 0.6;
-      this.musicPlayer.play();
+      const { sound } = await Audio.Sound.createAsync(
+        source,
+        { isLooping: true, volume: 0.4 }
+      );
+      
+      this.musicSound = sound;
+      await sound.playAsync();
     } catch (error) {
       console.error('Error reproduciendo música:', error);
     }
   }
 
   stopMusic() {
-    if (!this.musicPlayer) return;
+    if (!this.musicSound) return;
     try {
-      this.musicPlayer.pause();
+      this.musicSound.pauseAsync();
     } catch (error) {
       console.error('Error deteniendo música:', error);
     }
   }
 
   async playSuccess() {
-    if (!this.sfxPlayer || Platform.OS === 'web') return;
+    if (Platform.OS === 'web') return;
     
     try {
-      this.sfxPlayer.replace(SUCCESS_SOUND);
-      this.sfxPlayer.volume = 0.8;
-      this.sfxPlayer.play();
+      // Si ya hay sfx, detenerlo
+      if (this.sfxSound) {
+        await this.sfxSound.unloadAsync();
+      }
+
+      const { sound } = await Audio.Sound.createAsync(
+        SUCCESS_SOUND,
+        { volume: 0.8 }
+      );
+      
+      this.sfxSound = sound;
+      await sound.playAsync();
     } catch (error) {
       console.error('Error reproduciendo efecto:', error);
     }
@@ -75,8 +87,8 @@ class AudioService {
 
   cleanup() {
     try {
-      this.musicPlayer?.release();
-      this.sfxPlayer?.release();
+      this.musicSound?.unloadAsync();
+      this.sfxSound?.unloadAsync();
     } catch (error) {
       console.error('Error limpiando audio:', error);
     }
@@ -87,18 +99,18 @@ export const audioService = new AudioService();
 
 // Hook para usar el servicio de audio
 export function useAudioService() {
-  const musicPlayer = useAudioPlayer(SCENARIO_MUSIC.mountain);
-  const sfxPlayer = useAudioPlayer(SUCCESS_SOUND);
+  const initializedRef = useRef(false);
 
   useEffect(() => {
-    audioService.initialize();
-    audioService.setMusicPlayer(musicPlayer);
-    audioService.setSfxPlayer(sfxPlayer);
+    if (!initializedRef.current) {
+      audioService.initialize();
+      initializedRef.current = true;
+    }
 
     return () => {
       audioService.cleanup();
     };
-  }, [musicPlayer, sfxPlayer]);
+  }, []);
 
   return audioService;
 }
