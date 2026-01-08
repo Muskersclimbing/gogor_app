@@ -125,6 +125,7 @@ export default function GameScreen() {
   
   // Refs para estadísticas finales y referencia al componente del juego
   const finalStatsRef = useRef({ maxForce: 0, avgForce: 0 });
+  const finalFruitsRef = useRef(0);
   const shouldNavigateToResults = useRef(false);
   const gamePhaseRef = useRef<GamePhase>(gamePhase);
   const [forceRerender, setForceRerender] = useState(0);
@@ -425,7 +426,7 @@ export default function GameScreen() {
           maxForce: finalStatsRef.current.maxForce.toFixed(1),
           avgForce: finalStatsRef.current.avgForce.toFixed(1),
           timeElapsed: finalTimeElapsed.toString(),
-          fruitsCollected: fruitsCollected.toString(),
+          fruitsCollected: finalFruitsRef.current.toString(),
           completed: wasCompleted.toString(),
         },
       });
@@ -436,7 +437,11 @@ export default function GameScreen() {
   };
 
   const handleFruitCollected = () => {
-    setFruitsCollected((prev) => prev + 1);
+    setFruitsCollected((prev) => {
+      const newCount = prev + 1;
+      finalFruitsRef.current = newCount;
+      return newCount;
+    });
     
     if (Platform.OS !== "web") {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
