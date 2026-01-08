@@ -84,23 +84,45 @@ export const FlappyBirdGame = forwardRef<FlappyBirdGameRef, FlappyBirdGameProps>
   // Ref para trackear última colisión (evitar contar múltiples veces la misma)
   const lastCollisionObstacleId = useRef<number | null>(null);
   
-  // Audio player para sonido de recolección
+  // Audio players para música de fondo y sonido de recolección
   const collectSoundRef = useRef<any>(null);
+  const backgroundMusicRef = useRef<any>(null);
+  const isPlayingRef = useRef(false);
   
   useEffect(() => {
-    const loadSound = async () => {
+    const loadSounds = async () => {
       try {
-        await Audio.setAudioModeAsync({ playsInSilentModeIOS: true });
-        const { sound } = await Audio.Sound.createAsync(require("@/assets/audio/fruit_collect.wav"));
-        collectSoundRef.current = sound;
+        await Audio.setAudioModeAsync({ 
+          playsInSilentModeIOS: true,
+          staysActiveInBackground: true,
+          shouldDuckAndroid: true,
+        });
+        
+        // Cargar sonido de recolección
+        const { sound: collectSound } = await Audio.Sound.createAsync(
+          require("@/assets/audio/fruit_collect.wav")
+        );
+        collectSoundRef.current = collectSound;
+        
+        // Cargar música de fondo
+        const { sound: bgMusic } = await Audio.Sound.createAsync(
+          require("@/assets/audio/background_music.wav"),
+          { isLooping: true, volume: 0.3 }
+        );
+        backgroundMusicRef.current = bgMusic;
+        
+        // Reproducir música de fondo
+        await bgMusic.playAsync();
+        isPlayingRef.current = true;
       } catch (error) {
-        console.log("Error loading collect sound:", error);
+        console.log("Error loading sounds:", error);
       }
     };
-    loadSound();
+    loadSounds();
     
     return () => {
       collectSoundRef.current?.unloadAsync().catch(() => {});
+      backgroundMusicRef.current?.unloadAsync().catch(() => {});
     };
   }, []);
   
