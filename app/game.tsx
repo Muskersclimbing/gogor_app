@@ -126,6 +126,7 @@ export default function GameScreen() {
   // Refs para estadísticas finales y referencia al componente del juego
   const finalStatsRef = useRef({ maxForce: 0, avgForce: 0 });
   const finalFruitsRef = useRef(0);
+  const finalTimeRemainingRef = useRef(modeConfig.duration);
   const shouldNavigateToResults = useRef(false);
   const gamePhaseRef = useRef<GamePhase>(gamePhase);
   const [forceRerender, setForceRerender] = useState(0);
@@ -185,11 +186,12 @@ export default function GameScreen() {
       
       if (modeConfig.duration > 0) {
         setTimeRemaining((prev) => {
-          if (prev <= 0) {
+          const newTime = prev <= 0 ? 0 : prev - 1;
+          finalTimeRemainingRef.current = newTime;
+          if (newTime <= 0) {
             handleGameEnd();
-            return 0;
           }
-          return prev - 1;
+          return newTime;
         });
       }
     }, 1000);
@@ -417,7 +419,7 @@ export default function GameScreen() {
       const wasCompleted = modeConfig.duration > 0 ? timeRemaining === 0 : false;
       
       // Calcular tiempo transcurrido correctamente
-      const finalTimeElapsed = wasCompleted ? modeConfig.duration : (modeConfig.duration - timeRemaining);
+      const finalTimeElapsed = wasCompleted ? modeConfig.duration : (modeConfig.duration - finalTimeRemainingRef.current);
       
       router.push({
         pathname: "/results",
