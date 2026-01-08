@@ -343,6 +343,7 @@ export const FlappyBirdGame = forwardRef<FlappyBirdGameRef, FlappyBirdGameProps>
             try {
               if (collectSoundRef.current) {
                 collectSoundRef.current.replayAsync().catch((e: any) => {
+                  console.log('Error playing sound:', e);
                   console.log("Error playing collect sound:", e);
                 });
               }
@@ -448,7 +449,7 @@ export const FlappyBirdGame = forwardRef<FlappyBirdGameRef, FlappyBirdGameProps>
   const BIRD_COLOR = "#FFD700"; // Dorado
   
   return (
-    <View style={{ flex: 1, backgroundColor: "#87CEEB" }}>
+    <View style={{ flex: 1, backgroundColor: "transparent" }}>
       
       {/* Obstáculos */}
       {obstacles.map(obs => {
