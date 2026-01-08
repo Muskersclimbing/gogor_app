@@ -104,22 +104,30 @@ export default function GameScreen() {
     const loadGame = async () => {
       try {
         if (params.gameId && params.mode === "custom") {
-          const game = await customGamesService.getGameById(params.gameId);
-          if (game) {
+          // Convertir gameId a string si es array (Expo Router a veces pasa arrays)
+          const gameId = Array.isArray(params.gameId) ? params.gameId[0] : params.gameId;
+          console.log("[DEBUG] Buscando juego con ID:", gameId, "tipo:", typeof gameId);
+          
+          const game = await customGamesService.getGameById(gameId);
+          console.log("[DEBUG] Juego encontrado:", game);
+          
+          if (game && game.duration && typeof game.duration === "number") {
             setCustomGame(game);
             const customModeConfig = {
-              title: game.name,
-              duration: game.duration,
+              title: game.name || "Juego personalizado",
+              duration: Math.max(60, game.duration), // Mínimo 60 segundos
               fruitGoal: Math.ceil(game.duration / 15),
               scenes: ["yosemite"] as SceneName[],
               hasNightTransition: false,
             };
+            console.log("[DEBUG] Configuración cargada:", customModeConfig);
             setModeConfig(customModeConfig);
           } else {
-            console.error("Juego no encontrado:", params.gameId);
+            console.error("Juego inválido o no encontrado:", gameId, "game:", game);
             setModeConfig(MODE_CONFIG["quick"]);
           }
         } else {
+          console.log("[DEBUG] Modo predefinido:", gameMode);
           setModeConfig(MODE_CONFIG[gameMode]);
         }
       } catch (error) {
