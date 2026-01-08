@@ -9,6 +9,7 @@ import { tindeqService, type ForceData, type CalibrationData } from "@/lib/tinde
 import { FlappyBirdGame, type FlappyBirdGameRef } from "@/components/flappy-bird-game";
 import { FruitProgressIndicator } from "@/components/fruit-progress-indicator";
 import { useAudioService } from "@/lib/audio-service";
+import { customGamesService, type CustomGame } from "@/lib/custom-games-service";
 import Animated, { FadeIn, FadeOut } from "react-native-reanimated";
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
@@ -93,11 +94,35 @@ const MODE_CONFIG: Record<GameMode, {
 export default function GameScreen() {
   const colors = useColors();
   const router = useRouter();
-  const params = useLocalSearchParams<{ mode?: string }>();
+  const params = useLocalSearchParams<{ mode?: string; gameId?: string }>();
   const gameMode = (params.mode || "quick") as GameMode;
-  
-  // Un solo escenario fijo (yosemite)
-  const modeConfig = MODE_CONFIG[gameMode];
+  const [customGame, setCustomGame] = useState<CustomGame | null>(null);
+  const [modeConfig, setModeConfig] = useState(MODE_CONFIG[gameMode]);
+
+  // Cargar juego personalizado si existe
+  useEffect(() => {
+    if (params.gameId && params.mode === "custom") {
+      loadCustomGame();
+    } else {
+      setModeConfig(MODE_CONFIG[gameMode]);
+    }
+  }, [params.gameId, params.mode]);
+
+  const loadCustomGame = async () => {
+    if (!params.gameId) return;
+    const game = await customGamesService.getGameById(params.gameId);
+    if (game) {
+      setCustomGame(game);
+      const customModeConfig = {
+        title: game.name,
+        duration: game.duration,
+        fruitGoal: Math.ceil(game.duration / 15),
+        scenes: ["yosemite"] as SceneName[],
+        hasNightTransition: false,
+      };
+      setModeConfig(customModeConfig);
+    }
+  };
   
   // Servicio de audio
   const audioService = useAudioService();
@@ -118,7 +143,12 @@ export default function GameScreen() {
   const [maxForceReached, setMaxForceReached] = useState(0);
   const [averageForce, setAverageForce] = useState(0);
   const [forceHistory, setForceHistory] = useState<number[]>([]);
-  const [timeRemaining, setTimeRemaining] = useState(modeConfig.duration);
+  const [timeRemaining, setTimeRemaining] = useState(0);
+  
+  // Inicializar timeRemaining cuando modeConfig cambie
+  useEffect(() => {
+    setTimeRemaining(modeConfig.duration);
+  }, [modeConfig.duration]);
   const [timeElapsed, setTimeElapsed] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
   const [fruitsCollected, setFruitsCollected] = useState(0);
@@ -126,7 +156,12 @@ export default function GameScreen() {
   // Refs para estadísticas finales y referencia al componente del juego
   const finalStatsRef = useRef({ maxForce: 0, avgForce: 0 });
   const finalFruitsRef = useRef(0);
-  const finalTimeRemainingRef = useRef(modeConfig.duration);
+  const finalTimeRemainingRef = useRef(0);
+  
+  // Inicializar finalTimeRemainingRef cuando modeConfig cambie
+  useEffect(() => {
+    finalTimeRemainingRef.current = modeConfig.duration;
+  }, [modeConfig.duration]);
   const shouldNavigateToResults = useRef(false);
   const gamePhaseRef = useRef<GamePhase>(gamePhase);
   const [forceRerender, setForceRerender] = useState(0);
@@ -137,8 +172,19 @@ export default function GameScreen() {
   
   // Estado de resistencia
   const [lives, setLives] = useState(modeConfig.lives || 0);
+  
+  useEffect(() => {
+    setLives(modeConfig.lives || 0);
+  }, [modeConfig.lives]);
 
   const currentScene = SCENES[modeConfig.scenes[currentSceneIndex]];
+  
+  // Agregar useEffect para limpiar cuando se desmonte
+  useEffect(() => {
+    return () => {
+      // Limpiar recursos
+    };
+  }, []);
 
   // ELIMINADO: useEffect de navegación - ahora se navega directamente desde handleGameEnd
 
@@ -146,7 +192,6 @@ export default function GameScreen() {
   useEffect(() => {
     const connected = tindeqService.getIsConnected();
     setIsConnected(connected);
-
     if (!connected) {
       Alert.alert(
         "No conectado",

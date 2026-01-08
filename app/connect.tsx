@@ -25,7 +25,7 @@ type BluetoothDevice = {
 export default function ConnectScreen() {
   const colors = useColors();
   const router = useRouter();
-  const params = useLocalSearchParams<{ mode?: string }>();
+  const params = useLocalSearchParams<{ mode?: string; gameId?: string }>();
   const [isScanning, setIsScanning] = useState(true);
   const [isConnecting, setIsConnecting] = useState(false);
   const [devices, setDevices] = useState<BluetoothDevice[]>([]);
@@ -93,9 +93,13 @@ export default function ConnectScreen() {
       await tindeqService.connect(deviceInfo.id);
 
       // Navegar a la pantalla de calibración/juego con el modo seleccionado
+      const gameParams: any = { mode: params.mode || "quick" };
+      if (params.gameId) {
+        gameParams.gameId = params.gameId;
+      }
       router.push({
         pathname: "/game",
-        params: { mode: params.mode || "quick" },
+        params: gameParams,
       });
 
     } catch (error) {
