@@ -336,8 +336,8 @@ export default function GameScreen() {
 
   const handleStartGame = async () => {
     // Reproducir música según escenario
-    const scenarioMusic = currentSceneIndex === 0 ? "mountain" : currentSceneIndex === 1 ? "forest" : "desert";
-    audioService.playMusic(scenarioMusic);
+    // const scenarioMusic = currentSceneIndex === 0 ? "mountain" : currentSceneIndex === 1 ? "forest" : "desert";
+    // audioService.playMusic(scenarioMusic); // Desactivado: usar música del FlappyBirdGame en su lugar
     if (Platform.OS !== "web") {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     }
@@ -369,7 +369,7 @@ export default function GameScreen() {
 
   const handleStopGame = async () => {
     // Detener música
-    audioService.stopMusic();
+    // audioService.stopMusic(); // Desactivado: música del FlappyBirdGame continúa
     if (Platform.OS !== "web") {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     }
