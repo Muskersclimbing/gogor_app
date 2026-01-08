@@ -101,28 +101,34 @@ export default function GameScreen() {
 
   // Cargar juego personalizado si existe
   useEffect(() => {
-    if (params.gameId && params.mode === "custom") {
-      loadCustomGame();
-    } else {
-      setModeConfig(MODE_CONFIG[gameMode]);
-    }
-  }, [params.gameId, params.mode]);
-
-  const loadCustomGame = async () => {
-    if (!params.gameId) return;
-    const game = await customGamesService.getGameById(params.gameId);
-    if (game) {
-      setCustomGame(game);
-      const customModeConfig = {
-        title: game.name,
-        duration: game.duration,
-        fruitGoal: Math.ceil(game.duration / 15),
-        scenes: ["yosemite"] as SceneName[],
-        hasNightTransition: false,
-      };
-      setModeConfig(customModeConfig);
-    }
-  };
+    const loadGame = async () => {
+      try {
+        if (params.gameId && params.mode === "custom") {
+          const game = await customGamesService.getGameById(params.gameId);
+          if (game) {
+            setCustomGame(game);
+            const customModeConfig = {
+              title: game.name,
+              duration: game.duration,
+              fruitGoal: Math.ceil(game.duration / 15),
+              scenes: ["yosemite"] as SceneName[],
+              hasNightTransition: false,
+            };
+            setModeConfig(customModeConfig);
+          } else {
+            console.error("Juego no encontrado:", params.gameId);
+            setModeConfig(MODE_CONFIG["quick"]);
+          }
+        } else {
+          setModeConfig(MODE_CONFIG[gameMode]);
+        }
+      } catch (error) {
+        console.error("Error cargando juego personalizado:", error);
+        setModeConfig(MODE_CONFIG["quick"]);
+      }
+    };
+    loadGame();
+  }, [params.gameId, params.mode, gameMode]);
   
   // Servicio de audio
   const audioService = useAudioService();
