@@ -84,41 +84,64 @@ class TindeqService {
    * Escanear dispositivos Tindeq cercanos
    */
   async scanForDevices(onDeviceFound: (device: Device) => void): Promise<void> {
-    this.initializeManager();
+    try {
+      this.initializeManager();
 
-    if (!this.manager) {
-      throw new Error('Bluetooth no disponible en esta plataforma');
-    }
-
-    if (this.isScanning) {
-      return;
-    }
-
-    this.isScanning = true;
-
-    // Verificar permisos en Android
-    if (Platform.OS === 'android') {
-      const state = await this.manager.state();
-      if (state !== 'PoweredOn') {
-        throw new Error('Bluetooth no está encendido');
+      if (!this.manager) {
+        throw new Error('Bluetooth no disponible en esta plataforma');
       }
-    }
 
-    this.manager.startDeviceScan(
-      [TINDEQ_SERVICE_UUID],
-      { allowDuplicates: false },
-      (error: any, device: Device) => {
-        if (error) {
-          console.error('Error escaneando:', error);
+      if (this.isScanning) {
+        return;
+      }
+
+      this.isScanning = true;
+
+      // Verificar permisos en Android
+      if (Platform.OS === 'android') {
+        try {
+          const state = await this.manager.state();
+          if (state !== 'PoweredOn') {
+            throw new Error('Bluetooth no está encendido');
+          }
+        } catch (stateError) {
+          console.error('Error verificando estado de Bluetooth:', stateError);
           this.isScanning = false;
-          return;
-        }
-
-        if (device && device.name?.toLowerCase().includes('progressor')) {
-          onDeviceFound(device);
+          throw stateError;
         }
       }
-    );
+
+      try {
+        this.manager.startDeviceScan(
+          [TINDEQ_SERVICE_UUID],
+          { allowDuplicates: false },
+          (error: any, device: Device) => {
+            try {
+              if (error) {
+                console.error('Error escaneando:', error);
+                this.isScanning = false;
+                return;
+              }
+
+              if (device && device.name?.toLowerCase().includes('progressor')) {
+                onDeviceFound(device);
+              }
+            } catch (callbackError) {
+              console.error('Error en callback de escaneo:', callbackError);
+              this.isScanning = false;
+            }
+          }
+        );
+      } catch (scanError) {
+        console.error('Error iniciando escaneo:', scanError);
+        this.isScanning = false;
+        throw scanError;
+      }
+    } catch (error) {
+      console.error('Error en scanForDevices:', error);
+      this.isScanning = false;
+      throw error;
+    }
   }
 
   /**
