@@ -167,27 +167,46 @@ class TindeqService {
     try {
       this.stopScan();
 
-      // Conectar al dispositivo
-      this.device = await this.manager.connectToDevice(deviceId);
+      try {
+        console.log('[DEBUG] Conectando a dispositivo:', deviceId);
+        this.device = await this.manager.connectToDevice(deviceId);
+        console.log('[DEBUG] Dispositivo conectado:', this.device?.id);
+      } catch (connectError) {
+        console.error('[ERROR] Error en connectToDevice:', connectError);
+        throw connectError;
+      }
       
-      // Descubrir servicios y características
-      await this.device.discoverAllServicesAndCharacteristics();
+      try {
+        console.log('[DEBUG] Descubriendo servicios...');
+        await this.device.discoverAllServicesAndCharacteristics();
+        console.log('[DEBUG] Servicios descubiertos');
+      } catch (discoverError) {
+        console.error('[ERROR] Error en discoverAllServicesAndCharacteristics:', discoverError);
+        throw discoverError;
+      }
 
       this.isConnected = true;
       this.connectionCallback?.(true);
+      console.log('[DEBUG] Conexion establecida');
 
-      // Configurar listener para desconexión
       this.device.onDisconnected(() => {
+        console.log('[DEBUG] Dispositivo desconectado');
         this.isConnected = false;
         this.device = null;
         this.connectionCallback?.(false);
       });
 
-      // Suscribirse al Data Point para recibir datos
-      await this.subscribeToDataPoint();
+      try {
+        console.log('[DEBUG] Suscribiendo a Data Point...');
+        await this.subscribeToDataPoint();
+        console.log('[DEBUG] Suscripcion completada');
+      } catch (subscribeError) {
+        console.error('[ERROR] Error en subscribeToDataPoint:', subscribeError);
+        throw subscribeError;
+      }
 
     } catch (error) {
-      console.error('Error conectando:', error);
+      console.error('[ERROR] Error conectando:', error);
       this.isConnected = false;
       this.device = null;
       throw error;
