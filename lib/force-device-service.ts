@@ -108,7 +108,7 @@ class ForceDeviceService {
       return 'tindeq';
     }
     
-    if (name.includes('force board')) {
+    if (name.includes('force')) {
       return 'force_board';
     }
     
