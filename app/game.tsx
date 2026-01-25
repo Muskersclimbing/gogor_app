@@ -9,6 +9,7 @@ import { forceDeviceService, type ForceData, type CalibrationData } from "@/lib/
 import { FlappyBirdGame, type FlappyBirdGameRef } from "@/components/flappy-bird-game";
 import { FruitProgressIndicator } from "@/components/fruit-progress-indicator";
 import { useAudioService } from "@/lib/audio-service";
+import { customGamesService, type CustomGame } from "@/lib/custom-games-service";
 import Animated, { FadeIn, FadeOut } from "react-native-reanimated";
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
@@ -93,11 +94,52 @@ const MODE_CONFIG: Record<GameMode, {
 export default function GameScreen() {
   const colors = useColors();
   const router = useRouter();
-  const params = useLocalSearchParams<{ mode?: string }>();
+  const params = useLocalSearchParams<{ mode?: string; gameId?: string }>();
   const gameMode = (params.mode || "quick") as GameMode;
-  
-  // Un solo escenario fijo (yosemite)
-  const modeConfig = MODE_CONFIG[gameMode];
+  const [customGame, setCustomGame] = useState<CustomGame | null>(null);
+  const [modeConfig, setModeConfig] = useState(MODE_CONFIG[gameMode]);
+
+  // Cargar juego personalizado si existe
+  useEffect(() => {
+    const loadGame = async () => {
+      try {
+        if (params.gameId && params.mode === "custom") {
+          // Convertir gameId a string si es array (Expo Router a veces pasa arrays)
+          const gameId = Array.isArray(params.gameId) ? params.gameId[0] : params.gameId;
+          console.log("[GAME] gameId convertido:", gameId, "tipo:", typeof gameId);
+          
+          console.log("[GAME] Llamando getGameById");
+          const game = await customGamesService.getGameById(gameId);
+          console.log("[GAME] Juego encontrado:", game);
+          
+          if (game && game.duration && typeof game.duration === "number") {
+            setCustomGame(game);
+            const customModeConfig = {
+              title: game.name || "Juego personalizado",
+              duration: Math.max(60, game.duration), // Mínimo 60 segundos
+              fruitGoal: Math.ceil(game.duration / 15),
+              scenes: ["yosemite"] as SceneName[],
+              hasNightTransition: false,
+              lives: 0,
+            };
+            console.log("[GAME] customModeConfig creado:", customModeConfig);
+            setModeConfig(customModeConfig);
+          } else {
+            console.error("Juego inválido o no encontrado:", gameId, "game:", game);
+            setModeConfig(MODE_CONFIG["quick"]);
+          }
+        } else {
+          console.log("[DEBUG] Modo predefinido:", gameMode);
+          setModeConfig(MODE_CONFIG[gameMode]);
+        }
+      } catch (error) {
+        console.error("[GAME] ERROR en loadGame:", error);
+        console.error("[GAME] Stack:", (error as any)?.stack);
+        setModeConfig(MODE_CONFIG["quick"]);
+      }
+    };
+    loadGame();
+  }, [params.gameId, params.mode, gameMode]);
   
   // Servicio de audio
   const audioService = useAudioService();
@@ -118,13 +160,27 @@ export default function GameScreen() {
   const [maxForceReached, setMaxForceReached] = useState(0);
   const [averageForce, setAverageForce] = useState(0);
   const [forceHistory, setForceHistory] = useState<number[]>([]);
-  const [timeRemaining, setTimeRemaining] = useState(modeConfig.duration);
+  const [timeRemaining, setTimeRemaining] = useState(0);
+  
+  // Inicializar timeRemaining cuando modeConfig cambie
+  useEffect(() => {
+    const duration = modeConfig?.duration || MODE_CONFIG.quick.duration;
+    setTimeRemaining(duration);
+  }, [modeConfig?.duration]);
   const [timeElapsed, setTimeElapsed] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
   const [fruitsCollected, setFruitsCollected] = useState(0);
   
   // Refs para estadísticas finales y referencia al componente del juego
   const finalStatsRef = useRef({ maxForce: 0, avgForce: 0 });
+  const finalFruitsRef = useRef(0);
+  const finalTimeRemainingRef = useRef(0);
+  
+  // Inicializar finalTimeRemainingRef cuando modeConfig cambie
+  useEffect(() => {
+    const duration = modeConfig?.duration || MODE_CONFIG.quick.duration;
+    finalTimeRemainingRef.current = duration;
+  }, [modeConfig?.duration]);
   const shouldNavigateToResults = useRef(false);
   const gamePhaseRef = useRef<GamePhase>(gamePhase);
   const [forceRerender, setForceRerender] = useState(0);
@@ -134,9 +190,20 @@ export default function GameScreen() {
   const [currentSceneIndex] = useState(0); // Siempre 0, un solo escenario
   
   // Estado de resistencia
-  const [lives, setLives] = useState(modeConfig.lives || 0);
+  const [lives, setLives] = useState(modeConfig?.lives || 0);
+  
+  useEffect(() => {
+    setLives(modeConfig?.lives || 0);
+  }, [modeConfig?.lives]);
 
-  const currentScene = SCENES[modeConfig.scenes[currentSceneIndex]];
+  const currentScene = SCENES[modeConfig?.scenes?.[currentSceneIndex] || "yosemite"];
+  
+  // Agregar useEffect para limpiar cuando se desmonte
+  useEffect(() => {
+    return () => {
+      // Limpiar recursos
+    };
+  }, []);
 
   // ELIMINADO: useEffect de navegación - ahora se navega directamente desde handleGameEnd
 
@@ -144,7 +211,6 @@ export default function GameScreen() {
   useEffect(() => {
     const connected = forceDeviceService.getIsConnected();
     setIsConnected(connected);
-
     if (!connected) {
       Alert.alert(
         "No conectado",
@@ -182,13 +248,14 @@ export default function GameScreen() {
     const timer = setInterval(() => {
       setTimeElapsed((prev) => prev + 1);
       
-      if (modeConfig.duration > 0) {
+      if (modeConfig?.duration && modeConfig.duration > 0) {
         setTimeRemaining((prev) => {
-          if (prev <= 0) {
+          const newTime = prev <= 0 ? 0 : prev - 1;
+          finalTimeRemainingRef.current = newTime;
+          if (newTime <= 0) {
             handleGameEnd();
-            return 0;
           }
-          return prev - 1;
+          return newTime;
         });
       }
     }, 1000);
@@ -336,8 +403,8 @@ export default function GameScreen() {
 
   const handleStartGame = async () => {
     // Reproducir música según escenario
-    const scenarioMusic = currentSceneIndex === 0 ? "mountain" : currentSceneIndex === 1 ? "forest" : "desert";
-    audioService.playMusic(scenarioMusic);
+    // const scenarioMusic = currentSceneIndex === 0 ? "mountain" : currentSceneIndex === 1 ? "forest" : "desert";
+    // audioService.playMusic(scenarioMusic); // Desactivado: usar música del FlappyBirdGame en su lugar
     if (Platform.OS !== "web") {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     }
@@ -369,7 +436,7 @@ export default function GameScreen() {
 
   const handleStopGame = async () => {
     // Detener música
-    audioService.stopMusic();
+    // audioService.stopMusic(); // Desactivado: música del FlappyBirdGame continúa
     if (Platform.OS !== "web") {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     }
@@ -413,10 +480,10 @@ export default function GameScreen() {
       
       // Navegar directamente con valores del ref
       // completed=true solo si el tiempo llegó a 0 (ejercicio completo)
-      const wasCompleted = modeConfig.duration > 0 ? timeRemaining === 0 : false;
+      const wasCompleted = modeConfig?.duration && modeConfig.duration > 0 ? timeRemaining === 0 : false;
       
       // Calcular tiempo transcurrido correctamente
-      const finalTimeElapsed = wasCompleted ? modeConfig.duration : (modeConfig.duration - timeRemaining);
+      const finalTimeElapsed = wasCompleted ? (modeConfig?.duration || 0) : ((modeConfig?.duration || 0) - finalTimeRemainingRef.current);
       
       router.push({
         pathname: "/results",
@@ -425,7 +492,7 @@ export default function GameScreen() {
           maxForce: finalStatsRef.current.maxForce.toFixed(1),
           avgForce: finalStatsRef.current.avgForce.toFixed(1),
           timeElapsed: finalTimeElapsed.toString(),
-          fruitsCollected: fruitsCollected.toString(),
+          fruitsCollected: finalFruitsRef.current.toString(),
           completed: wasCompleted.toString(),
         },
       });
@@ -436,7 +503,11 @@ export default function GameScreen() {
   };
 
   const handleFruitCollected = () => {
-    setFruitsCollected((prev) => prev + 1);
+    setFruitsCollected((prev) => {
+      const newCount = prev + 1;
+      finalFruitsRef.current = newCount;
+      return newCount;
+    });
     
     if (Platform.OS !== "web") {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -538,7 +609,7 @@ export default function GameScreen() {
                 ¡Calibración completa!
               </Text>
               <Text className="text-white/80 text-center mb-2">
-                {modeConfig.title}
+                {modeConfig?.title || "Juego personalizado"}
               </Text>
               <Text className="text-white/60 text-center mb-6">
                 Tu fuerza máxima: {calibrationData.maxForce.toFixed(1)} kg
@@ -574,7 +645,7 @@ export default function GameScreen() {
                 <View className="bg-[#F5E6D3]/90 rounded-2xl px-4 py-2">
                   <FruitProgressIndicator
                     collected={fruitsCollected}
-                    goal={modeConfig.fruitGoal}
+                    goal={modeConfig?.fruitGoal || 15}
                   />
                 </View>
               </View>
@@ -593,7 +664,7 @@ export default function GameScreen() {
             <View className="absolute bottom-4 left-4 z-20">
               <View className="bg-[#F5E6D3]/90 rounded-2xl px-4 py-2">
                 <Text className="text-[#5C4A3A] text-2xl font-bold">
-                  {modeConfig.duration > 0 ? (
+                  {modeConfig?.duration && modeConfig.duration > 0 ? (
                     <>
                       {String(Math.floor(timeRemaining / 60)).padStart(2, "0")}:
                       {String(timeRemaining % 60).padStart(2, "0")}

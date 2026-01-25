@@ -96,28 +96,16 @@ export const FlappyBirdGame = forwardRef<FlappyBirdGameRef, FlappyBirdGameProps>
           staysActiveInBackground: true,
           shouldDuckAndroid: false,
         });
-        
-        // Cargar sonido de recolección
-        const { sound: collectSound } = await Audio.Sound.createAsync(
-          require("@/assets/audio/fruit_collect.wav")
-        );
+        const { sound: collectSound } = await Audio.Sound.createAsync(require("@/assets/audio/fruit_collect.wav"));
         collectSoundRef.current = collectSound;
-        
-        // Cargar música de fondo (Music is Math style)
-        const { sound: bgMusic } = await Audio.Sound.createAsync(
-          require("@/assets/audio/background_music.wav"),
-          { isLooping: true, volume: 0.4 }
-        );
+        const { sound: bgMusic } = await Audio.Sound.createAsync(require("@/assets/audio/background_music.wav"), { isLooping: true, volume: 0.4 });
         backgroundMusicRef.current = bgMusic;
-        
-        // Reproducir música de fondo
         await bgMusic.playAsync();
       } catch (error) {
         console.log("Error loading sounds:", error);
       }
     };
     loadSounds();
-    
     return () => {
       collectSoundRef.current?.unloadAsync().catch(() => {});
       backgroundMusicRef.current?.unloadAsync().catch(() => {});

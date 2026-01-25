@@ -5,13 +5,9 @@ import * as Haptics from "expo-haptics";
 
 import { ScreenContainer } from "@/components/screen-container";
 import { useColors } from "@/hooks/use-colors";
-import { forceDeviceService } from "@/lib/force-device-service";
+import { forceDeviceService, type DeviceInfo } from "@/lib/force-device-service";
 
-type BluetoothDevice = {
-  id: string;
-  name: string;
-  type: 'tindeq' | 'force_board';
-};
+type BluetoothDevice = DeviceInfo;
 
 /**
  * Connect Screen - Búsqueda y conexión de dispositivos Bluetooth
@@ -24,7 +20,7 @@ type BluetoothDevice = {
 export default function ConnectScreen() {
   const colors = useColors();
   const router = useRouter();
-  const params = useLocalSearchParams<{ mode?: string }>();
+  const params = useLocalSearchParams<{ mode?: string; gameId?: string }>();
   const [isScanning, setIsScanning] = useState(true);
   const [isConnecting, setIsConnecting] = useState(false);
   const [devices, setDevices] = useState<BluetoothDevice[]>([]);
@@ -50,14 +46,7 @@ export default function ConnectScreen() {
             return prev;
           }
 
-          return [
-            ...prev,
-            {
-              id: device.id,
-              name: device.name,
-              type: device.type,
-            },
-          ];
+          return [...prev, device];
         });
       });
 
@@ -88,13 +77,18 @@ export default function ConnectScreen() {
 
     try {
       // Conectar al dispositivo
-      const validType = (deviceInfo.type === 'tindeq' || deviceInfo.type === 'force_board') ? deviceInfo.type : 'tindeq';
-      await forceDeviceService.connect(deviceInfo.id, validType);
+      await forceDeviceService.connect(deviceInfo.id, deviceInfo.type);
 
       // Navegar a la pantalla de calibración/juego con el modo seleccionado
+      const gameParams: any = { mode: params.mode || "quick" };
+      if (params.gameId) {
+        // Convertir gameId a string si es array (Expo Router a veces pasa arrays)
+        gameParams.gameId = Array.isArray(params.gameId) ? params.gameId[0] : params.gameId;
+        console.log("[DEBUG] Pasando gameId a game.tsx:", gameParams.gameId);
+      }
       router.push({
         pathname: "/game",
-        params: { mode: params.mode || "quick" },
+        params: gameParams,
       });
 
     } catch (error) {
@@ -151,7 +145,7 @@ export default function ConnectScreen() {
       {/* Header */}
       <View className="mb-6">
         <Text className="text-2xl font-bold text-foreground">
-          Buscar Tindeq
+          Buscar Dispositivo
         </Text>
         <Text className="text-muted mt-1">
           {isScanning 
@@ -181,9 +175,9 @@ export default function ConnectScreen() {
           keyExtractor={(item) => item.id}
           ListEmptyComponent={
             <View className="items-center py-8">
-              <Text className="text-muted text-center mb-4">
+                <Text className="text-muted text-center mb-4">
                 No se encontraron dispositivos.{"\n"}
-                Asegúrate de que el Tindeq esté encendido.
+                Asegúrate de que tu dispositivo esté encendido.
               </Text>
               <TouchableOpacity
                 onPress={handleRetryPress}
