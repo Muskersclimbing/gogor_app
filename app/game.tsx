@@ -5,7 +5,7 @@ import * as Haptics from "expo-haptics";
 
 import { ScreenContainer } from "@/components/screen-container";
 import { useColors } from "@/hooks/use-colors";
-import { tindeqService, type ForceData, type CalibrationData } from "@/lib/tindeq-service";
+import { forceDeviceService, type ForceData, type CalibrationData } from "@/lib/force-device-service";
 import { FlappyBirdGame, type FlappyBirdGameRef } from "@/components/flappy-bird-game";
 import { FruitProgressIndicator } from "@/components/fruit-progress-indicator";
 import { useAudioService } from "@/lib/audio-service";
@@ -206,7 +206,7 @@ export default function GameScreen() {
 
   // Verificar conexión al montar
   useEffect(() => {
-    const connected = tindeqService.getIsConnected();
+    const connected = forceDeviceService.getIsConnected();
     setIsConnected(connected);
     if (!connected) {
       Alert.alert(
@@ -223,17 +223,17 @@ export default function GameScreen() {
     }
 
     // Configurar listeners
-    tindeqService.onForceData(handleForceData);
-    tindeqService.onBatteryData(handleBatteryData);
-    tindeqService.onConnectionChange(handleConnectionChange);
+    forceDeviceService.onForceData(handleForceData);
+    forceDeviceService.onBatteryData(handleBatteryData);
+    forceDeviceService.onConnectionChange(handleConnectionChange);
 
     // Leer batería inicial
-    tindeqService.readBattery().catch(console.error);
+    forceDeviceService.readBattery().catch(console.error);
 
     return () => {
       // Detener medición al salir
       if (isPlaying) {
-        tindeqService.stopMeasurement().catch(console.error);
+        forceDeviceService.stopMeasurement().catch(console.error);
       }
     };
   }, []);
@@ -332,13 +332,13 @@ export default function GameScreen() {
 
     try {
       // Calibrar a cero
-      await tindeqService.tare();
+      await forceDeviceService.tare();
       
       // Esperar 1 segundo
       await new Promise((resolve) => setTimeout(resolve, 1000));
 
       // Iniciar medición
-      await tindeqService.startMeasurement();
+      await forceDeviceService.startMeasurement();
 
       // Iniciar cronómetro de 5 segundos
       isCalibrating.current = true;
@@ -354,7 +354,7 @@ export default function GameScreen() {
   const finishCalibration = async () => {
     try {
       // Detener medición
-      await tindeqService.stopMeasurement();
+      await forceDeviceService.stopMeasurement();
 
       console.log("[DEBUG] Fuerzas capturadas:", calibrationForces.length);
       console.log("[DEBUG] Muestra:", calibrationForces.slice(0, 5));
@@ -408,11 +408,11 @@ export default function GameScreen() {
 
     try {
       // Calibrar a cero antes de empezar
-      await tindeqService.tare();
+      await forceDeviceService.tare();
       await new Promise((resolve) => setTimeout(resolve, 500));
 
       // Iniciar medición
-      await tindeqService.startMeasurement();
+      await forceDeviceService.startMeasurement();
 
       setIsPlaying(true);
       setGamePhase("playing");
@@ -439,7 +439,7 @@ export default function GameScreen() {
     }
 
     try {
-      await tindeqService.stopMeasurement();
+      await forceDeviceService.stopMeasurement();
       setIsPlaying(false);
       handleGameEnd();
 
@@ -454,7 +454,7 @@ export default function GameScreen() {
     }
 
     try {
-      await tindeqService.stopMeasurement();
+      await forceDeviceService.stopMeasurement();
       setIsPlaying(false);
       setGamePhase("finished");
       gamePhaseRef.current = "finished";
@@ -537,7 +537,7 @@ export default function GameScreen() {
     }
 
     if (isPlaying) {
-      await tindeqService.stopMeasurement();
+      await forceDeviceService.stopMeasurement();
     }
 
     router.back();

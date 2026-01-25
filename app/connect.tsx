@@ -5,20 +5,17 @@ import * as Haptics from "expo-haptics";
 
 import { ScreenContainer } from "@/components/screen-container";
 import { useColors } from "@/hooks/use-colors";
-import { tindeqService } from "@/lib/tindeq-service";
+import { forceDeviceService, type DeviceInfo } from "@/lib/force-device-service";
 
-type BluetoothDevice = {
-  id: string;
-  name: string;
+type BluetoothDevice = DeviceInfo & {
   rssi?: number;
-  device: any; // Device from react-native-ble-plx
 };
 
 /**
  * Connect Screen - Búsqueda y conexión de dispositivos Bluetooth
  * 
  * Permite al usuario:
- * - Ver dispositivos Tindeq Progressor cercanos
+ * - Ver dispositivos Tindeq y Force Board cercanos
  * - Conectarse al dispositivo seleccionado
  * - Ver el estado de la búsqueda
  */
@@ -29,12 +26,13 @@ export default function ConnectScreen() {
   const [isScanning, setIsScanning] = useState(true);
   const [isConnecting, setIsConnecting] = useState(false);
   const [devices, setDevices] = useState<BluetoothDevice[]>([]);
+  const [selectedDeviceType, setSelectedDeviceType] = useState<'tindeq' | 'force_board' | null>(null);
 
   useEffect(() => {
     startScanning();
 
     return () => {
-      tindeqService.stopScan();
+      forceDeviceService.stopScan();
     };
   }, []);
 
@@ -43,21 +41,26 @@ export default function ConnectScreen() {
       setIsScanning(true);
       setDevices([]);
 
-      await tindeqService.scanForDevices((device) => {
-        // Agregar dispositivo a la lista (evitar duplicados)
+      await forceDeviceService.scanForDevices((device) => {
         setDevices((prev) => {
           const exists = prev.find((d) => d.id === device.id);
           if (exists) {
             return prev;
           }
 
+          const deviceName = device.type === 'tindeq' 
+            ? 'Tindeq Progressor'
+            : device.type === 'force_board'
+            ? 'Force Board'
+            : device.name;
+
           return [
             ...prev,
             {
               id: device.id,
-              name: device.name || "Tindeq Progressor",
-              rssi: device.rssi || undefined,
-              device,
+              name: deviceName,
+              type: device.type,
+              rssi: undefined,
             },
           ];
         });
@@ -65,7 +68,7 @@ export default function ConnectScreen() {
 
       // Detener escaneo después de 10 segundos
       setTimeout(() => {
-        tindeqService.stopScan();
+        forceDeviceService.stopScan();
         setIsScanning(false);
       }, 10000);
 
@@ -86,16 +89,21 @@ export default function ConnectScreen() {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     }
 
+    if (deviceInfo.type === 'unknown') {
+      Alert.alert('Error', 'Tipo de dispositivo no reconocido');
+      return;
+    }
+
     setIsConnecting(true);
+    setSelectedDeviceType(deviceInfo.type);
 
     try {
       // Conectar al dispositivo
-      await tindeqService.connect(deviceInfo.id);
+      await forceDeviceService.connect(deviceInfo.id, deviceInfo.type);
 
       // Navegar a la pantalla de calibración/juego con el modo seleccionado
       const gameParams: any = { mode: params.mode || "quick" };
       if (params.gameId) {
-        // Convertir gameId a string si es array (Expo Router a veces pasa arrays)
         gameParams.gameId = Array.isArray(params.gameId) ? params.gameId[0] : params.gameId;
         console.log("[DEBUG] Pasando gameId a game.tsx:", gameParams.gameId);
       }
@@ -107,6 +115,7 @@ export default function ConnectScreen() {
     } catch (error) {
       console.error("Error conectando:", error);
       setIsConnecting(false);
+      setSelectedDeviceType(null);
 
       Alert.alert(
         "Error de conexión",
@@ -120,7 +129,7 @@ export default function ConnectScreen() {
     if (Platform.OS !== "web") {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     }
-    tindeqService.stopScan();
+    forceDeviceService.stopScan();
     router.back();
   };
 
@@ -129,6 +138,17 @@ export default function ConnectScreen() {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     }
     startScanning();
+  };
+
+  const getDeviceTypeLabel = (type: string) => {
+    switch (type) {
+      case 'tindeq':
+        return 'Tindeq Progressor';
+      case 'force_board':
+        return 'Force Board';
+      default:
+        return 'Dispositivo desconocido';
+    }
   };
 
   const renderDevice = ({ item }: { item: BluetoothDevice }) => (
@@ -143,7 +163,7 @@ export default function ConnectScreen() {
             {item.name}
           </Text>
           <Text className="text-muted text-sm mt-1">
-            Señal: {item.rssi ? `${item.rssi} dBm` : "Desconocida"}
+            {getDeviceTypeLabel(item.type)}
           </Text>
         </View>
         <View className="bg-primary px-4 py-2 rounded-lg">
@@ -158,13 +178,13 @@ export default function ConnectScreen() {
       {/* Header */}
       <View className="mb-6">
         <Text className="text-2xl font-bold text-foreground">
-          Buscar Tindeq
+          Buscar Dispositivo
         </Text>
         <Text className="text-muted mt-1">
           {isScanning 
             ? "Buscando dispositivos..." 
             : isConnecting
-            ? "Conectando..."
+            ? `Conectando a ${selectedDeviceType === 'tindeq' ? 'Tindeq' : 'Force Board'}...`
             : `${devices.length} dispositivo${devices.length !== 1 ? 's' : ''} encontrado${devices.length !== 1 ? 's' : ''}`
           }
         </Text>
@@ -175,7 +195,7 @@ export default function ConnectScreen() {
         <View className="items-center py-8">
           <ActivityIndicator size="large" color={colors.primary} />
           <Text className="text-muted mt-4">
-            {isScanning ? "Escaneando dispositivos Bluetooth..." : "Conectando al Tindeq..."}
+            {isScanning ? "Escaneando dispositivos Bluetooth..." : "Conectando al dispositivo..."}
           </Text>
         </View>
       )}
@@ -190,7 +210,7 @@ export default function ConnectScreen() {
             <View className="items-center py-8">
               <Text className="text-muted text-center mb-4">
                 No se encontraron dispositivos.{"\n"}
-                Asegúrate de que el Tindeq esté encendido.
+                Asegúrate de que el Tindeq o Force Board esté encendido.
               </Text>
               <TouchableOpacity
                 onPress={handleRetryPress}
