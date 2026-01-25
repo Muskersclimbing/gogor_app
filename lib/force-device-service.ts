@@ -56,7 +56,7 @@ export interface CalibrationData {
 export interface DeviceInfo {
   id: string;
   name: string;
-  type: 'tindeq' | 'force_board' | 'unknown';
+  type: 'tindeq' | 'force_board';
 }
 
 type ForceCallback = (data: ForceData) => void;

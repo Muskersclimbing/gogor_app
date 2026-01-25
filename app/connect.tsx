@@ -5,28 +5,29 @@ import * as Haptics from "expo-haptics";
 
 import { ScreenContainer } from "@/components/screen-container";
 import { useColors } from "@/hooks/use-colors";
-import { forceDeviceService, type DeviceInfo } from "@/lib/force-device-service";
+import { forceDeviceService } from "@/lib/force-device-service";
 
-type BluetoothDevice = DeviceInfo & {
-  rssi?: number;
+type BluetoothDevice = {
+  id: string;
+  name: string;
+  type: 'tindeq' | 'force_board';
 };
 
 /**
  * Connect Screen - Búsqueda y conexión de dispositivos Bluetooth
  * 
  * Permite al usuario:
- * - Ver dispositivos Tindeq y Force Board cercanos
+ * - Ver dispositivos Tindeq Progressor cercanos
  * - Conectarse al dispositivo seleccionado
  * - Ver el estado de la búsqueda
  */
 export default function ConnectScreen() {
   const colors = useColors();
   const router = useRouter();
-  const params = useLocalSearchParams<{ mode?: string; gameId?: string }>();
+  const params = useLocalSearchParams<{ mode?: string }>();
   const [isScanning, setIsScanning] = useState(true);
   const [isConnecting, setIsConnecting] = useState(false);
   const [devices, setDevices] = useState<BluetoothDevice[]>([]);
-  const [selectedDeviceType, setSelectedDeviceType] = useState<'tindeq' | 'force_board' | null>(null);
 
   useEffect(() => {
     startScanning();
@@ -42,25 +43,19 @@ export default function ConnectScreen() {
       setDevices([]);
 
       await forceDeviceService.scanForDevices((device) => {
+        // Agregar dispositivo a la lista (evitar duplicados)
         setDevices((prev) => {
           const exists = prev.find((d) => d.id === device.id);
           if (exists) {
             return prev;
           }
 
-          const deviceName = device.type === 'tindeq' 
-            ? 'Tindeq Progressor'
-            : device.type === 'force_board'
-            ? 'Force Board'
-            : device.name;
-
           return [
             ...prev,
             {
               id: device.id,
-              name: deviceName,
+              name: device.name,
               type: device.type,
-              rssi: undefined,
             },
           ];
         });
@@ -89,33 +84,22 @@ export default function ConnectScreen() {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     }
 
-    if (deviceInfo.type === 'unknown') {
-      Alert.alert('Error', 'Tipo de dispositivo no reconocido');
-      return;
-    }
-
     setIsConnecting(true);
-    setSelectedDeviceType(deviceInfo.type);
 
     try {
       // Conectar al dispositivo
-      await forceDeviceService.connect(deviceInfo.id, deviceInfo.type);
+      const validType = (deviceInfo.type === 'tindeq' || deviceInfo.type === 'force_board') ? deviceInfo.type : 'tindeq';
+      await forceDeviceService.connect(deviceInfo.id, validType);
 
       // Navegar a la pantalla de calibración/juego con el modo seleccionado
-      const gameParams: any = { mode: params.mode || "quick" };
-      if (params.gameId) {
-        gameParams.gameId = Array.isArray(params.gameId) ? params.gameId[0] : params.gameId;
-        console.log("[DEBUG] Pasando gameId a game.tsx:", gameParams.gameId);
-      }
       router.push({
         pathname: "/game",
-        params: gameParams,
+        params: { mode: params.mode || "quick" },
       });
 
     } catch (error) {
       console.error("Error conectando:", error);
       setIsConnecting(false);
-      setSelectedDeviceType(null);
 
       Alert.alert(
         "Error de conexión",
@@ -140,17 +124,6 @@ export default function ConnectScreen() {
     startScanning();
   };
 
-  const getDeviceTypeLabel = (type: string) => {
-    switch (type) {
-      case 'tindeq':
-        return 'Tindeq Progressor';
-      case 'force_board':
-        return 'Force Board';
-      default:
-        return 'Dispositivo desconocido';
-    }
-  };
-
   const renderDevice = ({ item }: { item: BluetoothDevice }) => (
     <TouchableOpacity
       onPress={() => handleDevicePress(item)}
@@ -163,7 +136,7 @@ export default function ConnectScreen() {
             {item.name}
           </Text>
           <Text className="text-muted text-sm mt-1">
-            {getDeviceTypeLabel(item.type)}
+            Tipo: {item.type === 'tindeq' ? 'Tindeq' : 'Force Board'}
           </Text>
         </View>
         <View className="bg-primary px-4 py-2 rounded-lg">
@@ -178,13 +151,13 @@ export default function ConnectScreen() {
       {/* Header */}
       <View className="mb-6">
         <Text className="text-2xl font-bold text-foreground">
-          Buscar Dispositivo
+          Buscar Tindeq
         </Text>
         <Text className="text-muted mt-1">
           {isScanning 
             ? "Buscando dispositivos..." 
             : isConnecting
-            ? `Conectando a ${selectedDeviceType === 'tindeq' ? 'Tindeq' : 'Force Board'}...`
+            ? "Conectando..."
             : `${devices.length} dispositivo${devices.length !== 1 ? 's' : ''} encontrado${devices.length !== 1 ? 's' : ''}`
           }
         </Text>
@@ -195,7 +168,7 @@ export default function ConnectScreen() {
         <View className="items-center py-8">
           <ActivityIndicator size="large" color={colors.primary} />
           <Text className="text-muted mt-4">
-            {isScanning ? "Escaneando dispositivos Bluetooth..." : "Conectando al dispositivo..."}
+            {isScanning ? "Escaneando dispositivos Bluetooth..." : "Conectando al Tindeq..."}
           </Text>
         </View>
       )}
@@ -210,7 +183,7 @@ export default function ConnectScreen() {
             <View className="items-center py-8">
               <Text className="text-muted text-center mb-4">
                 No se encontraron dispositivos.{"\n"}
-                Asegúrate de que el Tindeq o Force Board esté encendido.
+                Asegúrate de que el Tindeq esté encendido.
               </Text>
               <TouchableOpacity
                 onPress={handleRetryPress}
