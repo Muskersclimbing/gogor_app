@@ -151,7 +151,7 @@ export default function ConnectScreen() {
           {isScanning 
             ? "Buscando dispositivos..." 
             : isConnecting
-            ? "Conectando..."
+            ? "Conectando al dispositivo..."
             : `${devices.length} dispositivo${devices.length !== 1 ? 's' : ''} encontrado${devices.length !== 1 ? 's' : ''}`
           }
         </Text>
