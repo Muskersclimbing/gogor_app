@@ -443,7 +443,7 @@ class ForceDeviceService {
       const base64Mode = this.bytesToBase64(modeBytes);
 
       await this.device.writeCharacteristicWithResponseForService(
-        FORCE_BOARD_DEVICE_MODE_UUID.substring(0, 8),
+        FORCE_BOARD_DEVICE_MODE_UUID,
         FORCE_BOARD_DEVICE_MODE_UUID,
         base64Mode
       );
