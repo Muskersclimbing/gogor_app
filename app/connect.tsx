@@ -162,7 +162,7 @@ export default function ConnectScreen() {
         <View className="items-center py-8">
           <ActivityIndicator size="large" color={colors.primary} />
           <Text className="text-muted mt-4">
-            {isScanning ? "Escaneando dispositivos Bluetooth..." : "Conectando al Tindeq..."}
+            {isScanning ? "Escaneando dispositivos Bluetooth..." : "Conectando al dispositivo..."}
           </Text>
         </View>
       )}

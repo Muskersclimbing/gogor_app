@@ -218,6 +218,18 @@ class ForceDeviceService {
 
       console.log('[FORCE] Descubriendo servicios...');
       await this.device.discoverAllServicesAndCharacteristics();
+      
+      // Log todos los servicios y características descubiertos
+      const services = await this.device.services();
+      console.log('[FORCE] Servicios encontrados:', services.length);
+      for (const service of services) {
+        console.log('[FORCE] Servicio:', service.uuid);
+        const characteristics = await service.characteristics();
+        for (const char of characteristics) {
+          console.log('[FORCE]   - Característica:', char.uuid, 'Properties:', char.properties);
+        }
+      }
+      
       console.log('[FORCE] Servicios descubiertos');
 
       this.isConnected = true;
