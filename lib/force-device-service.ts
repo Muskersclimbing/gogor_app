@@ -324,8 +324,7 @@ class ForceDeviceService {
     }
 
     // Primero, establecer modo Streaming
-    // TODO: Comentado temporalmente para probar si este es el problema
-    // await this.setForceBoardMode(FORCE_BOARD_STREAMING_MODE);
+    await this.setForceBoardMode(FORCE_BOARD_STREAMING_MODE);
 
     // Luego suscribirse a Force Characteristic
     try {
