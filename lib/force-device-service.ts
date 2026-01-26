@@ -19,10 +19,11 @@ const TINDEQ_SERVICE_UUID = '7e4e1701-1ea6-40c9-9dcc-13d34ffead57';
 const TINDEQ_DATA_POINT_UUID = '7e4e1702-1ea6-40c9-9dcc-13d34ffead57';
 const TINDEQ_CONTROL_POINT_UUID = '7e4e1703-1ea6-40c9-9dcc-13d34ffead57';
 
-// UUIDs del Force Board
-const FORCE_BOARD_DEVICE_MODE_UUID = '46748517-6e39-11eb-9439-0242ac130002';
-const FORCE_BOARD_FORCE_UUID = '9a88d682-8df2-4aff-9e0d-c2bbe773d00d';
-const FORCE_BOARD_THRESHOLD_UUID = '9a88d686-8df2-4aff-9e0d-c2bbe773d00d';
+// UUIDs del Force Board (del PDF oficial Force Board Public API v1.0)
+const FORCE_BOARD_DEVICE_MODE_UUID = '467a8517-6e39-11eb-9439-0242ac130002';
+const FORCE_BOARD_FORCE_UUID = '9a88d683-8df2-4afe-9e0d-c2b8e773d00';
+const FORCE_BOARD_THRESHOLD_UUID = '9a88d683-8df2-4afe-9e0d-c2b8e773d00';
+const FORCE_BOARD_TARE_UUID = '9a88d683-8df2-4afe-9e0d-c2b8e773d00';
 
 // Comandos del Tindeq
 const CMD_TARE = 0x64;
