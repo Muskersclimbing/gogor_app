@@ -48,9 +48,6 @@ export interface ForceData {
 
 export interface CalibrationData {
   maxForce: number; // kg
-  lowZone: number; // 0-33%
-  mediumZone: number; // 33-66%
-  highZone: number; // 66-100%
 }
 
 export interface DeviceInfo {
@@ -59,130 +56,110 @@ export interface DeviceInfo {
   type: 'tindeq' | 'force_board';
 }
 
-type ForceCallback = (data: ForceData) => void;
-type BatteryCallback = (voltage: number) => void;
-type ConnectionCallback = (connected: boolean) => void;
-
 class ForceDeviceService {
+  private static instance: ForceDeviceService;
   private manager: BleManagerType | null = null;
   private device: Device | null = null;
   private deviceType: 'tindeq' | 'force_board' | null = null;
-  private forceCallback: ForceCallback | null = null;
-  private batteryCallback: BatteryCallback | null = null;
-  private connectionCallback: ConnectionCallback | null = null;
-  private isScanning = false;
   private isConnected = false;
+  private isScanning = false;
+  private onDataCallback: ((data: ForceData) => void) | null = null;
+  private connectionCallback: ((connected: boolean) => void) | null = null;
+  private devicesCallback: ((devices: DeviceInfo[]) => void) | null = null;
+  private scannedDevices: Map<string, DeviceInfo> = new Map();
 
-  constructor() {
-    // No inicializar BleManager en el constructor
+  private constructor() {}
+
+  static getInstance(): ForceDeviceService {
+    if (!ForceDeviceService.instance) {
+      ForceDeviceService.instance = new ForceDeviceService();
+    }
+    return ForceDeviceService.instance;
   }
 
   /**
-   * Inicializar BleManager de forma lazy
+   * Inicializar el manager de Bluetooth
    */
   private initializeManager(): void {
-    if (this.manager) {
-      return;
-    }
+    if (this.manager) return;
 
     if (Platform.OS === 'web') {
-      throw new Error('Bluetooth no disponible en web');
+      console.warn('[FORCE] Bluetooth no disponible en web');
+      return;
     }
 
     try {
       const { BleManager } = require('react-native-ble-plx');
       this.manager = new BleManager();
+      console.log('[FORCE] BleManager inicializado');
     } catch (error) {
-      console.error('Error inicializando BleManager:', error);
-      throw new Error('No se pudo inicializar el gestor de Bluetooth');
+      console.error('[FORCE] Error inicializando BleManager:', error);
     }
   }
 
   /**
-   * Detectar tipo de dispositivo por nombre
+   * Registrar callback para datos de fuerza
    */
-  private detectDeviceType(deviceName: string): 'tindeq' | 'force_board' | 'unknown' {
-    const name = deviceName?.toLowerCase() || '';
-    
-    if (name.includes('progressor')) {
-      return 'tindeq';
-    }
-    
-    if (name.includes('force')) {
-      return 'force_board';
-    }
-    
-    return 'unknown';
+  onData(callback: (data: ForceData) => void): void {
+    this.onDataCallback = callback;
   }
 
   /**
-   * Escanear dispositivos de fuerza cercanos
+   * Registrar callback para cambios de conexión
    */
-  async scanForDevices(onDeviceFound: (device: DeviceInfo) => void): Promise<void> {
+  onConnectionChange(callback: (connected: boolean) => void): void {
+    this.connectionCallback = callback;
+  }
+
+  /**
+   * Registrar callback para dispositivos encontrados
+   */
+  onDevicesFound(callback: (devices: DeviceInfo[]) => void): void {
+    this.devicesCallback = callback;
+  }
+
+  /**
+   * Escanear dispositivos Bluetooth
+   */
+  async scan(): Promise<void> {
+    this.initializeManager();
+
+    if (!this.manager) {
+      throw new Error('Bluetooth no disponible en esta plataforma');
+    }
+
     try {
-      this.initializeManager();
-
-      if (!this.manager) {
-        throw new Error('Bluetooth no disponible en esta plataforma');
-      }
-
-      if (this.isScanning) {
-        return;
-      }
-
       this.isScanning = true;
+      this.scannedDevices.clear();
 
-      if (Platform.OS === 'android') {
-        try {
-          const state = await this.manager.state();
-          if (state !== 'PoweredOn') {
-            throw new Error('Bluetooth no está encendido');
-          }
-        } catch (stateError) {
-          console.error('Error verificando estado de Bluetooth:', stateError);
-          this.isScanning = false;
-          throw stateError;
+      console.log('[FORCE] Iniciando escaneo...');
+
+      this.manager.startDeviceScan(null, null, (error: any, device: Device) => {
+        if (error) {
+          console.error('[FORCE] Error en escaneo:', error);
+          return;
         }
-      }
 
-      try {
-        // Escanear sin filtros para detectar cualquier dispositivo
-        this.manager.startDeviceScan(
-          null,
-          { allowDuplicates: false },
-          (error: any, device: Device) => {
-            try {
-              if (error) {
-                console.error('Error escaneando:', error);
-                this.isScanning = false;
-                return;
-              }
+        if (device) {
+          const deviceType = this.detectDeviceType(device.name);
 
-              if (device && device.name) {
-                const deviceType = this.detectDeviceType(device.name);
-                
-                // Reportar dispositivos conocidos
-                if (deviceType !== 'unknown') {
-                  onDeviceFound({
-                    id: device.id,
-                    name: device.name,
-                    type: deviceType,
-                  });
-                }
-              }
-            } catch (callbackError) {
-              console.error('Error en callback de escaneo:', callbackError);
-              this.isScanning = false;
+          if (deviceType) {
+            const deviceInfo: DeviceInfo = {
+              id: device.id,
+              name: device.name || 'Dispositivo desconocido',
+              type: deviceType,
+            };
+
+            if (!this.scannedDevices.has(device.id)) {
+              this.scannedDevices.set(device.id, deviceInfo);
+              console.log('[FORCE] Dispositivo encontrado:', deviceInfo.name, '(' + deviceInfo.type + ')');
+              this.devicesCallback?.(Array.from(this.scannedDevices.values()));
             }
           }
-        );
-      } catch (scanError) {
-        console.error('Error iniciando escaneo:', scanError);
-        this.isScanning = false;
-        throw scanError;
-      }
+        }
+      });
     } catch (error) {
-      console.error('Error en scanForDevices:', error);
+      console.error('[FORCE] Error iniciando escaneo:', error);
       this.isScanning = false;
       throw error;
     }
@@ -192,10 +169,30 @@ class ForceDeviceService {
    * Detener escaneo
    */
   stopScan(): void {
-    if (this.manager) {
+    if (this.manager && this.isScanning) {
       this.manager.stopDeviceScan();
+      this.isScanning = false;
+      console.log('[FORCE] Escaneo detenido');
     }
-    this.isScanning = false;
+  }
+
+  /**
+   * Detectar tipo de dispositivo por nombre
+   */
+  private detectDeviceType(name?: string): 'tindeq' | 'force_board' | null {
+    if (!name) return null;
+
+    const lowerName = name.toLowerCase();
+
+    if (lowerName.includes('tindeq')) {
+      return 'tindeq';
+    }
+
+    if (lowerName.includes('force')) {
+      return 'force_board';
+    }
+
+    return null;
   }
 
   /**
@@ -260,25 +257,19 @@ class ForceDeviceService {
   async disconnect(): Promise<void> {
     if (this.device) {
       try {
-        if (this.deviceType === 'tindeq') {
-          await this.stopMeasurement();
-        } else if (this.deviceType === 'force_board') {
-          await this.setForceBoardMode(FORCE_BOARD_IDLE_MODE);
-        }
+        await this.device.cancelConnection();
+        this.isConnected = false;
+        this.device = null;
+        this.deviceType = null;
+        console.log('[FORCE] Desconectado');
       } catch (error) {
-        console.error('[FORCE] Error deteniendo medición:', error);
+        console.error('[FORCE] Error desconectando:', error);
       }
-
-      await this.device.cancelConnection();
-      this.device = null;
-      this.isConnected = false;
-      this.deviceType = null;
-      this.connectionCallback?.(false);
     }
   }
 
   /**
-   * Verificar si está conectado
+   * Obtener estado de conexión
    */
   getIsConnected(): boolean {
     return this.isConnected;
@@ -292,7 +283,7 @@ class ForceDeviceService {
   }
 
   /**
-   * Suscribirse al Data Point del Tindeq
+   * Suscribirse a Tindeq Data Point
    */
   private async subscribeTindeqDataPoint(): Promise<void> {
     if (!this.device) {
@@ -323,11 +314,14 @@ class ForceDeviceService {
       throw new Error('No hay dispositivo conectado');
     }
 
-    // Primero, establecer modo Streaming
-    await this.setForceBoardMode(FORCE_BOARD_STREAMING_MODE);
-
-    // Luego suscribirse a Force Characteristic
     try {
+      // Primero, establecer modo Streaming
+      console.log('[FORCE] Estableciendo modo Streaming...');
+      await this.setForceBoardMode(FORCE_BOARD_STREAMING_MODE);
+      console.log('[FORCE] Modo Streaming establecido');
+
+      // Luego suscribirse a Force Characteristic
+      console.log('[FORCE] Suscribiendo a Force Characteristic...');
       await this.device.monitorCharacteristicForService(
         FORCE_BOARD_FORCE_UUID,
         FORCE_BOARD_FORCE_UUID,
@@ -342,23 +336,10 @@ class ForceDeviceService {
           }
         }
       );
+      console.log('[FORCE] Suscripción a Force Board completada');
     } catch (error) {
-      console.error('[FORCE] Error suscribiendo a Force Board:', error);
-      // Intentar con monitorCharacteristicForService sin UUID de servicio
-      await this.device.monitorCharacteristicForService(
-        FORCE_BOARD_FORCE_UUID,
-        FORCE_BOARD_FORCE_UUID,
-        (error: any, characteristic: Characteristic) => {
-          if (error) {
-            console.error('[FORCE] Error monitoreando Force Board (intento 2):', error);
-            return;
-          }
-
-          if (characteristic?.value) {
-            this.handleForceBoardNotification(characteristic);
-          }
-        }
-      );
+      console.error('[FORCE] Error en subscribeForceBoard:', error);
+      throw error;
     }
   }
 
@@ -382,7 +363,7 @@ class ForceDeviceService {
             const weight = this.bytesToFloat32(data.slice(i, i + 4));
             const timestamp = this.bytesToUint32(data.slice(i + 4, i + 8));
 
-            this.forceCallback?.({
+            this.onDataCallback?.({
               weight,
               timestamp,
             });
@@ -391,14 +372,12 @@ class ForceDeviceService {
         break;
 
       case RESP_BATTERY:
-        if (data.length >= 6) {
-          const voltage = this.bytesToUint32(data.slice(2, 6));
-          this.batteryCallback?.(voltage);
-        }
+        const battery = data[2];
+        console.log('[FORCE] Batería:', battery + '%');
         break;
 
       case RESP_LOW_BATTERY:
-        console.warn('[FORCE] Batería baja del Tindeq');
+        console.warn('[FORCE] Batería baja');
         break;
     }
   }
@@ -408,20 +387,17 @@ class ForceDeviceService {
    */
   private handleForceBoardNotification(characteristic: Characteristic): void {
     try {
-      // El Force Board envía datos en formato de entero (lbs)
       const data = this.base64ToBytes(characteristic.value!);
 
-      if (data.length < 2) {
+      if (data.length < 4) {
         return;
       }
 
-      // Leer como integer little-endian (2 bytes)
-      const forceLbs = this.bytesToInt16(data.slice(0, 2));
-      
-      // Convertir de lbs a kg
-      const forceKg = forceLbs * 0.453592;
+      // Force Board envía fuerza en lbs como float32
+      const forceLbs = this.bytesToFloat32(data.slice(0, 4));
+      const forceKg = forceLbs / 2.20462; // Convertir lbs a kg
 
-      this.forceCallback?.({
+      this.onDataCallback?.({
         weight: forceKg,
         timestamp: 0, // Force Board no proporciona timestamp
       });
@@ -443,7 +419,7 @@ class ForceDeviceService {
       const base64Mode = this.bytesToBase64(modeBytes);
 
       await this.device.writeCharacteristicWithResponseForService(
-        FORCE_BOARD_DEVICE_MODE_UUID.substring(0, 8),
+        FORCE_BOARD_DEVICE_MODE_UUID,
         FORCE_BOARD_DEVICE_MODE_UUID,
         base64Mode
       );
@@ -482,85 +458,13 @@ class ForceDeviceService {
   }
 
   /**
-   * Calibrar (TARE) - establecer cero cuando no hay carga
+   * Utilidades de conversión
    */
-  async tare(): Promise<void> {
-    if (this.deviceType === 'tindeq') {
-      await this.sendTindeqCommand(CMD_TARE);
-    } else if (this.deviceType === 'force_board') {
-      // Force Board no tiene comando de tare explícito
-      console.log('[FORCE] Force Board no requiere tare');
-    }
-  }
-
-  /**
-   * Iniciar medición de fuerza
-   */
-  async startMeasurement(): Promise<void> {
-    if (this.deviceType === 'tindeq') {
-      await this.sendTindeqCommand(CMD_START_MEASUREMENT);
-    } else if (this.deviceType === 'force_board') {
-      await this.setForceBoardMode(FORCE_BOARD_STREAMING_MODE);
-    }
-  }
-
-  /**
-   * Detener medición de fuerza
-   */
-  async stopMeasurement(): Promise<void> {
-    if (this.deviceType === 'tindeq') {
-      await this.sendTindeqCommand(CMD_STOP_MEASUREMENT);
-    } else if (this.deviceType === 'force_board') {
-      await this.setForceBoardMode(FORCE_BOARD_IDLE_MODE);
-    }
-  }
-
-  /**
-   * Apagar el dispositivo (solo Tindeq)
-   */
-  async shutdown(): Promise<void> {
-    if (this.deviceType === 'tindeq') {
-      await this.sendTindeqCommand(CMD_SHUTDOWN);
-    }
-  }
-
-  /**
-   * Leer voltaje de batería (solo Tindeq)
-   */
-  async readBattery(): Promise<void> {
-    if (this.deviceType === 'tindeq') {
-      await this.sendTindeqCommand(CMD_BATTERY);
-    }
-  }
-
-  /**
-   * Registrar callback para datos de fuerza
-   */
-  onForceData(callback: ForceCallback): void {
-    this.forceCallback = callback;
-  }
-
-  /**
-   * Registrar callback para batería
-   */
-  onBatteryData(callback: BatteryCallback): void {
-    this.batteryCallback = callback;
-  }
-
-  /**
-   * Registrar callback para cambios de conexión
-   */
-  onConnectionChange(callback: ConnectionCallback): void {
-    this.connectionCallback = callback;
-  }
-
-  // Utilidades de conversión de bytes
-
   private base64ToBytes(base64: string): Uint8Array {
-    const binaryString = atob(base64);
-    const bytes = new Uint8Array(binaryString.length);
-    for (let i = 0; i < binaryString.length; i++) {
-      bytes[i] = binaryString.charCodeAt(i);
+    const binary = atob(base64);
+    const bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) {
+      bytes[i] = binary.charCodeAt(i);
     }
     return bytes;
   }
@@ -574,32 +478,14 @@ class ForceDeviceService {
   }
 
   private bytesToFloat32(bytes: Uint8Array): number {
-    const buffer = new ArrayBuffer(4);
-    const view = new DataView(buffer);
-    for (let i = 0; i < 4; i++) {
-      view.setUint8(i, bytes[i]);
-    }
-    return view.getFloat32(0, true);
+    const view = new DataView(bytes.buffer, bytes.byteOffset, 4);
+    return view.getFloat32(0, true); // true = little-endian
   }
 
   private bytesToUint32(bytes: Uint8Array): number {
-    const buffer = new ArrayBuffer(4);
-    const view = new DataView(buffer);
-    for (let i = 0; i < 4; i++) {
-      view.setUint8(i, bytes[i]);
-    }
-    return view.getUint32(0, true);
-  }
-
-  private bytesToInt16(bytes: Uint8Array): number {
-    const buffer = new ArrayBuffer(2);
-    const view = new DataView(buffer);
-    for (let i = 0; i < 2; i++) {
-      view.setUint8(i, bytes[i]);
-    }
-    return view.getInt16(0, true);
+    const view = new DataView(bytes.buffer, bytes.byteOffset, 4);
+    return view.getUint32(0, true); // true = little-endian
   }
 }
 
-// Singleton instance
-export const forceDeviceService = new ForceDeviceService();
+export const forceDeviceService = ForceDeviceService.getInstance();
