@@ -489,8 +489,19 @@ class ForceDeviceService {
     if (this.deviceType === 'tindeq') {
       await this.sendTindeqCommand(CMD_TARE);
     } else if (this.deviceType === 'force_board') {
-      // Force Board no tiene comando de tare explícito
-      console.log('[FORCE] Force Board no requiere tare');
+      // Force Board: escribir 0x01 en característica Tare para calibrar
+      try {
+        const tareByte = Buffer.from([0x01]).toString('base64');
+        await this.device.writeCharacteristicWithResponseForService(
+          this.device.serviceUUIDs?.[0] || FORCE_BOARD_DEVICE_MODE_UUID,
+          FORCE_BOARD_TARE_UUID,
+          tareByte
+        );
+        console.log('[FORCE] Tare del Force Board enviado');
+      } catch (error) {
+        console.error('[FORCE] Error al hacer tare del Force Board:', error);
+        throw error;
+      }
     }
   }
 
