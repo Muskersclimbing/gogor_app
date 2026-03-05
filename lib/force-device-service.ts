@@ -342,8 +342,13 @@ class ForceDeviceService {
           if (characteristic?.value) {
             this.handleForceBoardNotification(characteristic);
           }
-        }
+         }
       );
+    } catch (error) {
+      console.error('[FORCE] Error suscribiendo a Force Board:', error);
+      throw error;
+    }
+  }
   /**
    * Procesar notificaciones del Tindeq
    */
