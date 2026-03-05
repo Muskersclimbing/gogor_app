@@ -1,6 +1,7 @@
 {
   "cli": {
     "version": ">= 13.2.0"
+    "projectRoot": "."
   },
   "build": {
     "development": {
