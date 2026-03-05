@@ -330,7 +330,7 @@ class ForceDeviceService {
     // Luego suscribirse a Force Characteristic
     try {
       await this.device.monitorCharacteristicForService(
-        FORCE_BOARD_FORCE_UUID,
+        FORCE_BOARD_DEVICE_MODE_UUID,
         FORCE_BOARD_FORCE_UUID,
         (error: any, characteristic: Characteristic) => {
           if (error) {
