@@ -344,12 +344,6 @@ class ForceDeviceService {
           }
         }
       );
-    } catch (error) {
-      console.error('[FORCE] Error suscribiendo a Force Board:', error);
-      // Intentar con monitorCharacteristicForService sin UUID de servicio
-      await this.device.monitorCharacteristicForService(
-        FORCE_BOARD_FORCE_UUID,
-        FORCE_BOARD_FORCE_UUID,
         (error: any, characteristic: Characteristic) => {
           if (error) {
             console.error('[FORCE] Error monitoreando Force Board (intento 2):', error);
@@ -413,20 +407,16 @@ class ForceDeviceService {
       // El Force Board envía datos en formato de entero (lbs)
       const data = this.base64ToBytes(characteristic.value!);
 
-      if (data.length < 2) {
-        return;
-      }
+      if (data.length < 5) return;
 
-      // Leer como integer little-endian (2 bytes)
-      const forceLbs = this.bytesToInt16(data.slice(0, 2));
-      
-      // Convertir de lbs a kg
+      const numSamples = data[0] * 256 + data[1];
+      if (numSamples < 1) return;
+
+      // Primera muestra: bytes 2, 3, 4
+      const forceLbs = data[2] * 32768 + data[3] * 256 + data[4];
       const forceKg = forceLbs * 0.453592;
 
-      this.forceCallback?.({
-        weight: forceKg,
-        timestamp: 0, // Force Board no proporciona timestamp
-      });
+      this.forceCallback?.({ weight: forceKg, timestamp: 0 });
     } catch (error) {
       console.error('[FORCE] Error procesando Force Board notification:', error);
     }
@@ -445,7 +435,7 @@ class ForceDeviceService {
       const base64Mode = this.bytesToBase64(modeBytes);
 
       await this.device.writeCharacteristicWithResponseForService(
-        FORCE_BOARD_DEVICE_MODE_UUID,
+        FORCE_BOARD_SERVICE_UUID,
         FORCE_BOARD_DEVICE_MODE_UUID,
         base64Mode
       );
@@ -494,7 +484,7 @@ class ForceDeviceService {
       try {
         const tareByte = Buffer.from([0x01]).toString('base64');
         await this.device.writeCharacteristicWithResponseForService(
-          this.device.serviceUUIDs?.[0] || FORCE_BOARD_DEVICE_MODE_UUID,
+          FORCE_BOARD_SERVICE_UUID,
           FORCE_BOARD_TARE_UUID,
           tareByte
         );
