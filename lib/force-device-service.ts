@@ -24,6 +24,7 @@ const FORCE_BOARD_DEVICE_MODE_UUID = '467a8517-6e39-11eb-9439-0242ac130002';
 const FORCE_BOARD_FORCE_UUID = '9a88d682-8df2-4afe-9e0d-c2bbbe773dd0';
 const FORCE_BOARD_THRESHOLD_UUID = '9a88d686-8df2-4afe-9e0d-c2bbbe773dd0';
 const FORCE_BOARD_TARE_UUID = '9a88d683-8df2-4afe-9e0d-c2bbbe773dd0';
+const FORCE_BOARD_SERVICE_UUID = '467a8517-6e39-11eb-9439-0242ac130002';
 
 // Comandos del Tindeq
 const CMD_TARE = 0x64;
@@ -330,7 +331,7 @@ class ForceDeviceService {
     // Luego suscribirse a Force Characteristic
     try {
       await this.device.monitorCharacteristicForService(
-        FORCE_BOARD_DEVICE_MODE_UUID,
+        FORCE_BOARD_SERVICE_UUID
         FORCE_BOARD_FORCE_UUID,
         (error: any, characteristic: Characteristic) => {
           if (error) {
