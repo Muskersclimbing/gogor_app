@@ -344,20 +344,6 @@ class ForceDeviceService {
           }
         }
       );
-        (error: any, characteristic: Characteristic) => {
-          if (error) {
-            console.error('[FORCE] Error monitoreando Force Board (intento 2):', error);
-            return;
-          }
-
-          if (characteristic?.value) {
-            this.handleForceBoardNotification(characteristic);
-          }
-        }
-      );
-    }
-  }
-
   /**
    * Procesar notificaciones del Tindeq
    */
