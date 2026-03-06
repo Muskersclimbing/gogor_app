@@ -40,8 +40,8 @@ const config: ExpoConfig = {
     supportsTablet: true,
     bundleIdentifier: env.iosBundleId,
     infoPlist: {
-      NSBluetoothAlwaysUsageDescription: "This app needs Bluetooth to connect to Tindeq Progressor.",
-      NSBluetoothPeripheralUsageDescription: "This app needs Bluetooth to connect to Tindeq Progressor.",
+      NSBluetoothAlwaysUsageDescription: "This app needs Bluetooth to connect to supported force devices like Tindeq Progressor and Force Board.",
+      NSBluetoothPeripheralUsageDescription: "This app needs Bluetooth to connect to supported force devices like Tindeq Progressor and Force Board.",
     },
   },
   android: {
@@ -88,7 +88,7 @@ const config: ExpoConfig = {
       {
         isBackgroundEnabled: false,
         modes: ["peripheral", "central"],
-        bluetoothAlwaysPermission: "Allow $(PRODUCT_NAME) to connect to Tindeq Progressor via Bluetooth.",
+        bluetoothAlwaysPermission: "Allow $(PRODUCT_NAME) to connect to supported force devices via Bluetooth.",
       },
     ],
     [
