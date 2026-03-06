@@ -214,7 +214,8 @@ class ForceDeviceService {
       this.stopScan();
 
       console.log('[FORCE] Conectando a dispositivo:', deviceId, 'tipo:', deviceType);
-      this.device = await this.manager.connectToDevice(deviceId);
+      await new Promise(resolve => setTimeout(resolve, 300));
+this.device = await this.manager.connectToDevice(deviceId, { timeout: 15000 });
       this.deviceType = deviceType;
       console.log('[FORCE] Dispositivo conectado:', this.device?.id);
 
