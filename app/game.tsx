@@ -214,7 +214,7 @@ export default function GameScreen() {
     if (!connected) {
       Alert.alert(
         "No conectado",
-        "No hay un dispositivo Tindeq conectado. Por favor, conéctate primero.",
+        "No hay un dispositivo de fuerza conectado. Por favor, conéctate primero.",
         [
           {
             text: "Volver",
@@ -317,7 +317,7 @@ export default function GameScreen() {
     if (!connected) {
       Alert.alert(
         "Desconectado",
-        "Se perdió la conexión con el Tindeq.",
+        "Se perdió la conexión con el dispositivo de fuerza.",
         [
           {
             text: "Volver",
