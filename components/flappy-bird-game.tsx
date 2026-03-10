@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef, forwardRef, useImperativeHandle } from "react";
 import { View, Dimensions, Text, Image } from "react-native";
-import { Audio } from "expo-av";
+import { setAudioModeAsync, useAudioPlayer } from "expo-audio";
 import Animated, { useSharedValue, useAnimatedStyle, withTiming, useAnimatedReaction, cancelAnimation, runOnJS } from "react-native-reanimated";
 
 const SCREEN_WIDTH = Dimensions.get("window").width;
@@ -83,34 +83,30 @@ export const FlappyBirdGame = forwardRef<FlappyBirdGameRef, FlappyBirdGameProps>
   
   // Ref para trackear última colisión (evitar contar múltiples veces la misma)
   const lastCollisionObstacleId = useRef<number | null>(null);
-  
-  // Audio players para música de fondo y sonido de recolección
-  const collectSoundRef = useRef<any>(null);
-  const backgroundMusicRef = useRef<any>(null);
-  
+
+  const collectSound = useAudioPlayer(require("@/assets/audio/fruit_collect.wav"));
+  const backgroundMusic = useAudioPlayer(require("@/assets/audio/background_music.wav"));
+
   useEffect(() => {
     const loadSounds = async () => {
       try {
-        await Audio.setAudioModeAsync({ 
-          playsInSilentModeIOS: true,
-          staysActiveInBackground: true,
-          shouldDuckAndroid: false,
+        await setAudioModeAsync({
+          playsInSilentMode: true,
+          shouldPlayInBackground: true,
+          interruptionMode: "doNotMix",
         });
-        const { sound: collectSound } = await Audio.Sound.createAsync(require("@/assets/audio/fruit_collect.wav"));
-        collectSoundRef.current = collectSound;
-        const { sound: bgMusic } = await Audio.Sound.createAsync(require("@/assets/audio/background_music.wav"), { isLooping: true, volume: 0.4 });
-        backgroundMusicRef.current = bgMusic;
-        await bgMusic.playAsync();
+        backgroundMusic.loop = true;
+        backgroundMusic.volume = 0.4;
+        backgroundMusic.play();
       } catch (error) {
         console.log("Error loading sounds:", error);
       }
     };
     loadSounds();
     return () => {
-      collectSoundRef.current?.unloadAsync().catch(() => {});
-      backgroundMusicRef.current?.unloadAsync().catch(() => {});
+      backgroundMusic.pause();
     };
-  }, []);
+  }, [backgroundMusic]);
   
   // Patrón de frutas
   const fruitPatternRef = useRef<{ pattern: string; percentages: number[] }>({
@@ -349,12 +345,14 @@ export const FlappyBirdGame = forwardRef<FlappyBirdGameRef, FlappyBirdGameProps>
           // Reproducir sonido de recolección
           runOnJS(() => {
             try {
-              if (collectSoundRef.current) {
-                collectSoundRef.current.replayAsync().catch((e: any) => {
-                  console.log('Error playing sound:', e);
+              collectSound
+                .seekTo(0)
+                .then(() => {
+                  collectSound.play();
+                })
+                .catch((e: any) => {
                   console.log("Error playing collect sound:", e);
                 });
-              }
             } catch (e) {
               console.log("Error playing collect sound:", e);
             }
@@ -445,7 +443,7 @@ export const FlappyBirdGame = forwardRef<FlappyBirdGameRef, FlappyBirdGameProps>
     }, 16);
     
     return () => clearInterval(interval);
-  }, [isPaused, collectedFruits, onFruitCollected, obstacles]);
+  }, [collectSound, isPaused, collectedFruits, onFruitCollected, obstacles]);
 
   // Estilo animado del pájaro
   const birdStyle = useAnimatedStyle(() => {
