@@ -15,18 +15,24 @@ Current gameplay:
 
 ## Stack and scripts
 
-- Expo Router + React Native 0.81 + React 19
+- Expo Router + React Native 0.83 + React 19
 - BLE via `@hangtime/grip-connect-react-native`
 - Styling with NativeWind
-- Audio with `expo-av`
+- Audio with `expo-audio`
+- Video with `expo-video`
 
 Main scripts from `package.json`:
 - `pnpm dev`
+- `pnpm dev:web`
 - `pnpm check`
 - `pnpm lint`
 - `pnpm test`
 - `pnpm android`
 - `pnpm ios`
+
+Current dev behavior:
+- `pnpm dev` starts Expo in `--dev-client` mode
+- `pnpm dev:web` is available for browser-only work
 
 ## Runtime constraints
 
@@ -133,5 +139,6 @@ Active in-game audio:
 ## Documentation rule going forward
 
 - Keep only `AGENTS.md` at the repo root as the operational source of truth.
+- `README.md` may exist as user-facing project documentation, but agents should defer to `AGENTS.md` when the two differ.
 - Do not create temporary handoff, historical debug, or "tomorrow" root notes again.
 - If a bug is fixed, document it in code or commits, not in new root-level `.md` files.
