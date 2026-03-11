@@ -175,6 +175,24 @@ class ForceDeviceService {
         deviceType,
       );
 
+      if (client instanceof WHC06) {
+        client.notify((measurement) => {
+          this.handleMeasurement(measurement);
+        }, this.unit);
+
+        await new Promise<void>((resolve, reject) => {
+          client.connect(resolve, reject);
+        });
+
+        this.device = client;
+        this.deviceType = deviceType;
+        this.isConnected = true;
+        this.connectionCallback?.(true);
+
+        console.log("[FORCE] Conexión establecida");
+        return;
+      }
+
       const connectedDevice = await manager.connectToDevice(deviceId, {
         timeout: 15000,
       });
@@ -225,7 +243,12 @@ class ForceDeviceService {
     }
 
     try {
-      await this.device.disconnect();
+      if (this.device instanceof WHC06) {
+        this.device.manager.stopDeviceScan();
+        this.device.disconnect();
+      } else {
+        await this.device.disconnect();
+      }
     } finally {
       this.device = null;
       this.deviceType = null;
@@ -247,7 +270,7 @@ class ForceDeviceService {
       throw new Error("No hay dispositivo conectado");
     }
 
-    if (this.deviceType === "tindeq") {
+    if (this.deviceType === "tindeq" || this.deviceType === "wh_c06") {
       this.device.tare();
       return;
     }
@@ -269,6 +292,10 @@ class ForceDeviceService {
       throw new Error("No hay dispositivo conectado");
     }
 
+    if (this.device instanceof WHC06) {
+      return;
+    }
+
     if (
       this.device instanceof Progressor ||
       this.device instanceof ForceBoard
@@ -279,6 +306,10 @@ class ForceDeviceService {
 
   async stopMeasurement(): Promise<void> {
     if (!this.device) {
+      return;
+    }
+
+    if (this.device instanceof WHC06) {
       return;
     }
 

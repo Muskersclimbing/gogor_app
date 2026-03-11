@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
   View,
   Text,
@@ -7,6 +7,7 @@ import {
   FlatList,
   Platform,
   Alert,
+  PermissionsAndroid,
 } from "react-native";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import * as Haptics from "expo-haptics";
@@ -36,18 +37,43 @@ export default function ConnectScreen() {
   const [isConnecting, setIsConnecting] = useState(false);
   const [devices, setDevices] = useState<BluetoothDevice[]>([]);
 
-  useEffect(() => {
-    startScanning();
+  const ensureBluetoothPermissions = useCallback(async () => {
+    if (Platform.OS !== "android") {
+      return true;
+    }
 
-    return () => {
-      forceDeviceService.stopScan();
-    };
+    const androidVersion = Number(Platform.Version);
+    const permissions =
+      androidVersion >= 31
+        ? [
+            PermissionsAndroid.PERMISSIONS.BLUETOOTH_SCAN,
+            PermissionsAndroid.PERMISSIONS.BLUETOOTH_CONNECT,
+          ]
+        : [PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION];
+
+    const results = await PermissionsAndroid.requestMultiple(permissions);
+
+    return permissions.every(
+      (permission) =>
+        results[permission] === PermissionsAndroid.RESULTS.GRANTED,
+    );
   }, []);
 
-  const startScanning = async () => {
+  const startScanning = useCallback(async () => {
     try {
       setIsScanning(true);
       setDevices([]);
+
+      const hasPermissions = await ensureBluetoothPermissions();
+      if (!hasPermissions) {
+        setIsScanning(false);
+        Alert.alert(
+          "Permisos requeridos",
+          "Bluetooth necesita permisos de Android para buscar y conectar dispositivos.",
+          [{ text: "OK" }],
+        );
+        return;
+      }
 
       await forceDeviceService.scanForDevices((device) => {
         // Agregar dispositivo a la lista (evitar duplicados)
@@ -76,7 +102,15 @@ export default function ConnectScreen() {
         [{ text: "OK" }],
       );
     }
-  };
+  }, [ensureBluetoothPermissions]);
+
+  useEffect(() => {
+    void startScanning();
+
+    return () => {
+      forceDeviceService.stopScan();
+    };
+  }, [startScanning]);
 
   const handleDevicePress = async (deviceInfo: BluetoothDevice) => {
     if (Platform.OS !== "web") {

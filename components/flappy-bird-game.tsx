@@ -13,7 +13,6 @@ import Animated, {
   withTiming,
   useAnimatedReaction,
   cancelAnimation,
-  runOnJS,
 } from "react-native-reanimated";
 
 const SCREEN_WIDTH = Dimensions.get("window").width;
@@ -61,6 +60,31 @@ interface Fruit {
   y: number;
   collected: boolean;
   type: FruitType;
+}
+
+function cloneObstacle(obstacle: Obstacle): Obstacle {
+  return {
+    id: obstacle.id,
+    x: obstacle.x,
+    gapY: obstacle.gapY,
+  };
+}
+
+function cloneObstacles(obstacles: Obstacle[]): Obstacle[] {
+  return obstacles.map(cloneObstacle);
+}
+
+function dedupeById<T extends { id: number }>(items: T[]): T[] {
+  const seen = new Set<number>();
+
+  return items.filter((item) => {
+    if (seen.has(item.id)) {
+      return false;
+    }
+
+    seen.add(item.id);
+    return true;
+  });
 }
 
 interface FlappyBirdGameProps {
@@ -112,6 +136,12 @@ export const FlappyBirdGame = forwardRef<
     // Tracking de fuerza
     const forceReadings = useRef<number[]>([]);
     const maxForceRef = useRef<number>(0);
+    const obstacleIdCounterRef = useRef(4);
+    const fruitIdCounterRef = useRef(100);
+    const obstaclesRef = useRef<Obstacle[]>([]);
+    const fruitsRef = useRef<Fruit[]>([]);
+    const collectedFruitsRef = useRef(0);
+    const currentForceRef = useRef(currentForce);
 
     // Ref para trackear última colisión (evitar contar múltiples veces la misma)
     const lastCollisionObstacleId = useRef<number | null>(null);
@@ -139,13 +169,33 @@ export const FlappyBirdGame = forwardRef<
         }
       };
       loadSounds();
-      return () => {
-        backgroundMusic.pause();
-      };
     }, [backgroundMusic]);
 
     // Inicializar obstáculos
     useEffect(() => {
+      currentForceRef.current = currentForce;
+    }, [currentForce]);
+
+    useEffect(() => {
+      obstaclesRef.current = obstacles;
+    }, [obstacles]);
+
+    useEffect(() => {
+      fruitsRef.current = fruits;
+    }, [fruits]);
+
+    useEffect(() => {
+      collectedFruitsRef.current = collectedFruits;
+    }, [collectedFruits]);
+
+    useEffect(() => {
+      obstacleIdCounterRef.current = 4;
+      fruitIdCounterRef.current = 100;
+      collectedFruitsRef.current = 0;
+      lastCollisionObstacleId.current = null;
+      forceReadings.current = [];
+      maxForceRef.current = 0;
+
       const initialObstacles: Obstacle[] = [
         {
           id: 1,
@@ -163,8 +213,9 @@ export const FlappyBirdGame = forwardRef<
           gapY: Math.random() * (SCREEN_HEIGHT - OBSTACLE_GAP - 200) + 100,
         },
       ];
-      setObstacles(initialObstacles);
-      obstaclesShared.value = initialObstacles; // Actualizar shared value
+      const uniqueInitialObstacles = dedupeById(initialObstacles);
+      obstaclesRef.current = uniqueInitialObstacles;
+      setObstacles(uniqueInitialObstacles);
 
       // Generar frutas para cada obstáculo
       const initialFruits: Fruit[] = [];
@@ -223,8 +274,14 @@ export const FlappyBirdGame = forwardRef<
           });
         }
       });
-      setFruits(initialFruits);
-    }, [obstaclesShared]);
+      const uniqueInitialFruits = dedupeById(initialFruits);
+      fruitsRef.current = uniqueInitialFruits;
+      setFruits(uniqueInitialFruits);
+    }, []);
+
+    useEffect(() => {
+      obstaclesShared.value = cloneObstacles(dedupeById(obstacles));
+    }, [obstacles, obstaclesShared]);
 
     // Actualizar posición del pájaro según fuerza
     // SIN obstacles en dependencias para evitar deslizamiento automático
@@ -336,15 +393,14 @@ export const FlappyBirdGame = forwardRef<
     useEffect(() => {
       if (isPaused) return;
 
-      let obstacleIdCounter = 4;
-      let fruitIdCounter = 100;
-
       const interval = setInterval(() => {
+        const currentForceValue = currentForceRef.current;
+
         // Trackear fuerza en cada frame
-        if (currentForce > 0) {
-          forceReadings.current.push(currentForce);
-          if (currentForce > maxForceRef.current) {
-            maxForceRef.current = currentForce;
+        if (currentForceValue > 0) {
+          forceReadings.current.push(currentForceValue);
+          if (currentForceValue > maxForceRef.current) {
+            maxForceRef.current = currentForceValue;
           }
         }
 
@@ -353,12 +409,13 @@ export const FlappyBirdGame = forwardRef<
         const birdLeftX = BIRD_X;
         const birdTopY = currentBirdY;
         const birdBottomY = currentBirdY + BIRD_SIZE;
+        const currentObstacles = obstaclesRef.current;
 
         // Detectar colisión FRONTAL (parte derecha del pájaro)
         let colliding = false;
         let collidingObsId: number | null = null;
 
-        for (const obs of obstacles) {
+        for (const obs of currentObstacles) {
           // Verificar si el pájaro está en el rango horizontal del obstáculo
           const inObstacleXRange =
             birdRightX > obs.x && birdLeftX < obs.x + OBSTACLE_WIDTH;
@@ -388,158 +445,137 @@ export const FlappyBirdGame = forwardRef<
         setCollidingObstacleId(collidingObsId);
 
         // Recoger frutas
-        setFruits((prev) => {
-          let newCollected = 0;
-          const updated = prev.map((fruit) => {
-            if (!fruit.collected) {
-              const fruitCenterX = fruit.x;
-              const fruitCenterY = fruit.y;
-              const distance = Math.sqrt(
-                Math.pow(BIRD_X + BIRD_SIZE / 2 - fruitCenterX, 2) +
-                  Math.pow(currentBirdY + BIRD_SIZE / 2 - fruitCenterY, 2),
-              );
-              if (distance < 40) {
-                newCollected++;
-                return { ...fruit, collected: true };
-              }
+        let newCollected = 0;
+        let nextFruits = fruitsRef.current.map((fruit) => {
+          if (!fruit.collected) {
+            const fruitCenterX = fruit.x;
+            const fruitCenterY = fruit.y;
+            const distance = Math.sqrt(
+              Math.pow(BIRD_X + BIRD_SIZE / 2 - fruitCenterX, 2) +
+                Math.pow(currentBirdY + BIRD_SIZE / 2 - fruitCenterY, 2),
+            );
+            if (distance < 40) {
+              newCollected++;
+              return { ...fruit, collected: true };
             }
-            return fruit;
-          });
-
-          if (newCollected > 0) {
-            const newTotal = collectedFruits + newCollected;
-            setCollectedFruits(newTotal);
-            onFruitCollected?.(newTotal);
-            // Reproducir sonido de recolección
-            runOnJS(() => {
-              try {
-                collectSound
-                  .seekTo(0)
-                  .then(() => {
-                    collectSound.play();
-                  })
-                  .catch((e: any) => {
-                    console.log("Error playing collect sound:", e);
-                  });
-              } catch (e) {
-                console.log("Error playing collect sound:", e);
-              }
-            })();
           }
-
-          return updated;
+          return fruit;
         });
+
+        if (newCollected > 0) {
+          const newTotal = collectedFruitsRef.current + newCollected;
+          collectedFruitsRef.current = newTotal;
+          setCollectedFruits(newTotal);
+          onFruitCollected?.(newTotal);
+          try {
+            collectSound
+              .seekTo(0)
+              .then(() => {
+                collectSound.play();
+              })
+              .catch((error: unknown) => {
+                console.log("Error playing collect sound:", error);
+              });
+          } catch (error) {
+            console.log("Error playing collect sound:", error);
+          }
+        }
 
         // Solo mover obstáculos si NO hay colisión frontal
         if (!colliding) {
-          setObstacles((prev) => {
-            const updated = prev.map((obs) => ({
-              ...obs,
-              x: obs.x - OBSTACLE_SPEED,
-            }));
-            const visible = updated.filter((obs) => obs.x > -OBSTACLE_WIDTH);
+          const movedObstacles = currentObstacles.map((obs) => ({
+            ...obs,
+            x: obs.x - OBSTACLE_SPEED,
+          }));
+          const visibleObstacles = movedObstacles.filter(
+            (obs) => obs.x > -OBSTACLE_WIDTH,
+          );
+          const spawnedFruits: Fruit[] = [];
 
-            obstaclesShared.value = visible;
+          if (visibleObstacles.length < 3) {
+            const last = visibleObstacles[visibleObstacles.length - 1];
+            if (!last || last.x < SCREEN_WIDTH - 300) {
+              const gapY =
+                Math.random() * (SCREEN_HEIGHT - OBSTACLE_GAP - 200) + 100;
+              const newObs = {
+                id: obstacleIdCounterRef.current++,
+                x: SCREEN_WIDTH,
+                gapY,
+              };
+              visibleObstacles.push(newObs);
 
-            // Generar nuevo obstáculo si es necesario
-            if (visible.length < 3) {
-              const last = visible[visible.length - 1];
-              if (!last || last.x < SCREEN_WIDTH - 300) {
-                const gapY =
-                  Math.random() * (SCREEN_HEIGHT - OBSTACLE_GAP - 200) + 100;
-                const newObs = {
-                  id: obstacleIdCounter++,
-                  x: SCREEN_WIDTH,
-                  gapY,
-                };
-                visible.push(newObs);
+              const fruitCount = 1 + Math.floor(Math.random() * 2);
+              for (let i = 0; i < fruitCount; i++) {
+                const randomX = newObs.x - 150 + Math.random() * 400;
 
-                // Generar frutas para el nuevo obstáculo
-                setFruits((prevFruits) => {
-                  const fruitCount = 1 + Math.floor(Math.random() * 2); // 1 o 2 frutas
-                  const newFruits: Fruit[] = [];
-                  for (let i = 0; i < fruitCount; i++) {
-                    // Posición X aleatoria en rango amplio
-                    const randomX = newObs.x - 150 + Math.random() * 400;
+                let randomY = newObs.gapY + OBSTACLE_GAP / 2;
+                let attempts = 0;
+                let validPosition = false;
 
-                    // Posición Y aleatoria en toda la pantalla (evitando bloques)
-                    let randomY = newObs.gapY + OBSTACLE_GAP / 2; // Valor por defecto
-                    let attempts = 0;
-                    let validPosition = false;
+                while (!validPosition && attempts < 10) {
+                  randomY = 50 + Math.random() * (SCREEN_HEIGHT - 100);
 
-                    while (!validPosition && attempts < 10) {
-                      randomY = 50 + Math.random() * (SCREEN_HEIGHT - 100);
+                  const inGap =
+                    randomY >= newObs.gapY &&
+                    randomY <= newObs.gapY + OBSTACLE_GAP;
+                  const outsideObstacleX =
+                    randomX < newObs.x || randomX > newObs.x + OBSTACLE_WIDTH;
 
-                      // Verificar si está en el hueco O fuera de la zona horizontal del obstáculo
-                      const inGap =
-                        randomY >= newObs.gapY &&
-                        randomY <= newObs.gapY + OBSTACLE_GAP;
-                      const outsideObstacleX =
-                        randomX < newObs.x ||
-                        randomX > newObs.x + OBSTACLE_WIDTH;
-
-                      if (inGap || outsideObstacleX) {
-                        validPosition = true;
-                      }
-                      attempts++;
-                    }
-
-                    // Si no encontró posición válida, usar el hueco por defecto
-                    if (!validPosition) {
-                      randomY = newObs.gapY + OBSTACLE_GAP / 2;
-                    }
-
-                    const fruitTypes: FruitType[] = [
-                      "apple",
-                      "banana",
-                      "cherry",
-                      "mandarin",
-                      "orange",
-                      "peach",
-                      "pear",
-                      "strawberry",
-                      "watermelon",
-                    ];
-                    const randomType =
-                      fruitTypes[Math.floor(Math.random() * fruitTypes.length)];
-
-                    newFruits.push({
-                      id: fruitIdCounter++,
-                      x: randomX,
-                      y: randomY,
-                      collected: false,
-                      type: randomType,
-                    });
+                  if (inGap || outsideObstacleX) {
+                    validPosition = true;
                   }
-                  return [...prevFruits, ...newFruits];
+                  attempts++;
+                }
+
+                if (!validPosition) {
+                  randomY = newObs.gapY + OBSTACLE_GAP / 2;
+                }
+
+                const fruitTypes: FruitType[] = [
+                  "apple",
+                  "banana",
+                  "cherry",
+                  "mandarin",
+                  "orange",
+                  "peach",
+                  "pear",
+                  "strawberry",
+                  "watermelon",
+                ];
+                const randomType =
+                  fruitTypes[Math.floor(Math.random() * fruitTypes.length)];
+
+                spawnedFruits.push({
+                  id: fruitIdCounterRef.current++,
+                  x: randomX,
+                  y: randomY,
+                  collected: false,
+                  type: randomType,
                 });
               }
             }
+          }
 
-            return visible;
-          });
+          const uniqueVisibleObstacles = dedupeById(visibleObstacles);
+          obstaclesRef.current = uniqueVisibleObstacles;
+          setObstacles(uniqueVisibleObstacles);
 
-          // Mover frutas
-          setFruits((prev) =>
-            prev
-              .map((fruit) => ({ ...fruit, x: fruit.x - OBSTACLE_SPEED }))
-              .filter((fruit) => fruit.x > -50),
-          );
+          nextFruits = nextFruits
+            .map((fruit) => ({ ...fruit, x: fruit.x - OBSTACLE_SPEED }))
+            .filter((fruit) => fruit.x > -50);
+
+          if (spawnedFruits.length > 0) {
+            nextFruits = [...nextFruits, ...spawnedFruits];
+          }
         }
+
+        const uniqueFruits = dedupeById(nextFruits);
+        fruitsRef.current = uniqueFruits;
+        setFruits(uniqueFruits);
       }, 16);
 
       return () => clearInterval(interval);
-    }, [
-      birdY,
-      collectSound,
-      collectedFruits,
-      currentForce,
-      isPaused,
-      obstacles,
-      obstaclesShared,
-      onCollision,
-      onFruitCollected,
-    ]);
+    }, [birdY, collectSound, isPaused, onCollision, onFruitCollected]);
 
     // Estilo animado del pájaro
     const birdStyle = useAnimatedStyle(() => {
@@ -551,7 +587,7 @@ export const FlappyBirdGame = forwardRef<
     return (
       <View style={{ flex: 1, backgroundColor: "transparent" }}>
         {/* Obstáculos */}
-        {obstacles.map((obs) => {
+        {dedupeById(obstacles).map((obs) => {
           const isColliding = obs.id === collidingObstacleId;
           const obstacleColor = isColliding ? "#FF0000" : "#8B4513";
           const borderColor = isColliding ? "#CC0000" : "#654321";
@@ -587,7 +623,7 @@ export const FlappyBirdGame = forwardRef<
         })}
 
         {/* Frutas */}
-        {fruits.map((fruit) => {
+        {dedupeById(fruits).map((fruit) => {
           // Tamaños ajustados por tipo de fruta para mejor proporción
           const fruitSizes: Record<FruitType, number> = {
             watermelon: 40,

@@ -1,4 +1,4 @@
-import React, { useEffect, useEffectEvent, useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   View,
   Text,
@@ -162,9 +162,14 @@ export default function GameScreen() {
   const [gamePhase, setGamePhase] = useState<GamePhase>("calibration");
   const [calibrationData, setCalibrationData] =
     useState<CalibrationData | null>(null);
-  const [calibrationForces, setCalibrationForces] = useState<number[]>([]);
   const [calibrationTime, setCalibrationTime] = useState(0);
   const isCalibrating = useRef(false);
+  const calibrationForcesRef = useRef<number[]>([]);
+  const gamePhaseRef = useRef<GamePhase>("calibration");
+  const finishCalibrationRef = useRef<() => void>(() => {});
+  const handleGameEndRef = useRef<() => void>(() => {});
+  const isFinishingCalibrationRef = useRef(false);
+  const isEndingGameRef = useRef(false);
 
   // Estado del juego
   const [currentForce, setCurrentForce] = useState(0);
@@ -179,6 +184,10 @@ export default function GameScreen() {
   const [timeElapsed, setTimeElapsed] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
   const [fruitsCollected, setFruitsCollected] = useState(0);
+
+  useEffect(() => {
+    gamePhaseRef.current = gamePhase;
+  }, [gamePhase]);
 
   // Refs para estadísticas finales y referencia al componente del juego
   const finalStatsRef = useRef({ maxForce: 0, avgForce: 0 });
@@ -207,44 +216,19 @@ export default function GameScreen() {
 
   // ELIMINADO: useEffect de navegación - ahora se navega directamente desde handleGameEnd
 
-  const handleForceData = useEffectEvent((data: ForceData) => {
-    const force = data.weight;
-    setCurrentForce(force);
-
-    if (isCalibrating.current) {
-      setCalibrationForces((prev) => [...prev, force]);
-    }
-
-    if (gamePhase === "playing") {
-      setMaxForceReached((prev) => (force > prev ? force : prev));
-    }
-  });
-
-  const handleBatteryData = useEffectEvent((_voltage: number) => {});
-
-  const handleConnectionChange = useEffectEvent((connected: boolean) => {
-    if (!connected) {
-      Alert.alert(
-        "Desconectado",
-        "Se perdió la conexión con el dispositivo de fuerza.",
-        [
-          {
-            text: "Volver",
-            onPress: () => router.back(),
-          },
-        ],
-      );
-    }
-  });
-
   const finishCalibration = async () => {
     try {
       await forceDeviceService.stopMeasurement();
 
-      console.log("[DEBUG] Fuerzas capturadas:", calibrationForces.length);
-      console.log("[DEBUG] Muestra:", calibrationForces.slice(0, 5));
+      const capturedForces = calibrationForcesRef.current;
 
-      if (calibrationForces.length === 0) {
+      console.log("[DEBUG] Fuerzas capturadas:", capturedForces.length);
+      console.log("[DEBUG] Muestra:", capturedForces.slice(0, 5));
+
+      if (capturedForces.length === 0) {
+        isCalibrating.current = false;
+        isFinishingCalibrationRef.current = false;
+        calibrationForcesRef.current = [];
         Alert.alert(
           "Error",
           "No se capturaron datos de fuerza durante la calibración.",
@@ -253,7 +237,7 @@ export default function GameScreen() {
         return;
       }
 
-      const sortedForces = [...calibrationForces].sort((a, b) => b - a);
+      const sortedForces = [...capturedForces].sort((a, b) => b - a);
       const top20Percent = sortedForces.slice(
         0,
         Math.max(1, Math.ceil(sortedForces.length * 0.2)),
@@ -273,6 +257,8 @@ export default function GameScreen() {
       console.log("[DEBUG] calibrationData:", calibration);
 
       isCalibrating.current = false;
+      isFinishingCalibrationRef.current = false;
+      calibrationForcesRef.current = [];
       setCalibrationData(calibration);
       setGamePhase("ready");
 
@@ -280,14 +266,15 @@ export default function GameScreen() {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       }
     } catch (error) {
+      isCalibrating.current = false;
+      isFinishingCalibrationRef.current = false;
       console.error("Error finalizando calibración:", error);
       Alert.alert("Error", "No se pudo completar la calibración.");
     }
   };
-
-  const finishCalibrationEffect = useEffectEvent(() => {
+  finishCalibrationRef.current = () => {
     void finishCalibration();
-  });
+  };
 
   const handleGameEnd = async () => {
     if (Platform.OS !== "web") {
@@ -296,6 +283,7 @@ export default function GameScreen() {
 
     try {
       await forceDeviceService.stopMeasurement();
+      isEndingGameRef.current = false;
       setIsPlaying(false);
       setGamePhase("finished");
 
@@ -341,13 +329,13 @@ export default function GameScreen() {
         },
       });
     } catch (error) {
+      isEndingGameRef.current = false;
       console.error("Error finalizando juego:", error);
     }
   };
-
-  const handleGameEndEffect = useEffectEvent(() => {
+  handleGameEndRef.current = () => {
     void handleGameEnd();
-  });
+  };
 
   // Verificar conexión al montar
   useEffect(() => {
@@ -367,9 +355,33 @@ export default function GameScreen() {
     }
 
     // Configurar listeners
-    forceDeviceService.onForceData(handleForceData);
-    forceDeviceService.onBatteryData(handleBatteryData);
-    forceDeviceService.onConnectionChange(handleConnectionChange);
+    forceDeviceService.onForceData((data: ForceData) => {
+      const force = data.weight;
+      setCurrentForce(force);
+
+      if (isCalibrating.current) {
+        calibrationForcesRef.current.push(force);
+      }
+
+      if (gamePhaseRef.current === "playing") {
+        setMaxForceReached((prev) => (force > prev ? force : prev));
+      }
+    });
+    forceDeviceService.onBatteryData((_voltage: number) => {});
+    forceDeviceService.onConnectionChange((isConnected: boolean) => {
+      if (!isConnected) {
+        Alert.alert(
+          "Desconectado",
+          "Se perdió la conexión con el dispositivo de fuerza.",
+          [
+            {
+              text: "Volver",
+              onPress: () => router.back(),
+            },
+          ],
+        );
+      }
+    });
 
     // Leer batería inicial
     forceDeviceService.readBattery().catch(console.error);
@@ -377,7 +389,7 @@ export default function GameScreen() {
     return () => {
       forceDeviceService.stopMeasurement().catch(console.error);
     };
-  }, [handleBatteryData, handleConnectionChange, handleForceData, router]);
+  }, [router]);
 
   // Cronómetro del juego
   useEffect(() => {
@@ -390,16 +402,22 @@ export default function GameScreen() {
         setTimeRemaining((prev) => {
           const newTime = prev <= 0 ? 0 : prev - 1;
           finalTimeRemainingRef.current = newTime;
-          if (newTime <= 0) {
-            handleGameEndEffect();
-          }
           return newTime;
         });
       }
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [handleGameEndEffect, isPlaying, modeConfig?.duration]);
+  }, [isPlaying, modeConfig?.duration]);
+
+  useEffect(() => {
+    if (!isPlaying || timeRemaining > 0 || isEndingGameRef.current) {
+      return;
+    }
+
+    isEndingGameRef.current = true;
+    handleGameEndRef.current();
+  }, [isPlaying, timeRemaining]);
 
   // Cronómetro de calibración (5 segundos)
   useEffect(() => {
@@ -410,7 +428,6 @@ export default function GameScreen() {
     const timer = setInterval(() => {
       setCalibrationTime((prev) => {
         if (prev <= 1) {
-          finishCalibrationEffect();
           return 0;
         }
         return prev - 1;
@@ -418,7 +435,21 @@ export default function GameScreen() {
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [calibrationTime, finishCalibrationEffect, gamePhase]);
+  }, [calibrationTime, gamePhase]);
+
+  useEffect(() => {
+    if (
+      gamePhase !== "calibration" ||
+      calibrationTime !== 0 ||
+      !isCalibrating.current ||
+      isFinishingCalibrationRef.current
+    ) {
+      return;
+    }
+
+    isFinishingCalibrationRef.current = true;
+    finishCalibrationRef.current();
+  }, [calibrationTime, gamePhase]);
 
   const handleStartCalibration = async () => {
     if (Platform.OS !== "web") {
@@ -426,6 +457,11 @@ export default function GameScreen() {
     }
 
     try {
+      isCalibrating.current = true;
+      isFinishingCalibrationRef.current = false;
+      calibrationForcesRef.current = [];
+      setCurrentForce(0);
+
       // Calibrar a cero
       await forceDeviceService.tare();
 
@@ -436,10 +472,10 @@ export default function GameScreen() {
       await forceDeviceService.startMeasurement();
 
       // Iniciar cronómetro de 5 segundos
-      isCalibrating.current = true;
       setCalibrationTime(5);
-      setCalibrationForces([]);
     } catch (error) {
+      isCalibrating.current = false;
+      isFinishingCalibrationRef.current = false;
       console.error("Error iniciando calibración:", error);
       Alert.alert("Error", "No se pudo iniciar la calibración.");
     }
@@ -461,6 +497,7 @@ export default function GameScreen() {
       // Iniciar medición
       await forceDeviceService.startMeasurement();
 
+      isEndingGameRef.current = false;
       setIsPlaying(true);
       setGamePhase("playing");
       setMaxForceReached(0);
