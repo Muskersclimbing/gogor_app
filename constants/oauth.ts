@@ -1,5 +1,6 @@
 import * as Linking from "expo-linking";
 import * as ReactNative from "react-native";
+import { Buffer } from "buffer";
 
 // Extract scheme from bundle ID (last segment timestamp, prefixed with "manus")
 // e.g., "space.manus.my.app.t20240115103045" -> "manus20240115103045"
@@ -56,11 +57,7 @@ const encodeState = (value: string) => {
   if (typeof globalThis.btoa === "function") {
     return globalThis.btoa(value);
   }
-  const BufferImpl = (globalThis as Record<string, any>).Buffer;
-  if (BufferImpl) {
-    return BufferImpl.from(value, "utf-8").toString("base64");
-  }
-  return value;
+  return Buffer.from(value, "utf-8").toString("base64");
 };
 
 export const getLoginUrl = () => {
