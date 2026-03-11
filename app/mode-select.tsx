@@ -1,11 +1,20 @@
-import { View, Text, TouchableOpacity, Platform, ScrollView, Alert } from "react-native";
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  Platform,
+  ScrollView,
+} from "react-native";
 import { useRouter, useFocusEffect } from "expo-router";
 import * as Haptics from "expo-haptics";
 import { useCallback, useState } from "react";
 
 import { ScreenContainer } from "@/components/screen-container";
 import { useColors } from "@/hooks/use-colors";
-import { customGamesService, type CustomGame } from "@/lib/custom-games-service";
+import {
+  customGamesService,
+  type CustomGame,
+} from "@/lib/custom-games-service";
 
 export type GameMode = "quick" | "total";
 
@@ -24,7 +33,14 @@ interface CustomGameCardProps {
   onEdit: (game: CustomGame) => void;
 }
 
-function ModeCard({ title, duration, description, icon, mode, onSelect }: ModeCardProps) {
+function ModeCard({
+  title,
+  duration,
+  description,
+  icon,
+  mode,
+  onSelect,
+}: ModeCardProps) {
   const colors = useColors();
 
   const handlePress = () => {
@@ -53,7 +69,6 @@ function ModeCard({ title, duration, description, icon, mode, onSelect }: ModeCa
 }
 
 function CustomGameCard({ game, onSelect, onEdit }: CustomGameCardProps) {
-  const colors = useColors();
   const minutes = Math.floor(game.duration / 60);
   const seconds = game.duration % 60;
   const durationStr = `${minutes}:${String(seconds).padStart(2, "0")}`;
@@ -78,22 +93,32 @@ function CustomGameCard({ game, onSelect, onEdit }: CustomGameCardProps) {
         <View className="flex-row items-center mb-3">
           <Text className="text-4xl mr-3">⚙️</Text>
           <View className="flex-1">
-            <Text className="text-foreground text-xl font-bold">{game.name}</Text>
-            <Text className="text-primary text-sm font-semibold">{durationStr}</Text>
+            <Text className="text-foreground text-xl font-bold">
+              {game.name}
+            </Text>
+            <Text className="text-primary text-sm font-semibold">
+              {durationStr}
+            </Text>
           </View>
         </View>
         <View className="flex-row gap-2 mb-3">
           <View className="flex-1 bg-background/50 rounded-lg p-2">
             <Text className="text-muted text-xs">Extensión</Text>
-            <Text className="text-foreground font-semibold">{game.forcezones.extension}%</Text>
+            <Text className="text-foreground font-semibold">
+              {game.forcezones.extension}%
+            </Text>
           </View>
           <View className="flex-1 bg-background/50 rounded-lg p-2">
             <Text className="text-muted text-xs">Semi-arqueo</Text>
-            <Text className="text-foreground font-semibold">{game.forcezones.semiArqueo}%</Text>
+            <Text className="text-foreground font-semibold">
+              {game.forcezones.semiArqueo}%
+            </Text>
           </View>
           <View className="flex-1 bg-background/50 rounded-lg p-2">
             <Text className="text-muted text-xs">Arqueo</Text>
-            <Text className="text-foreground font-semibold">{game.forcezones.arqueo}%</Text>
+            <Text className="text-foreground font-semibold">
+              {game.forcezones.arqueo}%
+            </Text>
           </View>
         </View>
       </TouchableOpacity>
@@ -102,7 +127,9 @@ function CustomGameCard({ game, onSelect, onEdit }: CustomGameCardProps) {
         onPress={handleEditPress}
         className="bg-primary/10 border border-primary/30 rounded-lg py-2 active:opacity-70"
       >
-        <Text className="text-primary text-center font-medium text-sm">Editar</Text>
+        <Text className="text-primary text-center font-medium text-sm">
+          Editar
+        </Text>
       </TouchableOpacity>
     </View>
   );
@@ -110,7 +137,7 @@ function CustomGameCard({ game, onSelect, onEdit }: CustomGameCardProps) {
 
 /**
  * Mode Select Screen - Selección de modalidad de juego
- * 
+ *
  * Permite al usuario elegir entre:
  * - Calentamiento Rápido (3 min)
  * - Calentamiento Total (5 min)
@@ -124,7 +151,7 @@ export default function ModeSelectScreen() {
   useFocusEffect(
     useCallback(() => {
       loadCustomGames();
-    }, [])
+    }, []),
   );
 
   const loadCustomGames = async () => {
@@ -177,7 +204,10 @@ export default function ModeSelectScreen() {
       <ScrollView showsVerticalScrollIndicator={false}>
         {/* Header */}
         <View className="mb-6">
-          <TouchableOpacity onPress={handleBackPress} className="mb-4 active:opacity-70">
+          <TouchableOpacity
+            onPress={handleBackPress}
+            className="mb-4 active:opacity-70"
+          >
             <Text className="text-primary text-lg">← Atrás</Text>
           </TouchableOpacity>
           <Text className="text-3xl font-bold text-foreground mb-2">
@@ -211,7 +241,9 @@ export default function ModeSelectScreen() {
         {/* Juegos Personalizados */}
         {customGames.length > 0 && (
           <View className="mt-8 mb-6">
-            <Text className="text-foreground font-bold text-lg mb-4">Mis Entrenamientos</Text>
+            <Text className="text-foreground font-bold text-lg mb-4">
+              Mis Entrenamientos
+            </Text>
             {customGames.map((game) => (
               <CustomGameCard
                 key={game.id}
@@ -238,7 +270,9 @@ export default function ModeSelectScreen() {
         <View className="mt-6 bg-surface rounded-xl p-4 border border-border">
           <Text className="text-foreground font-semibold mb-2">💡 Consejo</Text>
           <Text className="text-muted text-sm leading-relaxed">
-            Todos los modos incluyen ejercicios isométricos (mantener), concéntricos (apretar) y excéntricos (soltar lentamente) para un calentamiento completo.
+            Todos los modos incluyen ejercicios isométricos (mantener),
+            concéntricos (apretar) y excéntricos (soltar lentamente) para un
+            calentamiento completo.
           </Text>
         </View>
       </ScrollView>

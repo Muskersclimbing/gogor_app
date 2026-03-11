@@ -40,8 +40,10 @@ const config: ExpoConfig = {
     bundleIdentifier: env.iosBundleId,
     infoPlist: {
       ITSAppUsesNonExemptEncryption: false,
-      NSBluetoothAlwaysUsageDescription: "This app needs Bluetooth to connect to supported force devices like Tindeq Progressor and Force Board.",
-      NSBluetoothPeripheralUsageDescription: "This app needs Bluetooth to connect to supported force devices like Tindeq Progressor and Force Board.",
+      NSBluetoothAlwaysUsageDescription:
+        "This app needs Bluetooth to connect to supported force devices like Tindeq Progressor and Force Board.",
+      NSBluetoothPeripheralUsageDescription:
+        "This app needs Bluetooth to connect to supported force devices like Tindeq Progressor and Force Board.",
     },
   },
   android: {
@@ -87,13 +89,15 @@ const config: ExpoConfig = {
       {
         isBackgroundEnabled: false,
         modes: ["peripheral", "central"],
-        bluetoothAlwaysPermission: "Allow $(PRODUCT_NAME) to connect to supported force devices via Bluetooth.",
+        bluetoothAlwaysPermission:
+          "Allow $(PRODUCT_NAME) to connect to supported force devices via Bluetooth.",
       },
     ],
     [
       "expo-audio",
       {
-        microphonePermission: "Allow $(PRODUCT_NAME) to access your microphone.",
+        microphonePermission:
+          "Allow $(PRODUCT_NAME) to access your microphone.",
       },
     ],
     [

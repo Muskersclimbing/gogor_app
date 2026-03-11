@@ -1,5 +1,6 @@
-const { themeColors } = require("./theme.config");
-const plugin = require("tailwindcss/plugin");
+import { themeColors } from "./theme.config.js";
+import plugin from "tailwindcss/plugin.js";
+import nativewindPreset from "nativewind/dist/tailwind/index.js";
 
 const tailwindColors = Object.fromEntries(
   Object.entries(themeColors).map(([name, swatch]) => [
@@ -13,12 +14,17 @@ const tailwindColors = Object.fromEntries(
 );
 
 /** @type {import('tailwindcss').Config} */
-module.exports = {
+const config = {
   darkMode: "class",
   // Scan all component and app files for Tailwind classes
-  content: ["./app/**/*.{js,ts,tsx}", "./components/**/*.{js,ts,tsx}", "./lib/**/*.{js,ts,tsx}", "./hooks/**/*.{js,ts,tsx}"],
+  content: [
+    "./app/**/*.{js,ts,tsx}",
+    "./components/**/*.{js,ts,tsx}",
+    "./lib/**/*.{js,ts,tsx}",
+    "./hooks/**/*.{js,ts,tsx}",
+  ],
 
-  presets: [require("nativewind/preset")],
+  presets: [nativewindPreset],
   theme: {
     extend: {
       colors: tailwindColors,
@@ -31,3 +37,5 @@ module.exports = {
     }),
   ],
 };
+
+export default config;

@@ -7,7 +7,7 @@ import { useColors } from "@/hooks/use-colors";
 
 /**
  * Results Screen - Resultados de la sesión
- * 
+ *
  * Muestra:
  * - Estadísticas de la sesión completada
  * - Fuerza máxima y promedio
@@ -73,27 +73,37 @@ export default function ResultsScreen() {
 
       {/* Estadísticas */}
       <View className="bg-surface rounded-2xl p-6 mb-6 border border-border">
-        <Text className="text-foreground font-semibold text-lg mb-4">Estadísticas</Text>
-        
+        <Text className="text-foreground font-semibold text-lg mb-4">
+          Estadísticas
+        </Text>
+
         <View className="gap-3">
           <View className="flex-row justify-between">
             <Text className="text-muted">Fuerza máxima</Text>
-            <Text className="text-foreground font-semibold">{maxForce.toFixed(1)} kg</Text>
+            <Text className="text-foreground font-semibold">
+              {maxForce.toFixed(1)} kg
+            </Text>
           </View>
-          
+
           <View className="flex-row justify-between">
             <Text className="text-muted">Fuerza promedio</Text>
-            <Text className="text-foreground font-semibold">{avgForce.toFixed(1)} kg</Text>
+            <Text className="text-foreground font-semibold">
+              {avgForce.toFixed(1)} kg
+            </Text>
           </View>
-          
+
           <View className="flex-row justify-between">
             <Text className="text-muted">Tiempo total</Text>
-            <Text className="text-foreground font-semibold">{minutes}:{String(seconds).padStart(2, "0")} min</Text>
+            <Text className="text-foreground font-semibold">
+              {minutes}:{String(seconds).padStart(2, "0")} min
+            </Text>
           </View>
-          
+
           <View className="flex-row justify-between">
             <Text className="text-muted">Frutas recogidas</Text>
-            <Text className="text-foreground font-semibold">{fruitsCollected}</Text>
+            <Text className="text-foreground font-semibold">
+              {fruitsCollected}
+            </Text>
           </View>
         </View>
       </View>

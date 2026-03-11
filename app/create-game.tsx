@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import {
   View,
   Text,
@@ -7,29 +7,32 @@ import {
   ScrollView,
   Alert,
   Platform,
-} from 'react-native';
-import { useRouter } from 'expo-router';
-import * as Haptics from 'expo-haptics';
+} from "react-native";
+import { useRouter } from "expo-router";
+import * as Haptics from "expo-haptics";
 
-import { ScreenContainer } from '@/components/screen-container';
-import { useColors } from '@/hooks/use-colors';
-import { customGamesService, type ForcezoneConfig } from '@/lib/custom-games-service';
+import { ScreenContainer } from "@/components/screen-container";
+import { useColors } from "@/hooks/use-colors";
+import {
+  customGamesService,
+  type ForcezoneConfig,
+} from "@/lib/custom-games-service";
 
 export default function CreateGameScreen() {
   const colors = useColors();
   const router = useRouter();
 
-  const [name, setName] = useState('');
-  const [minutesInput, setMinutesInput] = useState('3');
-  const [secondsInput, setSecondsInput] = useState('0');
-  const [extension, setExtension] = useState('33');
-  const [semiArqueo, setSemiArqueo] = useState('33');
-  const [arqueo, setArqueo] = useState('34');
+  const [name, setName] = useState("");
+  const [minutesInput, setMinutesInput] = useState("3");
+  const [secondsInput, setSecondsInput] = useState("0");
+  const [extension, setExtension] = useState("33");
+  const [semiArqueo, setSemiArqueo] = useState("33");
+  const [arqueo, setArqueo] = useState("34");
   const [loading, setLoading] = useState(false);
 
   const validateInputs = (): boolean => {
     if (!name.trim()) {
-      Alert.alert('Error', 'Por favor ingresa un nombre para el juego');
+      Alert.alert("Error", "Por favor ingresa un nombre para el juego");
       return false;
     }
 
@@ -38,7 +41,7 @@ export default function CreateGameScreen() {
     const duration = minutes * 60 + seconds;
 
     if (duration <= 0) {
-      Alert.alert('Error', 'La duración debe ser mayor a 0');
+      Alert.alert("Error", "La duración debe ser mayor a 0");
       return false;
     }
 
@@ -47,12 +50,15 @@ export default function CreateGameScreen() {
     const arq = parseInt(arqueo) || 0;
 
     if (ext < 0 || semi < 0 || arq < 0) {
-      Alert.alert('Error', 'Los porcentajes no pueden ser negativos');
+      Alert.alert("Error", "Los porcentajes no pueden ser negativos");
       return false;
     }
 
     if (ext + semi + arq !== 100) {
-      Alert.alert('Error', `Los porcentajes deben sumar 100% (actualmente: ${ext + semi + arq}%)`);
+      Alert.alert(
+        "Error",
+        `Los porcentajes deben sumar 100% (actualmente: ${ext + semi + arq}%)`,
+      );
       return false;
     }
 
@@ -74,18 +80,18 @@ export default function CreateGameScreen() {
 
       await customGamesService.createGame(name, minutes, seconds, forcezones);
 
-      if (Platform.OS !== 'web') {
+      if (Platform.OS !== "web") {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       }
 
-      Alert.alert('Éxito', 'Juego creado correctamente', [
+      Alert.alert("Éxito", "Juego creado correctamente", [
         {
-          text: 'OK',
+          text: "OK",
           onPress: () => router.back(),
         },
       ]);
     } catch (error) {
-      Alert.alert('Error', 'No se pudo crear el juego');
+      Alert.alert("Error", "No se pudo crear el juego");
       console.error(error);
     } finally {
       setLoading(false);
@@ -93,7 +99,7 @@ export default function CreateGameScreen() {
   };
 
   const handleCancel = () => {
-    if (Platform.OS !== 'web') {
+    if (Platform.OS !== "web") {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     }
     router.back();
@@ -103,21 +109,31 @@ export default function CreateGameScreen() {
     const num = parseInt(value) || 0;
     const clamped = Math.max(0, Math.min(100, num));
 
-    if (field === 'extension') setExtension(clamped.toString());
-    else if (field === 'semiArqueo') setSemiArqueo(clamped.toString());
-    else if (field === 'arqueo') setArqueo(clamped.toString());
+    if (field === "extension") setExtension(clamped.toString());
+    else if (field === "semiArqueo") setSemiArqueo(clamped.toString());
+    else if (field === "arqueo") setArqueo(clamped.toString());
   };
 
-  const total = (parseInt(extension) || 0) + (parseInt(semiArqueo) || 0) + (parseInt(arqueo) || 0);
+  const total =
+    (parseInt(extension) || 0) +
+    (parseInt(semiArqueo) || 0) +
+    (parseInt(arqueo) || 0);
   const totalColor = total === 100 ? colors.success : colors.error;
 
   return (
     <ScreenContainer className="flex-1 p-6">
-      <ScrollView contentContainerStyle={{ flexGrow: 1 }} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        contentContainerStyle={{ flexGrow: 1 }}
+        showsVerticalScrollIndicator={false}
+      >
         {/* Título */}
         <View className="mb-8">
-          <Text className="text-3xl font-bold text-foreground mb-2">Crear Juego Nuevo</Text>
-          <Text className="text-muted text-sm">Configura tu entrenamiento personalizado</Text>
+          <Text className="text-3xl font-bold text-foreground mb-2">
+            Crear Juego Nuevo
+          </Text>
+          <Text className="text-muted text-sm">
+            Configura tu entrenamiento personalizado
+          </Text>
         </View>
 
         {/* Nombre */}
@@ -135,7 +151,9 @@ export default function CreateGameScreen() {
 
         {/* Tiempo de partida */}
         <View className="mb-6">
-          <Text className="text-foreground font-semibold mb-2">Tiempo de partida</Text>
+          <Text className="text-foreground font-semibold mb-2">
+            Tiempo de partida
+          </Text>
           <View className="flex-row gap-2 items-center justify-center">
             <View className="flex-1">
               <TextInput
@@ -171,9 +189,12 @@ export default function CreateGameScreen() {
 
         {/* Zonas de Fuerza */}
         <View className="mb-6">
-          <Text className="text-foreground font-semibold mb-2">Zonas de Fuerza</Text>
+          <Text className="text-foreground font-semibold mb-2">
+            Zonas de Fuerza
+          </Text>
           <Text className="text-muted text-xs mb-4">
-            Define el porcentaje de tiempo de partida que quieres transcurrir en cada segmento de carga
+            Define el porcentaje de tiempo de partida que quieres transcurrir en
+            cada segmento de carga
           </Text>
 
           {/* Extensión */}
@@ -186,7 +207,7 @@ export default function CreateGameScreen() {
               placeholder="0"
               placeholderTextColor={colors.muted}
               value={extension}
-              onChangeText={(val) => updatePercentage('extension', val)}
+              onChangeText={(val) => updatePercentage("extension", val)}
               keyboardType="number-pad"
               maxLength={3}
               className="bg-surface border border-border rounded-lg px-4 py-3 text-foreground text-center"
@@ -204,7 +225,7 @@ export default function CreateGameScreen() {
               placeholder="0"
               placeholderTextColor={colors.muted}
               value={semiArqueo}
-              onChangeText={(val) => updatePercentage('semiArqueo', val)}
+              onChangeText={(val) => updatePercentage("semiArqueo", val)}
               keyboardType="number-pad"
               maxLength={3}
               className="bg-surface border border-border rounded-lg px-4 py-3 text-foreground text-center"
@@ -222,7 +243,7 @@ export default function CreateGameScreen() {
               placeholder="0"
               placeholderTextColor={colors.muted}
               value={arqueo}
-              onChangeText={(val) => updatePercentage('arqueo', val)}
+              onChangeText={(val) => updatePercentage("arqueo", val)}
               keyboardType="number-pad"
               maxLength={3}
               className="bg-surface border border-border rounded-lg px-4 py-3 text-foreground text-center"
@@ -247,10 +268,13 @@ export default function CreateGameScreen() {
             onPress={handleSaveGame}
             disabled={loading}
             className="bg-primary px-6 py-4 rounded-xl active:opacity-80"
-            style={{ backgroundColor: colors.primary, opacity: loading ? 0.6 : 1 }}
+            style={{
+              backgroundColor: colors.primary,
+              opacity: loading ? 0.6 : 1,
+            }}
           >
             <Text className="text-background text-lg font-semibold text-center">
-              {loading ? 'Guardando...' : 'Guardar Juego'}
+              {loading ? "Guardando..." : "Guardar Juego"}
             </Text>
           </TouchableOpacity>
 
@@ -259,7 +283,9 @@ export default function CreateGameScreen() {
             disabled={loading}
             className="bg-surface border border-border px-6 py-3 rounded-xl active:opacity-70"
           >
-            <Text className="text-foreground text-center font-medium">Cancelar</Text>
+            <Text className="text-foreground text-center font-medium">
+              Cancelar
+            </Text>
           </TouchableOpacity>
         </View>
       </ScrollView>

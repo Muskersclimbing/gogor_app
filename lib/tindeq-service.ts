@@ -1,11 +1,11 @@
 /**
  * Tindeq Progressor Bluetooth Service
- * 
+ *
  * Maneja la conexión y comunicación con el Tindeq Progressor via BLE.
  * API Reference: https://tindeq.com/progressor_api/
  */
 
-import { Platform } from 'react-native';
+import { Platform } from "react-native";
 
 // Tipos para BLE
 type Device = any;
@@ -13,9 +13,9 @@ type Characteristic = any;
 type BleManagerType = any;
 
 // UUIDs del Tindeq Progressor (verificados contra código oficial)
-const TINDEQ_SERVICE_UUID = '7e4e1701-1ea6-40c9-9dcc-13d34ffead57';
-const DATA_POINT_UUID = '7e4e1702-1ea6-40c9-9dcc-13d34ffead57'; // Para recibir datos
-const CONTROL_POINT_UUID = '7e4e1703-1ea6-40c9-9dcc-13d34ffead57'; // Para enviar comandos
+const TINDEQ_SERVICE_UUID = "7e4e1701-1ea6-40c9-9dcc-13d34ffead57";
+const DATA_POINT_UUID = "7e4e1702-1ea6-40c9-9dcc-13d34ffead57"; // Para recibir datos
+const CONTROL_POINT_UUID = "7e4e1703-1ea6-40c9-9dcc-13d34ffead57"; // Para enviar comandos
 
 // Comandos del Progressor
 const CMD_TARE = 0x64;
@@ -67,16 +67,16 @@ class TindeqService {
       return; // Ya inicializado
     }
 
-    if (Platform.OS === 'web') {
-      throw new Error('Bluetooth no disponible en web');
+    if (Platform.OS === "web") {
+      throw new Error("Bluetooth no disponible en web");
     }
 
     try {
-      const { BleManager } = require('react-native-ble-plx');
+      const { BleManager } = require("react-native-ble-plx");
       this.manager = new BleManager();
     } catch (error) {
-      console.error('Error inicializando BleManager:', error);
-      throw new Error('No se pudo inicializar el gestor de Bluetooth');
+      console.error("Error inicializando BleManager:", error);
+      throw new Error("No se pudo inicializar el gestor de Bluetooth");
     }
   }
 
@@ -88,7 +88,7 @@ class TindeqService {
       this.initializeManager();
 
       if (!this.manager) {
-        throw new Error('Bluetooth no disponible en esta plataforma');
+        throw new Error("Bluetooth no disponible en esta plataforma");
       }
 
       if (this.isScanning) {
@@ -98,14 +98,14 @@ class TindeqService {
       this.isScanning = true;
 
       // Verificar permisos en Android
-      if (Platform.OS === 'android') {
+      if (Platform.OS === "android") {
         try {
           const state = await this.manager.state();
-          if (state !== 'PoweredOn') {
-            throw new Error('Bluetooth no está encendido');
+          if (state !== "PoweredOn") {
+            throw new Error("Bluetooth no está encendido");
           }
         } catch (stateError) {
-          console.error('Error verificando estado de Bluetooth:', stateError);
+          console.error("Error verificando estado de Bluetooth:", stateError);
           this.isScanning = false;
           throw stateError;
         }
@@ -118,27 +118,27 @@ class TindeqService {
           (error: any, device: Device) => {
             try {
               if (error) {
-                console.error('Error escaneando:', error);
+                console.error("Error escaneando:", error);
                 this.isScanning = false;
                 return;
               }
 
-              if (device && device.name?.toLowerCase().includes('progressor')) {
+              if (device && device.name?.toLowerCase().includes("progressor")) {
                 onDeviceFound(device);
               }
             } catch (callbackError) {
-              console.error('Error en callback de escaneo:', callbackError);
+              console.error("Error en callback de escaneo:", callbackError);
               this.isScanning = false;
             }
-          }
+          },
         );
       } catch (scanError) {
-        console.error('Error iniciando escaneo:', scanError);
+        console.error("Error iniciando escaneo:", scanError);
         this.isScanning = false;
         throw scanError;
       }
     } catch (error) {
-      console.error('Error en scanForDevices:', error);
+      console.error("Error en scanForDevices:", error);
       this.isScanning = false;
       throw error;
     }
@@ -161,52 +161,54 @@ class TindeqService {
     this.initializeManager();
 
     if (!this.manager) {
-      throw new Error('Bluetooth no disponible en esta plataforma');
+      throw new Error("Bluetooth no disponible en esta plataforma");
     }
 
     try {
       this.stopScan();
 
       try {
-        console.log('[DEBUG] Conectando a dispositivo:', deviceId);
+        console.log("[DEBUG] Conectando a dispositivo:", deviceId);
         this.device = await this.manager.connectToDevice(deviceId);
-        console.log('[DEBUG] Dispositivo conectado:', this.device?.id);
+        console.log("[DEBUG] Dispositivo conectado:", this.device?.id);
       } catch (connectError) {
-        console.error('[ERROR] Error en connectToDevice:', connectError);
+        console.error("[ERROR] Error en connectToDevice:", connectError);
         throw connectError;
       }
-      
+
       try {
-        console.log('[DEBUG] Descubriendo servicios...');
+        console.log("[DEBUG] Descubriendo servicios...");
         await this.device.discoverAllServicesAndCharacteristics();
-        console.log('[DEBUG] Servicios descubiertos');
+        console.log("[DEBUG] Servicios descubiertos");
       } catch (discoverError) {
-        console.error('[ERROR] Error en discoverAllServicesAndCharacteristics:', discoverError);
+        console.error(
+          "[ERROR] Error en discoverAllServicesAndCharacteristics:",
+          discoverError,
+        );
         throw discoverError;
       }
 
       this.isConnected = true;
       this.connectionCallback?.(true);
-      console.log('[DEBUG] Conexion establecida');
+      console.log("[DEBUG] Conexion establecida");
 
       this.device.onDisconnected(() => {
-        console.log('[DEBUG] Dispositivo desconectado');
+        console.log("[DEBUG] Dispositivo desconectado");
         this.isConnected = false;
         this.device = null;
         this.connectionCallback?.(false);
       });
 
       try {
-        console.log('[DEBUG] Suscribiendo a Data Point...');
+        console.log("[DEBUG] Suscribiendo a Data Point...");
         await this.subscribeToDataPoint();
-        console.log('[DEBUG] Suscripcion completada');
+        console.log("[DEBUG] Suscripcion completada");
       } catch (subscribeError) {
-        console.error('[ERROR] Error en subscribeToDataPoint:', subscribeError);
+        console.error("[ERROR] Error en subscribeToDataPoint:", subscribeError);
         throw subscribeError;
       }
-
     } catch (error) {
-      console.error('[ERROR] Error conectando:', error);
+      console.error("[ERROR] Error conectando:", error);
       this.isConnected = false;
       this.device = null;
       throw error;
@@ -238,7 +240,7 @@ class TindeqService {
    */
   private async subscribeToDataPoint(): Promise<void> {
     if (!this.device) {
-      throw new Error('No hay dispositivo conectado');
+      throw new Error("No hay dispositivo conectado");
     }
 
     await this.device.monitorCharacteristicForService(
@@ -246,14 +248,14 @@ class TindeqService {
       DATA_POINT_UUID,
       (error: any, characteristic: Characteristic) => {
         if (error) {
-          console.error('Error monitoreando Data Point:', error);
+          console.error("Error monitoreando Data Point:", error);
           return;
         }
 
         if (characteristic?.value) {
           this.handleDataPointNotification(characteristic);
         }
-      }
+      },
     );
   }
 
@@ -262,7 +264,7 @@ class TindeqService {
    */
   private handleDataPointNotification(characteristic: Characteristic): void {
     const data = this.base64ToBytes(characteristic.value!);
-    
+
     if (data.length < 2) {
       return;
     }
@@ -278,7 +280,7 @@ class TindeqService {
           if (i + 8 <= data.length) {
             const weight = this.bytesToFloat32(data.slice(i, i + 4));
             const timestamp = this.bytesToUint32(data.slice(i + 4, i + 8));
-            
+
             this.forceCallback?.({
               weight,
               timestamp,
@@ -295,7 +297,7 @@ class TindeqService {
         break;
 
       case RESP_LOW_BATTERY:
-        console.warn('Batería baja del Tindeq');
+        console.warn("Batería baja del Tindeq");
         break;
     }
   }
@@ -305,14 +307,14 @@ class TindeqService {
    */
   private async sendCommand(opcode: number, value?: Uint8Array): Promise<void> {
     if (!this.device) {
-      throw new Error('No hay dispositivo conectado');
+      throw new Error("No hay dispositivo conectado");
     }
 
     const length = value ? value.length : 0;
     const command = new Uint8Array(2 + length);
     command[0] = opcode;
     command[1] = length;
-    
+
     if (value) {
       command.set(value, 2);
     }
@@ -322,7 +324,7 @@ class TindeqService {
     await this.device.writeCharacteristicWithResponseForService(
       TINDEQ_SERVICE_UUID,
       CONTROL_POINT_UUID,
-      base64Command
+      base64Command,
     );
   }
 
@@ -394,7 +396,7 @@ class TindeqService {
   }
 
   private bytesToBase64(bytes: Uint8Array): string {
-    let binary = '';
+    let binary = "";
     for (let i = 0; i < bytes.length; i++) {
       binary += String.fromCharCode(bytes[i]);
     }

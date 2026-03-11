@@ -1,22 +1,35 @@
-import React, { useEffect, useState, useRef } from "react";
-import { View, Text, TouchableOpacity, Platform, Alert, Dimensions, ImageBackground } from "react-native";
+import React, { useEffect, useEffectEvent, useRef, useState } from "react";
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  Platform,
+  Alert,
+  ImageBackground,
+} from "react-native";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import * as Haptics from "expo-haptics";
 
 import { ScreenContainer } from "@/components/screen-container";
-import { useColors } from "@/hooks/use-colors";
-import { forceDeviceService, type ForceData, type CalibrationData } from "@/lib/force-device-service";
-import { FlappyBirdGame, type FlappyBirdGameRef } from "@/components/flappy-bird-game";
+import {
+  forceDeviceService,
+  type ForceData,
+  type CalibrationData,
+} from "@/lib/force-device-service";
+import {
+  FlappyBirdGame,
+  type FlappyBirdGameRef,
+} from "@/components/flappy-bird-game";
 import { FruitProgressIndicator } from "@/components/fruit-progress-indicator";
-import { useAudioService } from "@/lib/audio-service";
-import { customGamesService, type CustomGame } from "@/lib/custom-games-service";
-import Animated, { FadeIn, FadeOut } from "react-native-reanimated";
-
-const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
+import { customGamesService } from "@/lib/custom-games-service";
 
 type GameMode = "quick" | "total";
 type GamePhase = "calibration" | "ready" | "playing" | "rest" | "finished";
-type SceneName = "yosemite" | "monument_valley" | "albarracin" | "fontainebleau";
+type SceneName =
+  | "yosemite"
+  | "monument_valley"
+  | "albarracin"
+  | "fontainebleau";
 
 interface SceneConfig {
   name: SceneName;
@@ -52,24 +65,19 @@ const SCENES: Record<SceneName, SceneConfig> = {
   },
 };
 
-// Colores de fondo por escenario
-const SCENE_COLORS: Record<SceneName, string> = {
-  yosemite: "#87CEEB", // Azul cielo
-  monument_valley: "#FFB366", // Naranja desierto
-  albarracin: "#D4A574", // Marrón tierra
-  fontainebleau: "#90B494", // Verde bosque
-};
-
 // Configuración de modalidades
-const MODE_CONFIG: Record<GameMode, {
-  title: string;
-  duration: number;
-  fruitGoal: number;
-  scenes: SceneName[];
-  hasNightTransition: boolean;
-  nightAt?: number;
-  lives?: number;
-}> = {
+const MODE_CONFIG: Record<
+  GameMode,
+  {
+    title: string;
+    duration: number;
+    fruitGoal: number;
+    scenes: SceneName[];
+    hasNightTransition: boolean;
+    nightAt?: number;
+    lives?: number;
+  }
+> = {
   quick: {
     title: "Calentamiento Rápido",
     duration: 180, // 3 minutos
@@ -88,15 +96,13 @@ const MODE_CONFIG: Record<GameMode, {
 
 /**
  * Game Screen - Gogor Games
- * 
+ *
  * Pantalla principal del juego con mecánica Flappy Bird
  */
 export default function GameScreen() {
-  const colors = useColors();
   const router = useRouter();
   const params = useLocalSearchParams<{ mode?: string; gameId?: string }>();
   const gameMode = (params.mode || "quick") as GameMode;
-  const [customGame, setCustomGame] = useState<CustomGame | null>(null);
   const [modeConfig, setModeConfig] = useState(MODE_CONFIG[gameMode]);
 
   // Cargar juego personalizado si existe
@@ -105,15 +111,21 @@ export default function GameScreen() {
       try {
         if (params.gameId && params.mode === "custom") {
           // Convertir gameId a string si es array (Expo Router a veces pasa arrays)
-          const gameId = Array.isArray(params.gameId) ? params.gameId[0] : params.gameId;
-          console.log("[GAME] gameId convertido:", gameId, "tipo:", typeof gameId);
-          
+          const gameId = Array.isArray(params.gameId)
+            ? params.gameId[0]
+            : params.gameId;
+          console.log(
+            "[GAME] gameId convertido:",
+            gameId,
+            "tipo:",
+            typeof gameId,
+          );
+
           console.log("[GAME] Llamando getGameById");
           const game = await customGamesService.getGameById(gameId);
           console.log("[GAME] Juego encontrado:", game);
-          
+
           if (game && game.duration && typeof game.duration === "number") {
-            setCustomGame(game);
             const customModeConfig = {
               title: game.name || "Juego personalizado",
               duration: Math.max(60, game.duration), // Mínimo 60 segundos
@@ -125,7 +137,12 @@ export default function GameScreen() {
             console.log("[GAME] customModeConfig creado:", customModeConfig);
             setModeConfig(customModeConfig);
           } else {
-            console.error("Juego inválido o no encontrado:", gameId, "game:", game);
+            console.error(
+              "Juego inválido o no encontrado:",
+              gameId,
+              "game:",
+              game,
+            );
             setModeConfig(MODE_CONFIG["quick"]);
           }
         } else {
@@ -140,28 +157,20 @@ export default function GameScreen() {
     };
     loadGame();
   }, [params.gameId, params.mode, gameMode]);
-  
-  // Servicio de audio
-  const audioService = useAudioService();
-  
-  // Estado de conexión
-  const [isConnected, setIsConnected] = useState(false);
-  const [batteryVoltage, setBatteryVoltage] = useState<number | null>(null);
 
   // Estado de calibración
   const [gamePhase, setGamePhase] = useState<GamePhase>("calibration");
-  const [calibrationData, setCalibrationData] = useState<CalibrationData | null>(null);
+  const [calibrationData, setCalibrationData] =
+    useState<CalibrationData | null>(null);
   const [calibrationForces, setCalibrationForces] = useState<number[]>([]);
   const [calibrationTime, setCalibrationTime] = useState(0);
   const isCalibrating = useRef(false);
-  
+
   // Estado del juego
   const [currentForce, setCurrentForce] = useState(0);
-  const [maxForceReached, setMaxForceReached] = useState(0);
-  const [averageForce, setAverageForce] = useState(0);
-  const [forceHistory, setForceHistory] = useState<number[]>([]);
+  const [, setMaxForceReached] = useState(0);
   const [timeRemaining, setTimeRemaining] = useState(0);
-  
+
   // Inicializar timeRemaining cuando modeConfig cambie
   useEffect(() => {
     const duration = modeConfig?.duration || MODE_CONFIG.quick.duration;
@@ -170,34 +179,25 @@ export default function GameScreen() {
   const [timeElapsed, setTimeElapsed] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
   const [fruitsCollected, setFruitsCollected] = useState(0);
-  
+
   // Refs para estadísticas finales y referencia al componente del juego
   const finalStatsRef = useRef({ maxForce: 0, avgForce: 0 });
   const finalFruitsRef = useRef(0);
   const finalTimeRemainingRef = useRef(0);
-  
+
   // Inicializar finalTimeRemainingRef cuando modeConfig cambie
   useEffect(() => {
     const duration = modeConfig?.duration || MODE_CONFIG.quick.duration;
     finalTimeRemainingRef.current = duration;
   }, [modeConfig?.duration]);
-  const shouldNavigateToResults = useRef(false);
-  const gamePhaseRef = useRef<GamePhase>(gamePhase);
-  const [forceRerender, setForceRerender] = useState(0);
   const flappyBirdRef = useRef<FlappyBirdGameRef>(null);
-  
+
   // Estado de escenarios - un solo escenario fijo
   const [currentSceneIndex] = useState(0); // Siempre 0, un solo escenario
-  
-  // Estado de resistencia
-  const [lives, setLives] = useState(modeConfig?.lives || 0);
-  
-  useEffect(() => {
-    setLives(modeConfig?.lives || 0);
-  }, [modeConfig?.lives]);
 
-  const currentScene = SCENES[modeConfig?.scenes?.[currentSceneIndex] || "yosemite"];
-  
+  const currentScene =
+    SCENES[modeConfig?.scenes?.[currentSceneIndex] || "yosemite"];
+
   // Agregar useEffect para limpiar cuando se desmonte
   useEffect(() => {
     return () => {
@@ -207,10 +207,151 @@ export default function GameScreen() {
 
   // ELIMINADO: useEffect de navegación - ahora se navega directamente desde handleGameEnd
 
+  const handleForceData = useEffectEvent((data: ForceData) => {
+    const force = data.weight;
+    setCurrentForce(force);
+
+    if (isCalibrating.current) {
+      setCalibrationForces((prev) => [...prev, force]);
+    }
+
+    if (gamePhase === "playing") {
+      setMaxForceReached((prev) => (force > prev ? force : prev));
+    }
+  });
+
+  const handleBatteryData = useEffectEvent((_voltage: number) => {});
+
+  const handleConnectionChange = useEffectEvent((connected: boolean) => {
+    if (!connected) {
+      Alert.alert(
+        "Desconectado",
+        "Se perdió la conexión con el dispositivo de fuerza.",
+        [
+          {
+            text: "Volver",
+            onPress: () => router.back(),
+          },
+        ],
+      );
+    }
+  });
+
+  const finishCalibration = async () => {
+    try {
+      await forceDeviceService.stopMeasurement();
+
+      console.log("[DEBUG] Fuerzas capturadas:", calibrationForces.length);
+      console.log("[DEBUG] Muestra:", calibrationForces.slice(0, 5));
+
+      if (calibrationForces.length === 0) {
+        Alert.alert(
+          "Error",
+          "No se capturaron datos de fuerza durante la calibración.",
+        );
+        setCalibrationTime(0);
+        return;
+      }
+
+      const sortedForces = [...calibrationForces].sort((a, b) => b - a);
+      const top20Percent = sortedForces.slice(
+        0,
+        Math.max(1, Math.ceil(sortedForces.length * 0.2)),
+      );
+      const maxForce =
+        top20Percent.reduce((sum, f) => sum + f, 0) / top20Percent.length;
+
+      console.log("[DEBUG] maxForce calculado:", maxForce);
+
+      const calibration: CalibrationData = {
+        maxForce,
+        lowZone: maxForce * 0.33,
+        mediumZone: maxForce * 0.66,
+        highZone: maxForce,
+      };
+
+      console.log("[DEBUG] calibrationData:", calibration);
+
+      isCalibrating.current = false;
+      setCalibrationData(calibration);
+      setGamePhase("ready");
+
+      if (Platform.OS !== "web") {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      }
+    } catch (error) {
+      console.error("Error finalizando calibración:", error);
+      Alert.alert("Error", "No se pudo completar la calibración.");
+    }
+  };
+
+  const finishCalibrationEffect = useEffectEvent(() => {
+    void finishCalibration();
+  });
+
+  const handleGameEnd = async () => {
+    if (Platform.OS !== "web") {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    }
+
+    try {
+      await forceDeviceService.stopMeasurement();
+      setIsPlaying(false);
+      setGamePhase("finished");
+
+      const stats = flappyBirdRef.current?.getStats() || {
+        maxForce: 0,
+        avgForce: 0,
+        minForce: 0,
+      };
+      console.log(
+        "[game.tsx] Estadísticas obtenidas de FlappyBirdGame:",
+        stats,
+      );
+
+      finalStatsRef.current = {
+        maxForce: stats.maxForce,
+        avgForce: stats.avgForce,
+      };
+
+      console.log("[game.tsx] Navegando a resultados con refs:", {
+        maxForce: finalStatsRef.current.maxForce,
+        avgForce: finalStatsRef.current.avgForce,
+        fruitsCollected,
+      });
+
+      const wasCompleted =
+        modeConfig?.duration && modeConfig.duration > 0
+          ? timeRemaining === 0
+          : false;
+
+      const finalTimeElapsed = wasCompleted
+        ? modeConfig?.duration || 0
+        : (modeConfig?.duration || 0) - finalTimeRemainingRef.current;
+
+      router.push({
+        pathname: "/results",
+        params: {
+          mode: gameMode,
+          maxForce: finalStatsRef.current.maxForce.toFixed(1),
+          avgForce: finalStatsRef.current.avgForce.toFixed(1),
+          timeElapsed: finalTimeElapsed.toString(),
+          fruitsCollected: finalFruitsRef.current.toString(),
+          completed: wasCompleted.toString(),
+        },
+      });
+    } catch (error) {
+      console.error("Error finalizando juego:", error);
+    }
+  };
+
+  const handleGameEndEffect = useEffectEvent(() => {
+    void handleGameEnd();
+  });
+
   // Verificar conexión al montar
   useEffect(() => {
     const connected = forceDeviceService.getIsConnected();
-    setIsConnected(connected);
     if (!connected) {
       Alert.alert(
         "No conectado",
@@ -220,7 +361,7 @@ export default function GameScreen() {
             text: "Volver",
             onPress: () => router.back(),
           },
-        ]
+        ],
       );
       return;
     }
@@ -234,12 +375,9 @@ export default function GameScreen() {
     forceDeviceService.readBattery().catch(console.error);
 
     return () => {
-      // Detener medición al salir
-      if (isPlaying) {
-        forceDeviceService.stopMeasurement().catch(console.error);
-      }
+      forceDeviceService.stopMeasurement().catch(console.error);
     };
-  }, []);
+  }, [handleBatteryData, handleConnectionChange, handleForceData, router]);
 
   // Cronómetro del juego
   useEffect(() => {
@@ -247,13 +385,13 @@ export default function GameScreen() {
 
     const timer = setInterval(() => {
       setTimeElapsed((prev) => prev + 1);
-      
+
       if (modeConfig?.duration && modeConfig.duration > 0) {
         setTimeRemaining((prev) => {
           const newTime = prev <= 0 ? 0 : prev - 1;
           finalTimeRemainingRef.current = newTime;
           if (newTime <= 0) {
-            handleGameEnd();
+            handleGameEndEffect();
           }
           return newTime;
         });
@@ -261,7 +399,7 @@ export default function GameScreen() {
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [isPlaying]);
+  }, [handleGameEndEffect, isPlaying, modeConfig?.duration]);
 
   // Cronómetro de calibración (5 segundos)
   useEffect(() => {
@@ -272,7 +410,7 @@ export default function GameScreen() {
     const timer = setInterval(() => {
       setCalibrationTime((prev) => {
         if (prev <= 1) {
-          finishCalibration();
+          finishCalibrationEffect();
           return 0;
         }
         return prev - 1;
@@ -280,53 +418,7 @@ export default function GameScreen() {
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [gamePhase, calibrationTime]);
-
-  // Transiciones nocturnas eliminadas - juego continuo
-
-  const handleForceData = (data: ForceData) => {
-    const force = data.weight;
-    setCurrentForce(force);
-
-    // Durante calibración, guardar todas las fuerzas
-    if (isCalibrating.current) {
-      setCalibrationForces((prev) => [...prev, force]);
-    }
-
-    // Durante el juego, actualizar estadísticas
-    if (gamePhase === "playing") {
-      if (force > maxForceReached) {
-        setMaxForceReached(force);
-      }
-      
-      setForceHistory((prev) => {
-        const newHistory = [...prev, force];
-        const avg = newHistory.reduce((sum, f) => sum + f, 0) / newHistory.length;
-        setAverageForce(avg);
-        return newHistory;
-      });
-    }
-  };
-
-  const handleBatteryData = (voltage: number) => {
-    setBatteryVoltage(voltage);
-  };
-
-  const handleConnectionChange = (connected: boolean) => {
-    setIsConnected(connected);
-    if (!connected) {
-      Alert.alert(
-        "Desconectado",
-        "Se perdió la conexión con el dispositivo de fuerza.",
-        [
-          {
-            text: "Volver",
-            onPress: () => router.back(),
-          },
-        ]
-      );
-    }
-  };
+  }, [calibrationTime, finishCalibrationEffect, gamePhase]);
 
   const handleStartCalibration = async () => {
     if (Platform.OS !== "web") {
@@ -336,7 +428,7 @@ export default function GameScreen() {
     try {
       // Calibrar a cero
       await forceDeviceService.tare();
-      
+
       // Esperar 1 segundo
       await new Promise((resolve) => setTimeout(resolve, 1000));
 
@@ -347,57 +439,9 @@ export default function GameScreen() {
       isCalibrating.current = true;
       setCalibrationTime(5);
       setCalibrationForces([]);
-
     } catch (error) {
       console.error("Error iniciando calibración:", error);
       Alert.alert("Error", "No se pudo iniciar la calibración.");
-    }
-  };
-
-  const finishCalibration = async () => {
-    try {
-      // Detener medición
-      await forceDeviceService.stopMeasurement();
-
-      console.log("[DEBUG] Fuerzas capturadas:", calibrationForces.length);
-      console.log("[DEBUG] Muestra:", calibrationForces.slice(0, 5));
-
-      // Protección contra array vacío
-      if (calibrationForces.length === 0) {
-        Alert.alert("Error", "No se capturaron datos de fuerza durante la calibración.");
-        setCalibrationTime(0);
-        return;
-      }
-
-      // Calcular fuerza máxima sostenida (promedio del 80% superior)
-      const sortedForces = [...calibrationForces].sort((a, b) => b - a);
-      const top20Percent = sortedForces.slice(0, Math.max(1, Math.ceil(sortedForces.length * 0.2)));
-      const maxForce = top20Percent.reduce((sum, f) => sum + f, 0) / top20Percent.length;
-
-      console.log("[DEBUG] maxForce calculado:", maxForce);
-
-      // Calcular zonas (0-33%, 33-66%, 66-100%)
-      const calibration: CalibrationData = {
-        maxForce,
-        lowZone: maxForce * 0.33,
-        mediumZone: maxForce * 0.66,
-        highZone: maxForce,
-      };
-
-      console.log("[DEBUG] calibrationData:", calibration);
-
-      isCalibrating.current = false;
-      setCalibrationData(calibration);
-      setGamePhase("ready");
-      gamePhaseRef.current = "ready";
-
-      if (Platform.OS !== "web") {
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      }
-
-    } catch (error) {
-      console.error("Error finalizando calibración:", error);
-      Alert.alert("Error", "No se pudo completar la calibración.");
     }
   };
 
@@ -419,13 +463,9 @@ export default function GameScreen() {
 
       setIsPlaying(true);
       setGamePhase("playing");
-      gamePhaseRef.current = "playing";
       setMaxForceReached(0);
-      setAverageForce(0);
-      setForceHistory([]);
       setTimeElapsed(0);
       setFruitsCollected(0);
-
     } catch (error) {
       console.error("Error iniciando juego:", error);
       Alert.alert("Error", "No se pudo iniciar el juego.");
@@ -445,60 +485,8 @@ export default function GameScreen() {
       await forceDeviceService.stopMeasurement();
       setIsPlaying(false);
       handleGameEnd();
-
     } catch (error) {
       console.error("Error deteniendo juego:", error);
-    }
-  };
-
-  const handleGameEnd = async () => {
-    if (Platform.OS !== "web") {
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    }
-
-    try {
-      await forceDeviceService.stopMeasurement();
-      setIsPlaying(false);
-      setGamePhase("finished");
-      gamePhaseRef.current = "finished";
-
-      // Obtener estadísticas directamente del componente FlappyBirdGame
-      const stats = flappyBirdRef.current?.getStats() || { maxForce: 0, avgForce: 0, minForce: 0 };
-      console.log('[game.tsx] Estadísticas obtenidas de FlappyBirdGame:', stats);
-      
-      // Actualizar refs con los valores correctos
-      finalStatsRef.current = {
-        maxForce: stats.maxForce,
-        avgForce: stats.avgForce,
-      };
-
-      console.log('[game.tsx] Navegando a resultados con refs:', {
-        maxForce: finalStatsRef.current.maxForce,
-        avgForce: finalStatsRef.current.avgForce,
-        fruitsCollected,
-      });
-      
-      // Navegar directamente con valores del ref
-      // completed=true solo si el tiempo llegó a 0 (ejercicio completo)
-      const wasCompleted = modeConfig?.duration && modeConfig.duration > 0 ? timeRemaining === 0 : false;
-      
-      // Calcular tiempo transcurrido correctamente
-      const finalTimeElapsed = wasCompleted ? (modeConfig?.duration || 0) : ((modeConfig?.duration || 0) - finalTimeRemainingRef.current);
-      
-      router.push({
-        pathname: "/results",
-        params: {
-          mode: gameMode,
-          maxForce: finalStatsRef.current.maxForce.toFixed(1),
-          avgForce: finalStatsRef.current.avgForce.toFixed(1),
-          timeElapsed: finalTimeElapsed.toString(),
-          fruitsCollected: finalFruitsRef.current.toString(),
-          completed: wasCompleted.toString(),
-        },
-      });
-
-    } catch (error) {
-      console.error("Error finalizando juego:", error);
     }
   };
 
@@ -508,7 +496,7 @@ export default function GameScreen() {
       finalFruitsRef.current = newCount;
       return newCount;
     });
-    
+
     if (Platform.OS !== "web") {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     }
@@ -517,39 +505,7 @@ export default function GameScreen() {
     // El juego solo termina cuando se acaba el tiempo
   };
 
-  const handleCollision = () => {
-    // Modo resistance eliminado
-    if (false) {
-      setLives((prev) => {
-        const newLives = prev - 1;
-        if (newLives <= 0) {
-          handleGameEnd();
-        }
-        return newLives;
-      });
-      
-      if (Platform.OS !== "web") {
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-      }
-    }
-  };
-
-  const handleBackPress = async () => {
-    if (Platform.OS !== "web") {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    }
-
-    if (isPlaying) {
-      await forceDeviceService.stopMeasurement();
-    }
-
-    router.back();
-  };
-
-  // Calcular nivel de batería (estimado: 3000mV = 0%, 4200mV = 100%)
-  const batteryPercent = batteryVoltage 
-    ? Math.min(Math.max(((batteryVoltage - 3000) / 1200) * 100, 0), 100).toFixed(0)
-    : "?";
+  const handleCollision = () => {};
 
   const backgroundImage = currentScene.dayImage; // Siempre imagen de día, sin transiciones nocturnas
 
@@ -559,7 +515,12 @@ export default function GameScreen() {
       style={{ flex: 1 }}
       resizeMode="cover"
     >
-      <ScreenContainer className="flex-1" containerClassName="bg-transparent" safeAreaClassName="bg-transparent" edges={["top", "left", "right"]}>
+      <ScreenContainer
+        className="flex-1"
+        containerClassName="bg-transparent"
+        safeAreaClassName="bg-transparent"
+        edges={["top", "left", "right"]}
+      >
         {/* FASE: CALIBRACIÓN */}
         {gamePhase === "calibration" && (
           <View className="flex-1 justify-center items-center px-6">
@@ -569,7 +530,8 @@ export default function GameScreen() {
               </Text>
               <Text className="text-white/80 text-center mb-8 px-4">
                 Vamos a medir tu fuerza máxima.{"\n\n"}
-                Cuando presiones "Iniciar", aplica la máxima fuerza durante 5 segundos.
+                Cuando presiones &quot;Iniciar&quot;, aplica la máxima fuerza
+                durante 5 segundos.
               </Text>
 
               {calibrationTime > 0 ? (
@@ -584,7 +546,9 @@ export default function GameScreen() {
                     <Text className="text-foreground text-5xl font-bold text-center">
                       {currentForce.toFixed(1)}
                     </Text>
-                    <Text className="text-muted text-xl text-center mt-2">kg</Text>
+                    <Text className="text-muted text-xl text-center mt-2">
+                      kg
+                    </Text>
                   </View>
                 </>
               ) : (
@@ -699,19 +663,12 @@ export default function GameScreen() {
               onGameOver={handleCollision}
               isPaused={!isPlaying}
               onForceStats={(stats) => {
-                console.log('[game.tsx] onForceStats recibido:', stats);
-                // Guardar en estados para mostrar en UI
+                console.log("[game.tsx] onForceStats recibido:", stats);
                 setMaxForceReached(stats.maxForce);
-                setAverageForce(stats.avgForce);
-                // Guardar en ref para navegación (evita problemas de timing)
                 finalStatsRef.current = {
                   maxForce: stats.maxForce,
                   avgForce: stats.avgForce,
                 };
-                // Activar navegación (el useEffect verificará si gamePhase === "finished")
-                shouldNavigateToResults.current = true;
-                // Forzar re-render del useEffect
-                setForceRerender(prev => prev + 1);
               }}
               onCollision={() => {}}
             />

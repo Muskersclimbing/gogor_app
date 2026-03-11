@@ -1,17 +1,28 @@
 import { useState, useEffect } from "react";
-import { View, Text, TouchableOpacity, ActivityIndicator, FlatList, Platform, Alert } from "react-native";
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  ActivityIndicator,
+  FlatList,
+  Platform,
+  Alert,
+} from "react-native";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import * as Haptics from "expo-haptics";
 
 import { ScreenContainer } from "@/components/screen-container";
 import { useColors } from "@/hooks/use-colors";
-import { forceDeviceService, type DeviceInfo } from "@/lib/force-device-service";
+import {
+  forceDeviceService,
+  type DeviceInfo,
+} from "@/lib/force-device-service";
 
 type BluetoothDevice = DeviceInfo;
 
 /**
  * Connect Screen - Búsqueda y conexión de dispositivos Bluetooth
- * 
+ *
  * Permite al usuario:
  * - Ver dispositivos Tindeq Progressor cercanos
  * - Conectarse al dispositivo seleccionado
@@ -55,15 +66,14 @@ export default function ConnectScreen() {
         forceDeviceService.stopScan();
         setIsScanning(false);
       }, 10000);
-
     } catch (error) {
       console.error("Error escaneando:", error);
       setIsScanning(false);
-      
+
       Alert.alert(
         "Error de Bluetooth",
         "No se pudo iniciar el escaneo. Asegúrate de que Bluetooth esté activado y que la app tenga los permisos necesarios.",
-        [{ text: "OK" }]
+        [{ text: "OK" }],
       );
     }
   };
@@ -83,14 +93,15 @@ export default function ConnectScreen() {
       const gameParams: any = { mode: params.mode || "quick" };
       if (params.gameId) {
         // Convertir gameId a string si es array (Expo Router a veces pasa arrays)
-        gameParams.gameId = Array.isArray(params.gameId) ? params.gameId[0] : params.gameId;
+        gameParams.gameId = Array.isArray(params.gameId)
+          ? params.gameId[0]
+          : params.gameId;
         console.log("[DEBUG] Pasando gameId a game.tsx:", gameParams.gameId);
       }
       router.push({
         pathname: "/game",
         params: gameParams,
       });
-
     } catch (error) {
       console.error("Error conectando:", error);
       setIsConnecting(false);
@@ -98,7 +109,7 @@ export default function ConnectScreen() {
       Alert.alert(
         "Error de conexión",
         "No se pudo conectar al dispositivo. Inténtalo de nuevo.",
-        [{ text: "OK" }]
+        [{ text: "OK" }],
       );
     }
   };
@@ -130,7 +141,14 @@ export default function ConnectScreen() {
             {item.name}
           </Text>
           <Text className="text-muted text-sm mt-1">
-            Tipo: {item.type === 'tindeq' ? 'Tindeq' : 'Force Board'}
+            Tipo:{" "}
+            {item.type === "tindeq"
+              ? "Tindeq"
+              : item.type === "force_board"
+                ? "Force Board"
+                : item.type === "wh_c06"
+                  ? "WH-C06"
+                  : "Unknown"}
           </Text>
         </View>
         <View className="bg-primary px-4 py-2 rounded-lg">
@@ -148,12 +166,11 @@ export default function ConnectScreen() {
           Buscar Dispositivo
         </Text>
         <Text className="text-muted mt-1">
-          {isScanning 
-            ? "Buscando dispositivos..." 
+          {isScanning
+            ? "Buscando dispositivos..."
             : isConnecting
-            ? "Conectando al dispositivo..."
-            : `${devices.length} dispositivo${devices.length !== 1 ? 's' : ''} encontrado${devices.length !== 1 ? 's' : ''}`
-          }
+              ? "Conectando al dispositivo..."
+              : `${devices.length} dispositivo${devices.length !== 1 ? "s" : ""} encontrado${devices.length !== 1 ? "s" : ""}`}
         </Text>
       </View>
 
@@ -162,7 +179,9 @@ export default function ConnectScreen() {
         <View className="items-center py-8">
           <ActivityIndicator size="large" color={colors.primary} />
           <Text className="text-muted mt-4">
-            {isScanning ? "Escaneando dispositivos Bluetooth..." : "Conectando al dispositivo..."}
+            {isScanning
+              ? "Escaneando dispositivos Bluetooth..."
+              : "Conectando al dispositivo..."}
           </Text>
         </View>
       )}
@@ -175,7 +194,7 @@ export default function ConnectScreen() {
           keyExtractor={(item) => item.id}
           ListEmptyComponent={
             <View className="items-center py-8">
-                <Text className="text-muted text-center mb-4">
+              <Text className="text-muted text-center mb-4">
                 No se encontraron dispositivos.{"\n"}
                 Asegúrate de que tu dispositivo esté encendido.
               </Text>
@@ -183,7 +202,9 @@ export default function ConnectScreen() {
                 onPress={handleRetryPress}
                 className="bg-primary px-6 py-3 rounded-full active:opacity-80"
               >
-                <Text className="text-background font-semibold">Buscar de nuevo</Text>
+                <Text className="text-background font-semibold">
+                  Buscar de nuevo
+                </Text>
               </TouchableOpacity>
             </View>
           }

@@ -7,10 +7,10 @@ import { useColors } from "@/hooks/use-colors";
 
 /**
  * Home Screen - Gogor Games
- * 
+ *
  * Pantalla principal donde el usuario puede:
  * - Ver el título del juego
- * - Conectarse al Tindeq Progressor
+ * - Jugar con un dispositivo de fuerza compatible
  * - Ver el estado de Bluetooth
  */
 export default function HomeScreen() {
@@ -34,7 +34,7 @@ export default function HomeScreen() {
           Gogor Games
         </Text>
         <Text className="text-base text-muted text-center mt-2">
-          Juego de fuerza con Tindeq Progressor
+          Compatible con Tindeq, Force Board y WH-C06
         </Text>
       </View>
 

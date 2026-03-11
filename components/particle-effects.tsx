@@ -14,59 +14,78 @@ interface ParticleEffectsProps {
   isPlaying: boolean;
 }
 
-export function ParticleEffects({ zone, isPlaying }: ParticleEffectsProps) {
-  // Crear 5 partículas
-  const particles = Array.from({ length: 5 }, (_, i) => ({
-    id: i,
-    opacity: useSharedValue(0),
-    translateY: useSharedValue(0),
-    translateX: useSharedValue(0),
-  }));
+interface ParticleDotProps {
+  color: string;
+  index: number;
+  intensity: number;
+  duration: number;
+  isVisible: boolean;
+}
+
+function ParticleDot({
+  color,
+  index,
+  intensity,
+  duration,
+  isVisible,
+}: ParticleDotProps) {
+  const opacity = useSharedValue(0);
+  const translateY = useSharedValue(0);
+  const translateX = useSharedValue(0);
 
   useEffect(() => {
-    if (!isPlaying || zone === "none") {
-      // Ocultar partículas
-      particles.forEach((particle) => {
-        particle.opacity.value = withTiming(0);
-      });
+    if (!isVisible) {
+      opacity.value = withTiming(0);
+      translateY.value = withTiming(0);
+      translateX.value = withTiming(0);
       return;
     }
 
-    // Animar partículas según zona
-    const intensity = zone === "high" ? 1 : zone === "medium" ? 0.6 : 0.3;
-    const duration = zone === "high" ? 800 : zone === "medium" ? 1200 : 1600;
+    const delay = index * 200;
 
-    particles.forEach((particle, index) => {
-      const delay = index * 200;
+    opacity.value = withDelay(
+      delay,
+      withRepeat(withTiming(intensity, { duration: duration / 2 }), -1, true),
+    );
 
-      particle.opacity.value = withDelay(
-        delay,
-        withRepeat(
-          withTiming(intensity, { duration: duration / 2 }),
-          -1,
-          true
-        )
-      );
+    translateY.value = withDelay(
+      delay,
+      withRepeat(
+        withTiming(-100, { duration, easing: Easing.inOut(Easing.ease) }),
+        -1,
+        false,
+      ),
+    );
 
-      particle.translateY.value = withDelay(
-        delay,
-        withRepeat(
-          withTiming(-100, { duration, easing: Easing.inOut(Easing.ease) }),
-          -1,
-          false
-        )
-      );
+    translateX.value = withDelay(
+      delay,
+      withRepeat(
+        withTiming((index - 2) * 20, { duration: duration * 0.7 }),
+        -1,
+        true,
+      ),
+    );
+  }, [duration, index, intensity, isVisible, opacity, translateX, translateY]);
 
-      particle.translateX.value = withDelay(
-        delay,
-        withRepeat(
-          withTiming((index - 2) * 20, { duration: duration * 0.7 }),
-          -1,
-          true
-        )
-      );
-    });
-  }, [zone, isPlaying]);
+  const animatedStyle = useAnimatedStyle(() => {
+    return {
+      opacity: opacity.value,
+      transform: [
+        { translateY: translateY.value },
+        { translateX: translateX.value },
+      ],
+    };
+  });
+
+  return (
+    <Animated.View
+      style={[styles.particle, { backgroundColor: color }, animatedStyle]}
+    />
+  );
+}
+
+export function ParticleEffects({ zone, isPlaying }: ParticleEffectsProps) {
+  const isVisible = isPlaying && zone !== "none";
 
   const getParticleColor = () => {
     switch (zone) {
@@ -82,31 +101,21 @@ export function ParticleEffects({ zone, isPlaying }: ParticleEffectsProps) {
   };
 
   const particleColor = getParticleColor();
+  const intensity = zone === "high" ? 1 : zone === "medium" ? 0.6 : 0.3;
+  const duration = zone === "high" ? 800 : zone === "medium" ? 1200 : 1600;
 
   return (
     <View style={styles.container}>
-      {particles.map((particle) => {
-        const animatedStyle = useAnimatedStyle(() => {
-          return {
-            opacity: particle.opacity.value,
-            transform: [
-              { translateY: particle.translateY.value },
-              { translateX: particle.translateX.value },
-            ],
-          };
-        });
-
-        return (
-          <Animated.View
-            key={particle.id}
-            style={[
-              styles.particle,
-              { backgroundColor: particleColor },
-              animatedStyle,
-            ]}
-          />
-        );
-      })}
+      {Array.from({ length: 5 }, (_, index) => (
+        <ParticleDot
+          key={index}
+          color={particleColor}
+          duration={duration}
+          index={index}
+          intensity={intensity}
+          isVisible={isVisible}
+        />
+      ))}
     </View>
   );
 }

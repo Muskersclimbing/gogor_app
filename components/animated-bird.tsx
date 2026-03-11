@@ -15,7 +15,11 @@ interface AnimatedBirdProps {
   zone?: "low" | "medium" | "high" | "none";
 }
 
-export function AnimatedBird({ force, maxForce, zone = "none" }: AnimatedBirdProps) {
+export function AnimatedBird({
+  force,
+  maxForce,
+  zone = "none",
+}: AnimatedBirdProps) {
   const isPlaying = zone !== "none";
   const translateY = useSharedValue(0);
   const rotation = useSharedValue(0);
@@ -23,15 +27,20 @@ export function AnimatedBird({ force, maxForce, zone = "none" }: AnimatedBirdPro
   const scale = useSharedValue(1);
 
   // Calcular posición vertical basada en la fuerza (0-100%)
-  const forcePercent = maxForce > 0 ? Math.min((force / maxForce) * 100, 100) : 0;
-  
+  const forcePercent =
+    maxForce > 0 ? Math.min((force / maxForce) * 100, 100) : 0;
+
   // Color del pájaro según zona
   const getBirdColor = () => {
     switch (zone) {
-      case "low": return "#4ADE80"; // verde
-      case "medium": return "#FBBF24"; // amarillo
-      case "high": return "#F87171"; // rojo
-      default: return "#FFD700"; // dorado
+      case "low":
+        return "#4ADE80"; // verde
+      case "medium":
+        return "#FBBF24"; // amarillo
+      case "high":
+        return "#F87171"; // rojo
+      default:
+        return "#FFD700"; // dorado
     }
   };
 
@@ -64,7 +73,7 @@ export function AnimatedBird({ force, maxForce, zone = "none" }: AnimatedBirdPro
       damping: 12,
       stiffness: 90,
     });
-  }, [force, maxForce, isPlaying]);
+  }, [forcePercent, isPlaying, rotation, scale, translateY]);
 
   // Animación de aleteo constante
   useEffect(() => {
@@ -72,12 +81,12 @@ export function AnimatedBird({ force, maxForce, zone = "none" }: AnimatedBirdPro
       wingRotation.value = withRepeat(
         withTiming(20, { duration: 200, easing: Easing.inOut(Easing.ease) }),
         -1,
-        true
+        true,
       );
     } else {
       wingRotation.value = withTiming(0);
     }
-  }, [isPlaying]);
+  }, [isPlaying, wingRotation]);
 
   const birdStyle = useAnimatedStyle(() => {
     return {
@@ -102,7 +111,7 @@ export function AnimatedBird({ force, maxForce, zone = "none" }: AnimatedBirdPro
   });
 
   const birdColor = getBirdColor();
-  
+
   return (
     <Animated.View style={[styles.birdContainer, birdStyle]}>
       {/* Cuerpo del pájaro */}
@@ -115,7 +124,9 @@ export function AnimatedBird({ force, maxForce, zone = "none" }: AnimatedBirdPro
 
         {/* Alas */}
         <Animated.View style={[styles.wing, styles.leftWing, leftWingStyle]} />
-        <Animated.View style={[styles.wing, styles.rightWing, rightWingStyle]} />
+        <Animated.View
+          style={[styles.wing, styles.rightWing, rightWingStyle]}
+        />
 
         {/* Cola */}
         <View style={styles.tail} />

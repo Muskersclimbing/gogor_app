@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState } from "react";
 import {
   View,
   Text,
@@ -7,13 +7,17 @@ import {
   ScrollView,
   Alert,
   Platform,
-} from 'react-native';
-import { useRouter, useLocalSearchParams } from 'expo-router';
-import * as Haptics from 'expo-haptics';
+} from "react-native";
+import { useRouter, useLocalSearchParams } from "expo-router";
+import * as Haptics from "expo-haptics";
 
-import { ScreenContainer } from '@/components/screen-container';
-import { useColors } from '@/hooks/use-colors';
-import { customGamesService, type ForcezoneConfig, type CustomGame } from '@/lib/custom-games-service';
+import { ScreenContainer } from "@/components/screen-container";
+import { useColors } from "@/hooks/use-colors";
+import {
+  customGamesService,
+  type ForcezoneConfig,
+  type CustomGame,
+} from "@/lib/custom-games-service";
 
 export default function EditGameScreen() {
   const colors = useColors();
@@ -21,48 +25,48 @@ export default function EditGameScreen() {
   const params = useLocalSearchParams<{ gameId?: string }>();
 
   const [game, setGame] = useState<CustomGame | null>(null);
-  const [name, setName] = useState('');
-  const [minutesInput, setMinutesInput] = useState('3');
-  const [secondsInput, setSecondsInput] = useState('0');
-  const [extension, setExtension] = useState('33');
-  const [semiArqueo, setSemiArqueo] = useState('33');
-  const [arqueo, setArqueo] = useState('34');
+  const [name, setName] = useState("");
+  const [minutesInput, setMinutesInput] = useState("3");
+  const [secondsInput, setSecondsInput] = useState("0");
+  const [extension, setExtension] = useState("33");
+  const [semiArqueo, setSemiArqueo] = useState("33");
+  const [arqueo, setArqueo] = useState("34");
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
+    const loadGame = async () => {
+      if (!params.gameId) {
+        Alert.alert("Error", "No se especificó el juego a editar");
+        router.back();
+        return;
+      }
+
+      const loadedGame = await customGamesService.getGameById(params.gameId);
+      if (!loadedGame) {
+        Alert.alert("Error", "No se encontró el juego");
+        router.back();
+        return;
+      }
+
+      setGame(loadedGame);
+      setName(loadedGame.name);
+
+      const minutes = Math.floor(loadedGame.duration / 60);
+      const seconds = loadedGame.duration % 60;
+      setMinutesInput(minutes.toString());
+      setSecondsInput(seconds.toString());
+
+      setExtension(loadedGame.forcezones.extension.toString());
+      setSemiArqueo(loadedGame.forcezones.semiArqueo.toString());
+      setArqueo(loadedGame.forcezones.arqueo.toString());
+    };
+
     loadGame();
-  }, []);
-
-  const loadGame = async () => {
-    if (!params.gameId) {
-      Alert.alert('Error', 'No se especificó el juego a editar');
-      router.back();
-      return;
-    }
-
-    const loadedGame = await customGamesService.getGameById(params.gameId);
-    if (!loadedGame) {
-      Alert.alert('Error', 'No se encontró el juego');
-      router.back();
-      return;
-    }
-
-    setGame(loadedGame);
-    setName(loadedGame.name);
-
-    const minutes = Math.floor(loadedGame.duration / 60);
-    const seconds = loadedGame.duration % 60;
-    setMinutesInput(minutes.toString());
-    setSecondsInput(seconds.toString());
-
-    setExtension(loadedGame.forcezones.extension.toString());
-    setSemiArqueo(loadedGame.forcezones.semiArqueo.toString());
-    setArqueo(loadedGame.forcezones.arqueo.toString());
-  };
+  }, [params.gameId, router]);
 
   const validateInputs = (): boolean => {
     if (!name.trim()) {
-      Alert.alert('Error', 'Por favor ingresa un nombre para el juego');
+      Alert.alert("Error", "Por favor ingresa un nombre para el juego");
       return false;
     }
 
@@ -71,7 +75,7 @@ export default function EditGameScreen() {
     const duration = minutes * 60 + seconds;
 
     if (duration <= 0) {
-      Alert.alert('Error', 'La duración debe ser mayor a 0');
+      Alert.alert("Error", "La duración debe ser mayor a 0");
       return false;
     }
 
@@ -80,12 +84,15 @@ export default function EditGameScreen() {
     const arq = parseInt(arqueo) || 0;
 
     if (ext < 0 || semi < 0 || arq < 0) {
-      Alert.alert('Error', 'Los porcentajes no pueden ser negativos');
+      Alert.alert("Error", "Los porcentajes no pueden ser negativos");
       return false;
     }
 
     if (ext + semi + arq !== 100) {
-      Alert.alert('Error', `Los porcentajes deben sumar 100% (actualmente: ${ext + semi + arq}%)`);
+      Alert.alert(
+        "Error",
+        `Los porcentajes deben sumar 100% (actualmente: ${ext + semi + arq}%)`,
+      );
       return false;
     }
 
@@ -105,20 +112,26 @@ export default function EditGameScreen() {
         arqueo: parseInt(arqueo) || 0,
       };
 
-      await customGamesService.updateGame(game.id, name, minutes, seconds, forcezones);
+      await customGamesService.updateGame(
+        game.id,
+        name,
+        minutes,
+        seconds,
+        forcezones,
+      );
 
-      if (Platform.OS !== 'web') {
+      if (Platform.OS !== "web") {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       }
 
-      Alert.alert('Éxito', 'Juego actualizado correctamente', [
+      Alert.alert("Éxito", "Juego actualizado correctamente", [
         {
-          text: 'OK',
+          text: "OK",
           onPress: () => router.back(),
         },
       ]);
     } catch (error) {
-      Alert.alert('Error', 'No se pudo actualizar el juego');
+      Alert.alert("Error", "No se pudo actualizar el juego");
       console.error(error);
     } finally {
       setLoading(false);
@@ -129,46 +142,48 @@ export default function EditGameScreen() {
     if (!game) return;
 
     Alert.alert(
-      'Eliminar juego',
+      "Eliminar juego",
       `¿Estás seguro de que quieres eliminar "${game.name}"?`,
       [
         {
-          text: 'Cancelar',
+          text: "Cancelar",
           onPress: () => {},
-          style: 'cancel',
+          style: "cancel",
         },
         {
-          text: 'Eliminar',
+          text: "Eliminar",
           onPress: async () => {
             setLoading(true);
             try {
               await customGamesService.deleteGame(game.id);
 
-              if (Platform.OS !== 'web') {
-                Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+              if (Platform.OS !== "web") {
+                Haptics.notificationAsync(
+                  Haptics.NotificationFeedbackType.Success,
+                );
               }
 
-              Alert.alert('Éxito', 'Juego eliminado correctamente', [
+              Alert.alert("Éxito", "Juego eliminado correctamente", [
                 {
-                  text: 'OK',
+                  text: "OK",
                   onPress: () => router.back(),
                 },
               ]);
             } catch (error) {
-              Alert.alert('Error', 'No se pudo eliminar el juego');
+              Alert.alert("Error", "No se pudo eliminar el juego");
               console.error(error);
             } finally {
               setLoading(false);
             }
           },
-          style: 'destructive',
+          style: "destructive",
         },
-      ]
+      ],
     );
   };
 
   const handleCancel = () => {
-    if (Platform.OS !== 'web') {
+    if (Platform.OS !== "web") {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     }
     router.back();
@@ -178,12 +193,15 @@ export default function EditGameScreen() {
     const num = parseInt(value) || 0;
     const clamped = Math.max(0, Math.min(100, num));
 
-    if (field === 'extension') setExtension(clamped.toString());
-    else if (field === 'semiArqueo') setSemiArqueo(clamped.toString());
-    else if (field === 'arqueo') setArqueo(clamped.toString());
+    if (field === "extension") setExtension(clamped.toString());
+    else if (field === "semiArqueo") setSemiArqueo(clamped.toString());
+    else if (field === "arqueo") setArqueo(clamped.toString());
   };
 
-  const total = (parseInt(extension) || 0) + (parseInt(semiArqueo) || 0) + (parseInt(arqueo) || 0);
+  const total =
+    (parseInt(extension) || 0) +
+    (parseInt(semiArqueo) || 0) +
+    (parseInt(arqueo) || 0);
   const totalColor = total === 100 ? colors.success : colors.error;
 
   if (!game) {
@@ -196,11 +214,18 @@ export default function EditGameScreen() {
 
   return (
     <ScreenContainer className="flex-1 p-6">
-      <ScrollView contentContainerStyle={{ flexGrow: 1 }} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        contentContainerStyle={{ flexGrow: 1 }}
+        showsVerticalScrollIndicator={false}
+      >
         {/* Título */}
         <View className="mb-8">
-          <Text className="text-3xl font-bold text-foreground mb-2">Editar Juego</Text>
-          <Text className="text-muted text-sm">Modifica tu entrenamiento personalizado</Text>
+          <Text className="text-3xl font-bold text-foreground mb-2">
+            Editar Juego
+          </Text>
+          <Text className="text-muted text-sm">
+            Modifica tu entrenamiento personalizado
+          </Text>
         </View>
 
         {/* Nombre */}
@@ -218,7 +243,9 @@ export default function EditGameScreen() {
 
         {/* Tiempo de partida */}
         <View className="mb-6">
-          <Text className="text-foreground font-semibold mb-2">Tiempo de partida</Text>
+          <Text className="text-foreground font-semibold mb-2">
+            Tiempo de partida
+          </Text>
           <View className="flex-row gap-2 items-center justify-center">
             <View className="flex-1">
               <TextInput
@@ -254,9 +281,12 @@ export default function EditGameScreen() {
 
         {/* Zonas de Fuerza */}
         <View className="mb-6">
-          <Text className="text-foreground font-semibold mb-2">Zonas de Fuerza</Text>
+          <Text className="text-foreground font-semibold mb-2">
+            Zonas de Fuerza
+          </Text>
           <Text className="text-muted text-xs mb-4">
-            Define el porcentaje de tiempo de partida que quieres transcurrir en cada segmento de carga
+            Define el porcentaje de tiempo de partida que quieres transcurrir en
+            cada segmento de carga
           </Text>
 
           {/* Extensión */}
@@ -269,7 +299,7 @@ export default function EditGameScreen() {
               placeholder="0"
               placeholderTextColor={colors.muted}
               value={extension}
-              onChangeText={(val) => updatePercentage('extension', val)}
+              onChangeText={(val) => updatePercentage("extension", val)}
               keyboardType="number-pad"
               maxLength={3}
               className="bg-surface border border-border rounded-lg px-4 py-3 text-foreground text-center"
@@ -287,7 +317,7 @@ export default function EditGameScreen() {
               placeholder="0"
               placeholderTextColor={colors.muted}
               value={semiArqueo}
-              onChangeText={(val) => updatePercentage('semiArqueo', val)}
+              onChangeText={(val) => updatePercentage("semiArqueo", val)}
               keyboardType="number-pad"
               maxLength={3}
               className="bg-surface border border-border rounded-lg px-4 py-3 text-foreground text-center"
@@ -305,7 +335,7 @@ export default function EditGameScreen() {
               placeholder="0"
               placeholderTextColor={colors.muted}
               value={arqueo}
-              onChangeText={(val) => updatePercentage('arqueo', val)}
+              onChangeText={(val) => updatePercentage("arqueo", val)}
               keyboardType="number-pad"
               maxLength={3}
               className="bg-surface border border-border rounded-lg px-4 py-3 text-foreground text-center"
@@ -330,10 +360,13 @@ export default function EditGameScreen() {
             onPress={handleSaveGame}
             disabled={loading}
             className="bg-primary px-6 py-4 rounded-xl active:opacity-80"
-            style={{ backgroundColor: colors.primary, opacity: loading ? 0.6 : 1 }}
+            style={{
+              backgroundColor: colors.primary,
+              opacity: loading ? 0.6 : 1,
+            }}
           >
             <Text className="text-background text-lg font-semibold text-center">
-              {loading ? 'Guardando...' : 'Guardar Cambios'}
+              {loading ? "Guardando..." : "Guardar Cambios"}
             </Text>
           </TouchableOpacity>
 
@@ -342,7 +375,9 @@ export default function EditGameScreen() {
             disabled={loading}
             className="bg-error/10 border border-error/30 px-6 py-3 rounded-xl active:opacity-70"
           >
-            <Text className="text-error text-center font-medium">Eliminar Juego</Text>
+            <Text className="text-error text-center font-medium">
+              Eliminar Juego
+            </Text>
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -350,7 +385,9 @@ export default function EditGameScreen() {
             disabled={loading}
             className="bg-surface border border-border px-6 py-3 rounded-xl active:opacity-70"
           >
-            <Text className="text-foreground text-center font-medium">Cancelar</Text>
+            <Text className="text-foreground text-center font-medium">
+              Cancelar
+            </Text>
           </TouchableOpacity>
         </View>
       </ScrollView>

@@ -1,5 +1,5 @@
 import React from "react";
-import { View, Image, StyleSheet } from "react-native";
+import { View, StyleSheet } from "react-native";
 
 interface FruitProgressIndicatorProps {
   collected: number;
@@ -10,7 +10,10 @@ interface FruitProgressIndicatorProps {
  * Indicador visual de progreso con fresas pixel art
  * Muestra hasta 4 fresas en el top center
  */
-export function FruitProgressIndicator({ collected, goal }: FruitProgressIndicatorProps) {
+export function FruitProgressIndicator({
+  collected,
+  goal,
+}: FruitProgressIndicatorProps) {
   // Calcular cuántas fresas mostrar (máximo 4)
   const progress = Math.min(collected / goal, 1);
   const strawberriesToShow = Math.floor(progress * 4);
