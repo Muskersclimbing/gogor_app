@@ -15,12 +15,11 @@ Current gameplay flow:
 
 ## Stack
 
-- Expo Router
-- React Native 0.83
-- React 19
+- Expo
+- React Native
+- React
 - NativeWind
 - `@hangtime/grip-connect-react-native` for BLE
-- `expo-audio` and `expo-video`
 
 ## Requirements
 

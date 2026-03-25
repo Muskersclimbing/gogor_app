@@ -22,7 +22,6 @@ Current gameplay:
 - BLE via `@hangtime/grip-connect-react-native`
 - Styling with NativeWind
 - Audio with `expo-audio`
-- Video with `expo-video`
 
 Main scripts from `package.json`:
 
@@ -55,11 +54,6 @@ Current dev behavior:
 - `components/flappy-bird-game.tsx`: game loop, obstacles, fruit, collisions, and audio
 - `lib/force-device-service.ts`: active BLE service
 - `lib/custom-games-service.ts`: custom game persistence
-
-Legacy/non-canonical files:
-
-- `lib/tindeq-service.ts`
-- `lib/force-device-service-new.ts`
 
 These should not be treated as the primary reference unless an intentional migration is underway.
 

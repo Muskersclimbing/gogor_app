@@ -57,11 +57,6 @@ const config: ExpoConfig = {
     package: env.androidPackage,
     permissions: [
       "POST_NOTIFICATIONS",
-      "BLUETOOTH",
-      "BLUETOOTH_ADMIN",
-      "BLUETOOTH_CONNECT",
-      "BLUETOOTH_SCAN",
-      "ACCESS_FINE_LOCATION",
     ],
     intentFilters: [
       {
@@ -98,13 +93,6 @@ const config: ExpoConfig = {
       {
         microphonePermission:
           "Allow $(PRODUCT_NAME) to access your microphone.",
-      },
-    ],
-    [
-      "expo-video",
-      {
-        supportsBackgroundPlayback: true,
-        supportsPictureInPicture: true,
       },
     ],
     [
