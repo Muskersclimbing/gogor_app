@@ -11,6 +11,7 @@ import {
 } from "react-native";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import * as Haptics from "expo-haptics";
+import { useTranslation } from "react-i18next";
 
 import { ScreenContainer } from "@/components/screen-container";
 import { useColors } from "@/hooks/use-colors";
@@ -18,20 +19,14 @@ import {
   forceDeviceService,
   type DeviceInfo,
 } from "@/lib/force-device-service";
+import { getDeviceTypeLabel } from "@/i18n/helpers";
 
 type BluetoothDevice = DeviceInfo;
 
-/**
- * Connect Screen - Búsqueda y conexión de dispositivos Bluetooth
- *
- * Permite al usuario:
- * - Ver dispositivos Tindeq Progressor cercanos
- * - Conectarse al dispositivo seleccionado
- * - Ver el estado de la búsqueda
- */
 export default function ConnectScreen() {
   const colors = useColors();
   const router = useRouter();
+  const { t } = useTranslation();
   const params = useLocalSearchParams<{ mode?: string; gameId?: string }>();
   const [isScanning, setIsScanning] = useState(true);
   const [isConnecting, setIsConnecting] = useState(false);
@@ -68,15 +63,14 @@ export default function ConnectScreen() {
       if (!hasPermissions) {
         setIsScanning(false);
         Alert.alert(
-          "Permisos requeridos",
-          "Bluetooth necesita permisos de Android para buscar y conectar dispositivos.",
-          [{ text: "OK" }],
+          t("connect.permissionsTitle"),
+          t("connect.permissionsMessage"),
+          [{ text: t("common.ok") }],
         );
         return;
       }
 
       await forceDeviceService.scanForDevices((device) => {
-        // Agregar dispositivo a la lista (evitar duplicados)
         setDevices((prev) => {
           const exists = prev.find((d) => d.id === device.id);
           if (exists) {
@@ -87,7 +81,6 @@ export default function ConnectScreen() {
         });
       });
 
-      // Detener escaneo después de 10 segundos
       setTimeout(() => {
         forceDeviceService.stopScan();
         setIsScanning(false);
@@ -97,12 +90,12 @@ export default function ConnectScreen() {
       setIsScanning(false);
 
       Alert.alert(
-        "Error de Bluetooth",
-        "No se pudo iniciar el escaneo. Asegúrate de que Bluetooth esté activado y que la app tenga los permisos necesarios.",
-        [{ text: "OK" }],
+        t("connect.bluetoothErrorTitle"),
+        t("connect.bluetoothErrorMessage"),
+        [{ text: t("common.ok") }],
       );
     }
-  }, [ensureBluetoothPermissions]);
+  }, [ensureBluetoothPermissions, t]);
 
   useEffect(() => {
     void startScanning();
@@ -120,17 +113,15 @@ export default function ConnectScreen() {
     setIsConnecting(true);
 
     try {
-      // Conectar al dispositivo
       await forceDeviceService.connect(deviceInfo.id, deviceInfo.type);
 
-      // Navegar a la pantalla de calibración/juego con el modo seleccionado
-      const gameParams: any = { mode: params.mode || "quick" };
+      const gameParams: { mode: string; gameId?: string } = {
+        mode: params.mode || "quick",
+      };
       if (params.gameId) {
-        // Convertir gameId a string si es array (Expo Router a veces pasa arrays)
         gameParams.gameId = Array.isArray(params.gameId)
           ? params.gameId[0]
           : params.gameId;
-        console.log("[DEBUG] Pasando gameId a game.tsx:", gameParams.gameId);
       }
       router.push({
         pathname: "/game",
@@ -141,9 +132,9 @@ export default function ConnectScreen() {
       setIsConnecting(false);
 
       Alert.alert(
-        "Error de conexión",
-        "No se pudo conectar al dispositivo. Inténtalo de nuevo.",
-        [{ text: "OK" }],
+        t("connect.connectionErrorTitle"),
+        t("connect.connectionErrorMessage"),
+        [{ text: t("common.ok") }],
       );
     }
   };
@@ -163,6 +154,12 @@ export default function ConnectScreen() {
     startScanning();
   };
 
+  const statusText = isScanning
+    ? t("connect.scanning")
+    : isConnecting
+      ? t("connect.connecting")
+      : t("connect.devicesFound", { count: devices.length });
+
   const renderDevice = ({ item }: { item: BluetoothDevice }) => (
     <TouchableOpacity
       onPress={() => handleDevicePress(item)}
@@ -175,18 +172,15 @@ export default function ConnectScreen() {
             {item.name}
           </Text>
           <Text className="text-muted text-sm mt-1">
-            Tipo:{" "}
-            {item.type === "tindeq"
-              ? "Tindeq"
-              : item.type === "force_board"
-                ? "Force Board"
-                : item.type === "wh_c06"
-                  ? "WH-C06"
-                  : "Unknown"}
+            {t("connect.deviceType", {
+              type: getDeviceTypeLabel(t, item.type),
+            })}
           </Text>
         </View>
         <View className="bg-primary px-4 py-2 rounded-lg">
-          <Text className="text-background font-medium">Conectar</Text>
+          <Text className="text-background font-medium">
+            {t("connect.connect")}
+          </Text>
         </View>
       </View>
     </TouchableOpacity>
@@ -194,33 +188,24 @@ export default function ConnectScreen() {
 
   return (
     <ScreenContainer className="flex-1 p-6">
-      {/* Header */}
       <View className="mb-6">
         <Text className="text-2xl font-bold text-foreground">
-          Buscar Dispositivo
+          {t("connect.title")}
         </Text>
-        <Text className="text-muted mt-1">
-          {isScanning
-            ? "Buscando dispositivos..."
-            : isConnecting
-              ? "Conectando al dispositivo..."
-              : `${devices.length} dispositivo${devices.length !== 1 ? "s" : ""} encontrado${devices.length !== 1 ? "s" : ""}`}
-        </Text>
+        <Text className="text-muted mt-1">{statusText}</Text>
       </View>
 
-      {/* Loading indicator */}
       {(isScanning || isConnecting) && (
         <View className="items-center py-8">
           <ActivityIndicator size="large" color={colors.primary} />
           <Text className="text-muted mt-4">
             {isScanning
-              ? "Escaneando dispositivos Bluetooth..."
-              : "Conectando al dispositivo..."}
+              ? t("connect.scanningDetail")
+              : t("connect.connectingDetail")}
           </Text>
         </View>
       )}
 
-      {/* Devices list */}
       {!isScanning && !isConnecting && (
         <FlatList
           data={devices}
@@ -229,15 +214,14 @@ export default function ConnectScreen() {
           ListEmptyComponent={
             <View className="items-center py-8">
               <Text className="text-muted text-center mb-4">
-                No se encontraron dispositivos.{"\n"}
-                Asegúrate de que tu dispositivo esté encendido.
+                {t("connect.empty")}
               </Text>
               <TouchableOpacity
                 onPress={handleRetryPress}
                 className="bg-primary px-6 py-3 rounded-full active:opacity-80"
               >
                 <Text className="text-background font-semibold">
-                  Buscar de nuevo
+                  {t("connect.searchAgain")}
                 </Text>
               </TouchableOpacity>
             </View>
@@ -245,14 +229,13 @@ export default function ConnectScreen() {
         />
       )}
 
-      {/* Cancel button */}
       {!isConnecting && (
         <TouchableOpacity
           onPress={handleCancelPress}
           className="bg-surface border border-border px-6 py-4 rounded-xl mt-4 active:opacity-70"
         >
           <Text className="text-foreground text-center font-medium">
-            Cancelar
+            {t("common.cancel")}
           </Text>
         </TouchableOpacity>
       )}

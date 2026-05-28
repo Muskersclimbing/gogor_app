@@ -10,6 +10,7 @@ import {
 } from "react-native";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import * as Haptics from "expo-haptics";
+import { useTranslation } from "react-i18next";
 
 import { ScreenContainer } from "@/components/screen-container";
 import { useColors } from "@/hooks/use-colors";
@@ -22,6 +23,7 @@ import {
 export default function EditGameScreen() {
   const colors = useColors();
   const router = useRouter();
+  const { t } = useTranslation();
   const params = useLocalSearchParams<{ gameId?: string }>();
 
   const [game, setGame] = useState<CustomGame | null>(null);
@@ -36,14 +38,14 @@ export default function EditGameScreen() {
   useEffect(() => {
     const loadGame = async () => {
       if (!params.gameId) {
-        Alert.alert("Error", "No se especificó el juego a editar");
+        Alert.alert(t("common.error"), t("customGame.errors.gameNotSpecified"));
         router.back();
         return;
       }
 
       const loadedGame = await customGamesService.getGameById(params.gameId);
       if (!loadedGame) {
-        Alert.alert("Error", "No se encontró el juego");
+        Alert.alert(t("common.error"), t("customGame.errors.gameNotFound"));
         router.back();
         return;
       }
@@ -62,11 +64,11 @@ export default function EditGameScreen() {
     };
 
     loadGame();
-  }, [params.gameId, router]);
+  }, [params.gameId, router, t]);
 
   const validateInputs = (): boolean => {
     if (!name.trim()) {
-      Alert.alert("Error", "Por favor ingresa un nombre para el juego");
+      Alert.alert(t("common.error"), t("customGame.errors.nameRequired"));
       return false;
     }
 
@@ -75,7 +77,7 @@ export default function EditGameScreen() {
     const duration = minutes * 60 + seconds;
 
     if (duration <= 0) {
-      Alert.alert("Error", "La duración debe ser mayor a 0");
+      Alert.alert(t("common.error"), t("customGame.errors.durationRequired"));
       return false;
     }
 
@@ -84,14 +86,14 @@ export default function EditGameScreen() {
     const arq = parseInt(arqueo) || 0;
 
     if (ext < 0 || semi < 0 || arq < 0) {
-      Alert.alert("Error", "Los porcentajes no pueden ser negativos");
+      Alert.alert(t("common.error"), t("customGame.errors.negativePercent"));
       return false;
     }
 
     if (ext + semi + arq !== 100) {
       Alert.alert(
-        "Error",
-        `Los porcentajes deben sumar 100% (actualmente: ${ext + semi + arq}%)`,
+        t("common.error"),
+        t("customGame.errors.percentSum", { total: ext + semi + arq }),
       );
       return false;
     }
@@ -124,14 +126,14 @@ export default function EditGameScreen() {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       }
 
-      Alert.alert("Éxito", "Juego actualizado correctamente", [
+      Alert.alert(t("common.success"), t("customGame.success.updated"), [
         {
-          text: "OK",
+          text: t("common.ok"),
           onPress: () => router.back(),
         },
       ]);
     } catch (error) {
-      Alert.alert("Error", "No se pudo actualizar el juego");
+      Alert.alert(t("common.error"), t("customGame.errors.updateFailed"));
       console.error(error);
     } finally {
       setLoading(false);
@@ -142,16 +144,16 @@ export default function EditGameScreen() {
     if (!game) return;
 
     Alert.alert(
-      "Eliminar juego",
-      `¿Estás seguro de que quieres eliminar "${game.name}"?`,
+      t("customGame.deleteConfirmTitle"),
+      t("customGame.deleteConfirmMessage", { name: game.name }),
       [
         {
-          text: "Cancelar",
+          text: t("common.cancel"),
           onPress: () => {},
           style: "cancel",
         },
         {
-          text: "Eliminar",
+          text: t("common.delete"),
           onPress: async () => {
             setLoading(true);
             try {
@@ -163,14 +165,14 @@ export default function EditGameScreen() {
                 );
               }
 
-              Alert.alert("Éxito", "Juego eliminado correctamente", [
+              Alert.alert(t("common.success"), t("customGame.success.deleted"), [
                 {
-                  text: "OK",
+                  text: t("common.ok"),
                   onPress: () => router.back(),
                 },
               ]);
             } catch (error) {
-              Alert.alert("Error", "No se pudo eliminar el juego");
+              Alert.alert(t("common.error"), t("customGame.errors.deleteFailed"));
               console.error(error);
             } finally {
               setLoading(false);
@@ -207,7 +209,7 @@ export default function EditGameScreen() {
   if (!game) {
     return (
       <ScreenContainer className="flex-1 items-center justify-center">
-        <Text className="text-foreground">Cargando...</Text>
+        <Text className="text-foreground">{t("common.loading")}</Text>
       </ScreenContainer>
     );
   }
@@ -218,21 +220,21 @@ export default function EditGameScreen() {
         contentContainerStyle={{ flexGrow: 1 }}
         showsVerticalScrollIndicator={false}
       >
-        {/* Título */}
         <View className="mb-8">
           <Text className="text-3xl font-bold text-foreground mb-2">
-            Editar Juego
+            {t("customGame.editTitle")}
           </Text>
           <Text className="text-muted text-sm">
-            Modifica tu entrenamiento personalizado
+            {t("customGame.editSubtitle")}
           </Text>
         </View>
 
-        {/* Nombre */}
         <View className="mb-6">
-          <Text className="text-foreground font-semibold mb-2">Nombre</Text>
+          <Text className="text-foreground font-semibold mb-2">
+            {t("common.name")}
+          </Text>
           <TextInput
-            placeholder="Ej: Entrenamiento de fuerza"
+            placeholder={t("customGame.namePlaceholder")}
             placeholderTextColor={colors.muted}
             value={name}
             onChangeText={setName}
@@ -241,10 +243,9 @@ export default function EditGameScreen() {
           />
         </View>
 
-        {/* Tiempo de partida */}
         <View className="mb-6">
           <Text className="text-foreground font-semibold mb-2">
-            Tiempo de partida
+            {t("customGame.matchDuration")}
           </Text>
           <View className="flex-row gap-2 items-center justify-center">
             <View className="flex-1">
@@ -258,7 +259,9 @@ export default function EditGameScreen() {
                 className="bg-surface border border-border rounded-lg px-4 py-3 text-foreground text-center text-lg"
                 editable={!loading}
               />
-              <Text className="text-muted text-xs text-center mt-1">Min.</Text>
+              <Text className="text-muted text-xs text-center mt-1">
+                {t("customGame.minutes")}
+              </Text>
             </View>
 
             <Text className="text-foreground text-2xl font-bold">:</Text>
@@ -274,26 +277,29 @@ export default function EditGameScreen() {
                 className="bg-surface border border-border rounded-lg px-4 py-3 text-foreground text-center text-lg"
                 editable={!loading}
               />
-              <Text className="text-muted text-xs text-center mt-1">Seg.</Text>
+              <Text className="text-muted text-xs text-center mt-1">
+                {t("customGame.seconds")}
+              </Text>
             </View>
           </View>
         </View>
 
-        {/* Zonas de Fuerza */}
         <View className="mb-6">
           <Text className="text-foreground font-semibold mb-2">
-            Zonas de Fuerza
+            {t("customGame.forceZones")}
           </Text>
           <Text className="text-muted text-xs mb-4">
-            Define el porcentaje de tiempo de partida que quieres transcurrir en
-            cada segmento de carga
+            {t("customGame.forceZonesHint")}
           </Text>
 
-          {/* Extensión */}
           <View className="mb-4">
             <View className="flex-row justify-between mb-2">
-              <Text className="text-foreground font-medium">Extensión</Text>
-              <Text className="text-muted text-xs">0-35%</Text>
+              <Text className="text-foreground font-medium">
+                {t("modeSelect.forcezones.extension")}
+              </Text>
+              <Text className="text-muted text-xs">
+                {t("customGame.rangeExtension")}
+              </Text>
             </View>
             <TextInput
               placeholder="0"
@@ -307,11 +313,14 @@ export default function EditGameScreen() {
             />
           </View>
 
-          {/* Semi-arqueo */}
           <View className="mb-4">
             <View className="flex-row justify-between mb-2">
-              <Text className="text-foreground font-medium">Semi-arqueo</Text>
-              <Text className="text-muted text-xs">35-70%</Text>
+              <Text className="text-foreground font-medium">
+                {t("modeSelect.forcezones.semiArqueo")}
+              </Text>
+              <Text className="text-muted text-xs">
+                {t("customGame.rangeSemiArqueo")}
+              </Text>
             </View>
             <TextInput
               placeholder="0"
@@ -325,11 +334,14 @@ export default function EditGameScreen() {
             />
           </View>
 
-          {/* Arqueo */}
           <View className="mb-4">
             <View className="flex-row justify-between mb-2">
-              <Text className="text-foreground font-medium">Arqueo</Text>
-              <Text className="text-muted text-xs">70-100%</Text>
+              <Text className="text-foreground font-medium">
+                {t("modeSelect.forcezones.arqueo")}
+              </Text>
+              <Text className="text-muted text-xs">
+                {t("customGame.rangeArqueo")}
+              </Text>
             </View>
             <TextInput
               placeholder="0"
@@ -343,10 +355,9 @@ export default function EditGameScreen() {
             />
           </View>
 
-          {/* Total */}
           <View className="bg-surface border border-border rounded-lg p-3 mt-2">
             <View className="flex-row justify-between items-center">
-              <Text className="text-muted">Total</Text>
+              <Text className="text-muted">{t("common.total")}</Text>
               <Text className="text-lg font-bold" style={{ color: totalColor }}>
                 {total}%
               </Text>
@@ -354,7 +365,6 @@ export default function EditGameScreen() {
           </View>
         </View>
 
-        {/* Botones */}
         <View className="gap-3 mt-auto">
           <TouchableOpacity
             onPress={handleSaveGame}
@@ -366,7 +376,7 @@ export default function EditGameScreen() {
             }}
           >
             <Text className="text-background text-lg font-semibold text-center">
-              {loading ? "Guardando..." : "Guardar Cambios"}
+              {loading ? t("common.saving") : t("customGame.saveChanges")}
             </Text>
           </TouchableOpacity>
 
@@ -376,7 +386,7 @@ export default function EditGameScreen() {
             className="bg-error/10 border border-error/30 px-6 py-3 rounded-xl active:opacity-70"
           >
             <Text className="text-error text-center font-medium">
-              Eliminar Juego
+              {t("customGame.deleteGame")}
             </Text>
           </TouchableOpacity>
 
@@ -386,7 +396,7 @@ export default function EditGameScreen() {
             className="bg-surface border border-border px-6 py-3 rounded-xl active:opacity-70"
           >
             <Text className="text-foreground text-center font-medium">
-              Cancelar
+              {t("common.cancel")}
             </Text>
           </TouchableOpacity>
         </View>

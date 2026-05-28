@@ -8,6 +8,7 @@ import {
 import { useRouter, useFocusEffect } from "expo-router";
 import * as Haptics from "expo-haptics";
 import { useCallback, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 import { ScreenContainer } from "@/components/screen-container";
 import { useColors } from "@/hooks/use-colors";
@@ -69,6 +70,7 @@ function ModeCard({
 }
 
 function CustomGameCard({ game, onSelect, onEdit }: CustomGameCardProps) {
+  const { t } = useTranslation();
   const minutes = Math.floor(game.duration / 60);
   const seconds = game.duration % 60;
   const durationStr = `${minutes}:${String(seconds).padStart(2, "0")}`;
@@ -103,19 +105,25 @@ function CustomGameCard({ game, onSelect, onEdit }: CustomGameCardProps) {
         </View>
         <View className="flex-row gap-2 mb-3">
           <View className="flex-1 bg-background/50 rounded-lg p-2">
-            <Text className="text-muted text-xs">Extensión</Text>
+            <Text className="text-muted text-xs">
+              {t("modeSelect.forcezones.extension")}
+            </Text>
             <Text className="text-foreground font-semibold">
               {game.forcezones.extension}%
             </Text>
           </View>
           <View className="flex-1 bg-background/50 rounded-lg p-2">
-            <Text className="text-muted text-xs">Semi-arqueo</Text>
+            <Text className="text-muted text-xs">
+              {t("modeSelect.forcezones.semiArqueo")}
+            </Text>
             <Text className="text-foreground font-semibold">
               {game.forcezones.semiArqueo}%
             </Text>
           </View>
           <View className="flex-1 bg-background/50 rounded-lg p-2">
-            <Text className="text-muted text-xs">Arqueo</Text>
+            <Text className="text-muted text-xs">
+              {t("modeSelect.forcezones.arqueo")}
+            </Text>
             <Text className="text-foreground font-semibold">
               {game.forcezones.arqueo}%
             </Text>
@@ -128,24 +136,17 @@ function CustomGameCard({ game, onSelect, onEdit }: CustomGameCardProps) {
         className="bg-primary/10 border border-primary/30 rounded-lg py-2 active:opacity-70"
       >
         <Text className="text-primary text-center font-medium text-sm">
-          Editar
+          {t("common.edit")}
         </Text>
       </TouchableOpacity>
     </View>
   );
 }
 
-/**
- * Mode Select Screen - Selección de modalidad de juego
- *
- * Permite al usuario elegir entre:
- * - Calentamiento Rápido (3 min)
- * - Calentamiento Total (5 min)
- * - Juegos personalizados
- */
 export default function ModeSelectScreen() {
   const colors = useColors();
   const router = useRouter();
+  const { t } = useTranslation();
   const [customGames, setCustomGames] = useState<CustomGame[]>([]);
 
   useFocusEffect(
@@ -160,7 +161,6 @@ export default function ModeSelectScreen() {
   };
 
   const handleModeSelect = (mode: GameMode) => {
-    // Navegar a la pantalla de conexión con el modo seleccionado
     router.push({
       pathname: "/connect",
       params: { mode },
@@ -168,7 +168,6 @@ export default function ModeSelectScreen() {
   };
 
   const handleCustomGameSelect = (game: CustomGame) => {
-    // Navegar a la pantalla de conexión con el juego personalizado
     router.push({
       pathname: "/connect",
       params: {
@@ -202,47 +201,41 @@ export default function ModeSelectScreen() {
   return (
     <ScreenContainer className="flex-1 p-6">
       <ScrollView showsVerticalScrollIndicator={false}>
-        {/* Header */}
         <View className="mb-6">
           <TouchableOpacity
             onPress={handleBackPress}
             className="mb-4 active:opacity-70"
           >
-            <Text className="text-primary text-lg">← Atrás</Text>
+            <Text className="text-primary text-lg">{t("modeSelect.back")}</Text>
           </TouchableOpacity>
           <Text className="text-3xl font-bold text-foreground mb-2">
-            Elige tu modalidad
+            {t("modeSelect.title")}
           </Text>
-          <Text className="text-muted">
-            Selecciona el tipo de calentamiento que quieres realizar
-          </Text>
+          <Text className="text-muted">{t("modeSelect.subtitle")}</Text>
         </View>
 
-        {/* Modo: Calentamiento Rápido */}
         <ModeCard
-          title="Calentamiento Rápido"
-          duration="3 minutos"
-          description="Sesión corta de 3 minutos en un escenario. Ideal para un calentamiento express antes de escalar."
+          title={t("modeSelect.quick.title")}
+          duration={t("modeSelect.quick.duration")}
+          description={t("modeSelect.quick.description")}
           icon="⚡"
           mode="quick"
           onSelect={handleModeSelect}
         />
 
-        {/* Modo: Calentamiento Total */}
         <ModeCard
-          title="Calentamiento Total"
-          duration="5 minutos"
-          description="Sesión completa de 5 minutos con 2 escenarios y transición nocturna. Calentamiento completo para una sesión de escalada."
+          title={t("modeSelect.total.title")}
+          duration={t("modeSelect.total.duration")}
+          description={t("modeSelect.total.description")}
           icon="🌄"
           mode="total"
           onSelect={handleModeSelect}
         />
 
-        {/* Juegos Personalizados */}
         {customGames.length > 0 && (
           <View className="mt-8 mb-6">
             <Text className="text-foreground font-bold text-lg mb-4">
-              Mis Entrenamientos
+              {t("modeSelect.customGames")}
             </Text>
             {customGames.map((game) => (
               <CustomGameCard
@@ -255,24 +248,22 @@ export default function ModeSelectScreen() {
           </View>
         )}
 
-        {/* Botón Crear Juego Nuevo */}
         <TouchableOpacity
           onPress={handleCreateGame}
           className="bg-primary px-6 py-4 rounded-xl active:opacity-80 mb-6"
           style={{ backgroundColor: colors.primary }}
         >
           <Text className="text-background text-lg font-semibold text-center">
-            Crear Juego Nuevo
+            {t("modeSelect.createGame")}
           </Text>
         </TouchableOpacity>
 
-        {/* Información adicional */}
         <View className="mt-6 bg-surface rounded-xl p-4 border border-border">
-          <Text className="text-foreground font-semibold mb-2">💡 Consejo</Text>
+          <Text className="text-foreground font-semibold mb-2">
+            {t("modeSelect.tipTitle")}
+          </Text>
           <Text className="text-muted text-sm leading-relaxed">
-            Todos los modos incluyen ejercicios isométricos (mantener),
-            concéntricos (apretar) y excéntricos (soltar lentamente) para un
-            calentamiento completo.
+            {t("modeSelect.tipBody")}
           </Text>
         </View>
       </ScrollView>

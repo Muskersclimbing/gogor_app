@@ -7,8 +7,10 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import { ActivityIndicator, Text } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useTranslation } from "react-i18next";
 
 export default function OAuthCallback() {
+  const { t } = useTranslation();
   const router = useRouter();
   const params = useLocalSearchParams<{
     code?: string;
@@ -242,7 +244,7 @@ export default function OAuthCallback() {
         setErrorMessage(
           error instanceof Error
             ? error.message
-            : "Failed to complete authentication",
+            : t("oauth.failedGeneric"),
         );
       }
     };
@@ -255,6 +257,7 @@ export default function OAuthCallback() {
     params.sessionToken,
     params.user,
     router,
+    t,
   ]);
 
   return (
@@ -264,24 +267,24 @@ export default function OAuthCallback() {
           <>
             <ActivityIndicator size="large" />
             <Text className="mt-4 text-base leading-6 text-center text-foreground">
-              Completing authentication...
+              {t("oauth.processing")}
             </Text>
           </>
         )}
         {status === "success" && (
           <>
             <Text className="text-base leading-6 text-center text-foreground">
-              Authentication successful!
+              {t("oauth.success")}
             </Text>
             <Text className="text-base leading-6 text-center text-foreground">
-              Redirecting...
+              {t("oauth.redirecting")}
             </Text>
           </>
         )}
         {status === "error" && (
           <>
             <Text className="mb-2 text-xl font-bold leading-7 text-error">
-              Authentication failed
+              {t("oauth.failed")}
             </Text>
             <Text className="text-base leading-6 text-center text-foreground">
               {errorMessage}

@@ -1,0 +1,170 @@
+{
+  "common": {
+    "appName": "Gogor Games",
+    "ok": "OK",
+    "cancel": "Cancel",
+    "back": "Back",
+    "edit": "Edit",
+    "loading": "Loading...",
+    "saving": "Saving...",
+    "retry": "Try again",
+    "delete": "Delete",
+    "goBack": "Go back",
+    "error": "Error",
+    "success": "Success",
+    "total": "Total",
+    "name": "Name"
+  },
+  "tabs": {
+    "home": "Home"
+  },
+  "home": {
+    "tagline": "Works with Tindeq, Force Board, and WH-C06",
+    "start": "Start",
+    "bluetoothHint": "Make sure Bluetooth is turned on"
+  },
+  "modeSelect": {
+    "title": "Choose your mode",
+    "subtitle": "Select the warmup you want to do",
+    "back": "← Back",
+    "quick": {
+      "title": "Quick Warmup",
+      "duration": "3 minutes",
+      "description": "Short 3-minute session in one scene. Ideal for a quick warmup before climbing."
+    },
+    "total": {
+      "title": "Full Warmup",
+      "duration": "5 minutes",
+      "description": "Full 5-minute session with 2 scenes and a night transition. Complete warmup for a climbing session."
+    },
+    "customGames": "My Workouts",
+    "createGame": "Create New Game",
+    "tipTitle": "💡 Tip",
+    "tipBody": "All modes include isometric (hold), concentric (squeeze), and eccentric (slow release) exercises for a complete warmup.",
+    "forcezones": {
+      "extension": "Extension",
+      "semiArqueo": "Semi-crimp",
+      "arqueo": "Crimp"
+    }
+  },
+  "connect": {
+    "title": "Find Device",
+    "scanning": "Searching for devices...",
+    "connecting": "Connecting to device...",
+    "devicesFound_one": "{{count}} device found",
+    "devicesFound_other": "{{count}} devices found",
+    "scanningDetail": "Scanning for Bluetooth devices...",
+    "connectingDetail": "Connecting to device...",
+    "connect": "Connect",
+    "deviceType": "Type: {{type}}",
+    "empty": "No devices found.\nMake sure your device is powered on.",
+    "searchAgain": "Search again",
+    "permissionsTitle": "Permissions required",
+    "permissionsMessage": "Bluetooth needs Android permissions to scan and connect to devices.",
+    "bluetoothErrorTitle": "Bluetooth error",
+    "bluetoothErrorMessage": "Could not start scanning. Make sure Bluetooth is on and the app has the required permissions.",
+    "connectionErrorTitle": "Connection error",
+    "connectionErrorMessage": "Could not connect to the device. Please try again."
+  },
+  "results": {
+    "completed": "Session complete!",
+    "durationDisplay": "{{minutes}}:{{seconds}} minutes",
+    "durationShort": "{{minutes}}:{{seconds}} min",
+    "stats": "Stats",
+    "maxForce": "Max force",
+    "avgForce": "Average force",
+    "totalTime": "Total time",
+    "fruitsCollected": "Fruit collected",
+    "forceValue": "{{value}} kg",
+    "successMessage": "✓ Great job. Your fingers are ready to climb.",
+    "playAgain": "New session",
+    "home": "Back to home"
+  },
+  "modes": {
+    "quick": "Quick Warmup",
+    "total": "Full Warmup",
+    "resistance": "Resistance",
+    "default": "Warmup"
+  },
+  "devices": {
+    "tindeq": "Tindeq",
+    "forceBoard": "Force Board",
+    "whC06": "WH-C06",
+    "unknown": "Unknown"
+  },
+  "game": {
+    "customGame": "Custom game",
+    "unitKg": "kg",
+    "forceDisplay": "{{value}}Kg",
+    "calibration": {
+      "title": "Calibration",
+      "instructions": "We will measure your maximum force.\n\nWhen you press \"Start\", apply maximum force for 5 seconds.",
+      "squeeze": "Squeeze hard!",
+      "startButton": "Start Calibration"
+    },
+    "ready": {
+      "title": "Calibration complete!",
+      "maxForce": "Your max force: {{force}} kg",
+      "start": "Start"
+    },
+    "alerts": {
+      "noCalibrationData": "No force data was captured during calibration.",
+      "calibrationFailed": "Could not complete calibration.",
+      "calibrationStartFailed": "Could not start calibration.",
+      "gameStartFailed": "Could not start the game.",
+      "notConnectedTitle": "Not connected",
+      "notConnectedMessage": "No force device is connected. Please connect first.",
+      "disconnectedTitle": "Disconnected",
+      "disconnectedMessage": "Connection to the force device was lost."
+    },
+    "scenes": {
+      "mountain": "Mountain",
+      "desert": "Desert",
+      "valley": "Valley",
+      "forest": "Forest"
+    }
+  },
+  "oauth": {
+    "processing": "Completing authentication...",
+    "success": "Authentication successful!",
+    "redirecting": "Redirecting...",
+    "failed": "Authentication failed",
+    "failedGeneric": "Failed to complete authentication"
+  },
+  "customGame": {
+    "createTitle": "Create New Game",
+    "editTitle": "Edit Game",
+    "createSubtitle": "Set up your custom workout",
+    "editSubtitle": "Edit your custom workout",
+    "namePlaceholder": "e.g. Strength training",
+    "matchDuration": "Match duration",
+    "forceZones": "Force zones",
+    "forceZonesHint": "Set the percentage of match time you want to spend in each load segment",
+    "rangeExtension": "0-35%",
+    "rangeSemiArqueo": "35-70%",
+    "rangeArqueo": "70-100%",
+    "minutes": "Min.",
+    "seconds": "Sec.",
+    "saveGame": "Save Game",
+    "saveChanges": "Save Changes",
+    "deleteGame": "Delete Game",
+    "deleteConfirmTitle": "Delete game",
+    "deleteConfirmMessage": "Are you sure you want to delete \"{{name}}\"?",
+    "errors": {
+      "nameRequired": "Please enter a name for the game",
+      "durationRequired": "Duration must be greater than 0",
+      "negativePercent": "Percentages cannot be negative",
+      "percentSum": "Percentages must add up to 100% (currently: {{total}}%)",
+      "gameNotSpecified": "No game was specified to edit",
+      "gameNotFound": "Game not found",
+      "createFailed": "Could not create the game",
+      "updateFailed": "Could not update the game",
+      "deleteFailed": "Could not delete the game"
+    },
+    "success": {
+      "created": "Game created successfully",
+      "updated": "Game updated successfully",
+      "deleted": "Game deleted successfully"
+    }
+  }
+}

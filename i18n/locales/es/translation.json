@@ -1,0 +1,170 @@
+{
+  "common": {
+    "appName": "Gogor Games",
+    "ok": "OK",
+    "cancel": "Cancelar",
+    "back": "Atrás",
+    "edit": "Editar",
+    "loading": "Cargando...",
+    "saving": "Guardando...",
+    "retry": "Reintentar",
+    "delete": "Eliminar",
+    "goBack": "Volver",
+    "error": "Error",
+    "success": "Éxito",
+    "total": "Total",
+    "name": "Nombre"
+  },
+  "tabs": {
+    "home": "Inicio"
+  },
+  "home": {
+    "tagline": "Compatible con Tindeq, Force Board y WH-C06",
+    "start": "Comenzar",
+    "bluetoothHint": "Asegúrate de tener el Bluetooth activado"
+  },
+  "modeSelect": {
+    "title": "Elige tu modalidad",
+    "subtitle": "Selecciona el tipo de calentamiento que quieres realizar",
+    "back": "← Atrás",
+    "quick": {
+      "title": "Calentamiento Rápido",
+      "duration": "3 minutos",
+      "description": "Sesión corta de 3 minutos en un escenario. Ideal para un calentamiento express antes de escalar."
+    },
+    "total": {
+      "title": "Calentamiento Total",
+      "duration": "5 minutos",
+      "description": "Sesión completa de 5 minutos con 2 escenarios y transición nocturna. Calentamiento completo para una sesión de escalada."
+    },
+    "customGames": "Mis Entrenamientos",
+    "createGame": "Crear Juego Nuevo",
+    "tipTitle": "💡 Consejo",
+    "tipBody": "Todos los modos incluyen ejercicios isométricos (mantener), concéntricos (apretar) y excéntricos (soltar lentamente) para un calentamiento completo.",
+    "forcezones": {
+      "extension": "Extensión",
+      "semiArqueo": "Semi-arqueo",
+      "arqueo": "Arqueo"
+    }
+  },
+  "connect": {
+    "title": "Buscar Dispositivo",
+    "scanning": "Buscando dispositivos...",
+    "connecting": "Conectando al dispositivo...",
+    "devicesFound_one": "{{count}} dispositivo encontrado",
+    "devicesFound_other": "{{count}} dispositivos encontrados",
+    "scanningDetail": "Escaneando dispositivos Bluetooth...",
+    "connectingDetail": "Conectando al dispositivo...",
+    "connect": "Conectar",
+    "deviceType": "Tipo: {{type}}",
+    "empty": "No se encontraron dispositivos.\nAsegúrate de que tu dispositivo esté encendido.",
+    "searchAgain": "Buscar de nuevo",
+    "permissionsTitle": "Permisos requeridos",
+    "permissionsMessage": "Bluetooth necesita permisos de Android para buscar y conectar dispositivos.",
+    "bluetoothErrorTitle": "Error de Bluetooth",
+    "bluetoothErrorMessage": "No se pudo iniciar el escaneo. Asegúrate de que Bluetooth esté activado y que la app tenga los permisos necesarios.",
+    "connectionErrorTitle": "Error de conexión",
+    "connectionErrorMessage": "No se pudo conectar al dispositivo. Inténtalo de nuevo."
+  },
+  "results": {
+    "completed": "¡Sesión completada!",
+    "durationDisplay": "{{minutes}}:{{seconds}} minutos",
+    "durationShort": "{{minutes}}:{{seconds}} min",
+    "stats": "Estadísticas",
+    "maxForce": "Fuerza máxima",
+    "avgForce": "Fuerza promedio",
+    "totalTime": "Tiempo total",
+    "fruitsCollected": "Frutas recogidas",
+    "forceValue": "{{value}} kg",
+    "successMessage": "✓ Excelente trabajo. Tus dedos están listos para escalar.",
+    "playAgain": "Nueva sesión",
+    "home": "Volver al inicio"
+  },
+  "modes": {
+    "quick": "Calentamiento Rápido",
+    "total": "Calentamiento Total",
+    "resistance": "Resistencia",
+    "default": "Calentamiento"
+  },
+  "devices": {
+    "tindeq": "Tindeq",
+    "forceBoard": "Force Board",
+    "whC06": "WH-C06",
+    "unknown": "Desconocido"
+  },
+  "game": {
+    "customGame": "Juego personalizado",
+    "unitKg": "kg",
+    "forceDisplay": "{{value}}Kg",
+    "calibration": {
+      "title": "Calibración",
+      "instructions": "Vamos a medir tu fuerza máxima.\n\nCuando presiones \"Iniciar\", aplica la máxima fuerza durante 5 segundos.",
+      "squeeze": "¡Aprieta con fuerza!",
+      "startButton": "Iniciar Calibración"
+    },
+    "ready": {
+      "title": "¡Calibración completa!",
+      "maxForce": "Tu fuerza máxima: {{force}} kg",
+      "start": "Comenzar"
+    },
+    "alerts": {
+      "noCalibrationData": "No se capturaron datos de fuerza durante la calibración.",
+      "calibrationFailed": "No se pudo completar la calibración.",
+      "calibrationStartFailed": "No se pudo iniciar la calibración.",
+      "gameStartFailed": "No se pudo iniciar el juego.",
+      "notConnectedTitle": "No conectado",
+      "notConnectedMessage": "No hay un dispositivo de fuerza conectado. Por favor, conéctate primero.",
+      "disconnectedTitle": "Desconectado",
+      "disconnectedMessage": "Se perdió la conexión con el dispositivo de fuerza."
+    },
+    "scenes": {
+      "mountain": "Montaña",
+      "desert": "Desierto",
+      "valley": "Valle",
+      "forest": "Bosque"
+    }
+  },
+  "oauth": {
+    "processing": "Completando autenticación...",
+    "success": "¡Autenticación exitosa!",
+    "redirecting": "Redirigiendo...",
+    "failed": "Error de autenticación",
+    "failedGeneric": "No se pudo completar la autenticación"
+  },
+  "customGame": {
+    "createTitle": "Crear Juego Nuevo",
+    "editTitle": "Editar Juego",
+    "createSubtitle": "Configura tu entrenamiento personalizado",
+    "editSubtitle": "Modifica tu entrenamiento personalizado",
+    "namePlaceholder": "Ej: Entrenamiento de fuerza",
+    "matchDuration": "Tiempo de partida",
+    "forceZones": "Zonas de Fuerza",
+    "forceZonesHint": "Define el porcentaje de tiempo de partida que quieres transcurrir en cada segmento de carga",
+    "rangeExtension": "0-35%",
+    "rangeSemiArqueo": "35-70%",
+    "rangeArqueo": "70-100%",
+    "minutes": "Min.",
+    "seconds": "Seg.",
+    "saveGame": "Guardar Juego",
+    "saveChanges": "Guardar Cambios",
+    "deleteGame": "Eliminar Juego",
+    "deleteConfirmTitle": "Eliminar juego",
+    "deleteConfirmMessage": "¿Estás seguro de que quieres eliminar \"{{name}}\"?",
+    "errors": {
+      "nameRequired": "Por favor ingresa un nombre para el juego",
+      "durationRequired": "La duración debe ser mayor a 0",
+      "negativePercent": "Los porcentajes no pueden ser negativos",
+      "percentSum": "Los porcentajes deben sumar 100% (actualmente: {{total}}%)",
+      "gameNotSpecified": "No se especificó el juego a editar",
+      "gameNotFound": "No se encontró el juego",
+      "createFailed": "No se pudo crear el juego",
+      "updateFailed": "No se pudo actualizar el juego",
+      "deleteFailed": "No se pudo eliminar el juego"
+    },
+    "success": {
+      "created": "Juego creado correctamente",
+      "updated": "Juego actualizado correctamente",
+      "deleted": "Juego eliminado correctamente"
+    }
+  }
+}

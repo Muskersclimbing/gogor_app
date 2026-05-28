@@ -10,6 +10,7 @@ import {
 } from "react-native";
 import { useRouter } from "expo-router";
 import * as Haptics from "expo-haptics";
+import { useTranslation } from "react-i18next";
 
 import { ScreenContainer } from "@/components/screen-container";
 import { useColors } from "@/hooks/use-colors";
@@ -21,6 +22,7 @@ import {
 export default function CreateGameScreen() {
   const colors = useColors();
   const router = useRouter();
+  const { t } = useTranslation();
 
   const [name, setName] = useState("");
   const [minutesInput, setMinutesInput] = useState("3");
@@ -32,7 +34,7 @@ export default function CreateGameScreen() {
 
   const validateInputs = (): boolean => {
     if (!name.trim()) {
-      Alert.alert("Error", "Por favor ingresa un nombre para el juego");
+      Alert.alert(t("common.error"), t("customGame.errors.nameRequired"));
       return false;
     }
 
@@ -41,7 +43,7 @@ export default function CreateGameScreen() {
     const duration = minutes * 60 + seconds;
 
     if (duration <= 0) {
-      Alert.alert("Error", "La duración debe ser mayor a 0");
+      Alert.alert(t("common.error"), t("customGame.errors.durationRequired"));
       return false;
     }
 
@@ -50,14 +52,14 @@ export default function CreateGameScreen() {
     const arq = parseInt(arqueo) || 0;
 
     if (ext < 0 || semi < 0 || arq < 0) {
-      Alert.alert("Error", "Los porcentajes no pueden ser negativos");
+      Alert.alert(t("common.error"), t("customGame.errors.negativePercent"));
       return false;
     }
 
     if (ext + semi + arq !== 100) {
       Alert.alert(
-        "Error",
-        `Los porcentajes deben sumar 100% (actualmente: ${ext + semi + arq}%)`,
+        t("common.error"),
+        t("customGame.errors.percentSum", { total: ext + semi + arq }),
       );
       return false;
     }
@@ -84,14 +86,14 @@ export default function CreateGameScreen() {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       }
 
-      Alert.alert("Éxito", "Juego creado correctamente", [
+      Alert.alert(t("common.success"), t("customGame.success.created"), [
         {
-          text: "OK",
+          text: t("common.ok"),
           onPress: () => router.back(),
         },
       ]);
     } catch (error) {
-      Alert.alert("Error", "No se pudo crear el juego");
+      Alert.alert(t("common.error"), t("customGame.errors.createFailed"));
       console.error(error);
     } finally {
       setLoading(false);
@@ -126,21 +128,21 @@ export default function CreateGameScreen() {
         contentContainerStyle={{ flexGrow: 1 }}
         showsVerticalScrollIndicator={false}
       >
-        {/* Título */}
         <View className="mb-8">
           <Text className="text-3xl font-bold text-foreground mb-2">
-            Crear Juego Nuevo
+            {t("customGame.createTitle")}
           </Text>
           <Text className="text-muted text-sm">
-            Configura tu entrenamiento personalizado
+            {t("customGame.createSubtitle")}
           </Text>
         </View>
 
-        {/* Nombre */}
         <View className="mb-6">
-          <Text className="text-foreground font-semibold mb-2">Nombre</Text>
+          <Text className="text-foreground font-semibold mb-2">
+            {t("common.name")}
+          </Text>
           <TextInput
-            placeholder="Ej: Entrenamiento de fuerza"
+            placeholder={t("customGame.namePlaceholder")}
             placeholderTextColor={colors.muted}
             value={name}
             onChangeText={setName}
@@ -149,10 +151,9 @@ export default function CreateGameScreen() {
           />
         </View>
 
-        {/* Tiempo de partida */}
         <View className="mb-6">
           <Text className="text-foreground font-semibold mb-2">
-            Tiempo de partida
+            {t("customGame.matchDuration")}
           </Text>
           <View className="flex-row gap-2 items-center justify-center">
             <View className="flex-1">
@@ -166,7 +167,9 @@ export default function CreateGameScreen() {
                 className="bg-surface border border-border rounded-lg px-4 py-3 text-foreground text-center text-lg"
                 editable={!loading}
               />
-              <Text className="text-muted text-xs text-center mt-1">Min.</Text>
+              <Text className="text-muted text-xs text-center mt-1">
+                {t("customGame.minutes")}
+              </Text>
             </View>
 
             <Text className="text-foreground text-2xl font-bold">:</Text>
@@ -182,26 +185,29 @@ export default function CreateGameScreen() {
                 className="bg-surface border border-border rounded-lg px-4 py-3 text-foreground text-center text-lg"
                 editable={!loading}
               />
-              <Text className="text-muted text-xs text-center mt-1">Seg.</Text>
+              <Text className="text-muted text-xs text-center mt-1">
+                {t("customGame.seconds")}
+              </Text>
             </View>
           </View>
         </View>
 
-        {/* Zonas de Fuerza */}
         <View className="mb-6">
           <Text className="text-foreground font-semibold mb-2">
-            Zonas de Fuerza
+            {t("customGame.forceZones")}
           </Text>
           <Text className="text-muted text-xs mb-4">
-            Define el porcentaje de tiempo de partida que quieres transcurrir en
-            cada segmento de carga
+            {t("customGame.forceZonesHint")}
           </Text>
 
-          {/* Extensión */}
           <View className="mb-4">
             <View className="flex-row justify-between mb-2">
-              <Text className="text-foreground font-medium">Extensión</Text>
-              <Text className="text-muted text-xs">0-35%</Text>
+              <Text className="text-foreground font-medium">
+                {t("modeSelect.forcezones.extension")}
+              </Text>
+              <Text className="text-muted text-xs">
+                {t("customGame.rangeExtension")}
+              </Text>
             </View>
             <TextInput
               placeholder="0"
@@ -215,11 +221,14 @@ export default function CreateGameScreen() {
             />
           </View>
 
-          {/* Semi-arqueo */}
           <View className="mb-4">
             <View className="flex-row justify-between mb-2">
-              <Text className="text-foreground font-medium">Semi-arqueo</Text>
-              <Text className="text-muted text-xs">35-70%</Text>
+              <Text className="text-foreground font-medium">
+                {t("modeSelect.forcezones.semiArqueo")}
+              </Text>
+              <Text className="text-muted text-xs">
+                {t("customGame.rangeSemiArqueo")}
+              </Text>
             </View>
             <TextInput
               placeholder="0"
@@ -233,11 +242,14 @@ export default function CreateGameScreen() {
             />
           </View>
 
-          {/* Arqueo */}
           <View className="mb-4">
             <View className="flex-row justify-between mb-2">
-              <Text className="text-foreground font-medium">Arqueo</Text>
-              <Text className="text-muted text-xs">70-100%</Text>
+              <Text className="text-foreground font-medium">
+                {t("modeSelect.forcezones.arqueo")}
+              </Text>
+              <Text className="text-muted text-xs">
+                {t("customGame.rangeArqueo")}
+              </Text>
             </View>
             <TextInput
               placeholder="0"
@@ -251,10 +263,9 @@ export default function CreateGameScreen() {
             />
           </View>
 
-          {/* Total */}
           <View className="bg-surface border border-border rounded-lg p-3 mt-2">
             <View className="flex-row justify-between items-center">
-              <Text className="text-muted">Total</Text>
+              <Text className="text-muted">{t("common.total")}</Text>
               <Text className="text-lg font-bold" style={{ color: totalColor }}>
                 {total}%
               </Text>
@@ -262,7 +273,6 @@ export default function CreateGameScreen() {
           </View>
         </View>
 
-        {/* Botones */}
         <View className="gap-3 mt-auto">
           <TouchableOpacity
             onPress={handleSaveGame}
@@ -274,7 +284,7 @@ export default function CreateGameScreen() {
             }}
           >
             <Text className="text-background text-lg font-semibold text-center">
-              {loading ? "Guardando..." : "Guardar Juego"}
+              {loading ? t("common.saving") : t("customGame.saveGame")}
             </Text>
           </TouchableOpacity>
 
@@ -284,7 +294,7 @@ export default function CreateGameScreen() {
             className="bg-surface border border-border px-6 py-3 rounded-xl active:opacity-70"
           >
             <Text className="text-foreground text-center font-medium">
-              Cancelar
+              {t("common.cancel")}
             </Text>
           </TouchableOpacity>
         </View>

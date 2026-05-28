@@ -9,6 +9,7 @@ import {
 } from "react-native";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import * as Haptics from "expo-haptics";
+import { useTranslation } from "react-i18next";
 
 import { ScreenContainer } from "@/components/screen-container";
 import {
@@ -22,6 +23,7 @@ import {
 } from "@/components/flappy-bird-game";
 import { FruitProgressIndicator } from "@/components/fruit-progress-indicator";
 import { customGamesService } from "@/lib/custom-games-service";
+import { getModeLabel } from "@/i18n/helpers";
 
 type GameMode = "quick" | "total";
 type GamePhase = "calibration" | "ready" | "playing" | "rest" | "finished";
@@ -33,64 +35,54 @@ type SceneName =
 
 interface SceneConfig {
   name: SceneName;
-  title: string;
-  dayImage: any;
-  nightImage: any;
+  dayImage: number;
+  nightImage: number;
 }
 
 const SCENES: Record<SceneName, SceneConfig> = {
   yosemite: {
     name: "yosemite",
-    title: "Mountain",
     dayImage: require("@/assets/images/yosemite-day.png"),
     nightImage: require("@/assets/images/yosemite-night.png"),
   },
   monument_valley: {
     name: "monument_valley",
-    title: "Desert",
     dayImage: require("@/assets/images/utah-day.png"),
     nightImage: require("@/assets/images/utah-night.png"),
   },
   albarracin: {
     name: "albarracin",
-    title: "Valley",
     dayImage: require("@/assets/images/albarracin-day.png"),
     nightImage: require("@/assets/images/albarracin-night.png"),
   },
   fontainebleau: {
     name: "fontainebleau",
-    title: "Forest",
     dayImage: require("@/assets/images/fontainebleau-day.png"),
     nightImage: require("@/assets/images/fontainebleau-night.png"),
   },
 };
 
-// Configuración de modalidades
-const MODE_CONFIG: Record<
-  GameMode,
-  {
-    title: string;
-    duration: number;
-    fruitGoal: number;
-    scenes: SceneName[];
-    hasNightTransition: boolean;
-    nightAt?: number;
-    lives?: number;
-  }
-> = {
+interface ModeConfig {
+  duration: number;
+  fruitGoal: number;
+  scenes: SceneName[];
+  hasNightTransition: boolean;
+  nightAt?: number;
+  lives?: number;
+}
+
+const MODE_CONFIG: Record<GameMode, ModeConfig> = {
   quick: {
-    title: "Calentamiento Rápido",
-    duration: 180, // 3 minutos
+    duration: 180,
     fruitGoal: 15,
-    scenes: ["yosemite"] as SceneName[], // Un solo escenario fijo
+    scenes: ["yosemite"] as SceneName[],
     hasNightTransition: false,
   },
   total: {
-    title: "Calentamiento Total",
-    duration: 300, // 5 minutos
+    duration: 300,
     fruitGoal: 25,
-    scenes: ["yosemite"] as SceneName[], // Un solo escenario fijo
-    hasNightTransition: false, // Sin transiciones nocturnas
+    scenes: ["yosemite"] as SceneName[],
+    hasNightTransition: false,
   },
 };
 
@@ -101,9 +93,11 @@ const MODE_CONFIG: Record<
  */
 export default function GameScreen() {
   const router = useRouter();
+  const { t } = useTranslation();
   const params = useLocalSearchParams<{ mode?: string; gameId?: string }>();
   const gameMode = (params.mode || "quick") as GameMode;
-  const [modeConfig, setModeConfig] = useState(MODE_CONFIG[gameMode]);
+  const [modeConfig, setModeConfig] = useState<ModeConfig>(MODE_CONFIG[gameMode]);
+  const [sessionTitle, setSessionTitle] = useState<string | null>(null);
 
   // Cargar juego personalizado si existe
   useEffect(() => {
@@ -126,9 +120,8 @@ export default function GameScreen() {
           console.log("[GAME] Juego encontrado:", game);
 
           if (game && game.duration && typeof game.duration === "number") {
-            const customModeConfig = {
-              title: game.name || "Juego personalizado",
-              duration: Math.max(60, game.duration), // Mínimo 60 segundos
+            const customModeConfig: ModeConfig = {
+              duration: Math.max(60, game.duration),
               fruitGoal: Math.ceil(game.duration / 15),
               scenes: ["yosemite"] as SceneName[],
               hasNightTransition: false,
@@ -136,6 +129,7 @@ export default function GameScreen() {
             };
             console.log("[GAME] customModeConfig creado:", customModeConfig);
             setModeConfig(customModeConfig);
+            setSessionTitle(game.name || t("game.customGame"));
           } else {
             console.error(
               "Juego inválido o no encontrado:",
@@ -144,19 +138,22 @@ export default function GameScreen() {
               game,
             );
             setModeConfig(MODE_CONFIG["quick"]);
+            setSessionTitle(null);
           }
         } else {
           console.log("[DEBUG] Modo predefinido:", gameMode);
           setModeConfig(MODE_CONFIG[gameMode]);
+          setSessionTitle(null);
         }
       } catch (error) {
         console.error("[GAME] ERROR en loadGame:", error);
         console.error("[GAME] Stack:", (error as any)?.stack);
         setModeConfig(MODE_CONFIG["quick"]);
+        setSessionTitle(null);
       }
     };
     loadGame();
-  }, [params.gameId, params.mode, gameMode]);
+  }, [params.gameId, params.mode, gameMode, t]);
 
   // Estado de calibración
   const [gamePhase, setGamePhase] = useState<GamePhase>("calibration");
@@ -230,8 +227,8 @@ export default function GameScreen() {
         isFinishingCalibrationRef.current = false;
         calibrationForcesRef.current = [];
         Alert.alert(
-          "Error",
-          "No se capturaron datos de fuerza durante la calibración.",
+          t("common.error"),
+          t("game.alerts.noCalibrationData"),
         );
         setCalibrationTime(0);
         return;
@@ -269,7 +266,7 @@ export default function GameScreen() {
       isCalibrating.current = false;
       isFinishingCalibrationRef.current = false;
       console.error("Error finalizando calibración:", error);
-      Alert.alert("Error", "No se pudo completar la calibración.");
+      Alert.alert(t("common.error"), t("game.alerts.calibrationFailed"));
     }
   };
   finishCalibrationRef.current = () => {
@@ -342,11 +339,11 @@ export default function GameScreen() {
     const connected = forceDeviceService.getIsConnected();
     if (!connected) {
       Alert.alert(
-        "No conectado",
-        "No hay un dispositivo de fuerza conectado. Por favor, conéctate primero.",
+        t("game.alerts.notConnectedTitle"),
+        t("game.alerts.notConnectedMessage"),
         [
           {
-            text: "Volver",
+            text: t("common.goBack"),
             onPress: () => router.back(),
           },
         ],
@@ -371,11 +368,11 @@ export default function GameScreen() {
     forceDeviceService.onConnectionChange((isConnected: boolean) => {
       if (!isConnected) {
         Alert.alert(
-          "Desconectado",
-          "Se perdió la conexión con el dispositivo de fuerza.",
+          t("game.alerts.disconnectedTitle"),
+          t("game.alerts.disconnectedMessage"),
           [
             {
-              text: "Volver",
+              text: t("common.goBack"),
               onPress: () => router.back(),
             },
           ],
@@ -389,7 +386,7 @@ export default function GameScreen() {
     return () => {
       forceDeviceService.stopMeasurement().catch(console.error);
     };
-  }, [router]);
+  }, [router, t]);
 
   // Cronómetro del juego
   useEffect(() => {
@@ -477,7 +474,7 @@ export default function GameScreen() {
       isCalibrating.current = false;
       isFinishingCalibrationRef.current = false;
       console.error("Error iniciando calibración:", error);
-      Alert.alert("Error", "No se pudo iniciar la calibración.");
+      Alert.alert(t("common.error"), t("game.alerts.calibrationStartFailed"));
     }
   };
 
@@ -505,7 +502,7 @@ export default function GameScreen() {
       setFruitsCollected(0);
     } catch (error) {
       console.error("Error iniciando juego:", error);
-      Alert.alert("Error", "No se pudo iniciar el juego.");
+      Alert.alert(t("common.error"), t("game.alerts.gameStartFailed"));
     }
   };
 
@@ -544,7 +541,12 @@ export default function GameScreen() {
 
   const handleCollision = () => {};
 
-  const backgroundImage = currentScene.dayImage; // Siempre imagen de día, sin transiciones nocturnas
+  const backgroundImage = currentScene.dayImage;
+  const displaySessionTitle =
+    sessionTitle ??
+    (gameMode === "quick" || gameMode === "total"
+      ? getModeLabel(t, gameMode)
+      : t("game.customGame"));
 
   return (
     <ImageBackground
@@ -563,12 +565,10 @@ export default function GameScreen() {
           <View className="flex-1 justify-center items-center px-6">
             <View className="bg-black/70 rounded-3xl p-8 items-center max-w-md">
               <Text className="text-white text-2xl font-bold text-center mb-4">
-                Calibración
+                {t("game.calibration.title")}
               </Text>
               <Text className="text-white/80 text-center mb-8 px-4">
-                Vamos a medir tu fuerza máxima.{"\n\n"}
-                Cuando presiones &quot;Iniciar&quot;, aplica la máxima fuerza
-                durante 5 segundos.
+                {t("game.calibration.instructions")}
               </Text>
 
               {calibrationTime > 0 ? (
@@ -577,14 +577,14 @@ export default function GameScreen() {
                     {calibrationTime}
                   </Text>
                   <Text className="text-primary text-xl font-semibold mb-8">
-                    ¡Aprieta con fuerza!
+                    {t("game.calibration.squeeze")}
                   </Text>
                   <View className="bg-white/90 rounded-3xl p-8">
                     <Text className="text-foreground text-5xl font-bold text-center">
                       {currentForce.toFixed(1)}
                     </Text>
                     <Text className="text-muted text-xl text-center mt-2">
-                      kg
+                      {t("game.unitKg")}
                     </Text>
                   </View>
                 </>
@@ -594,7 +594,7 @@ export default function GameScreen() {
                   className="bg-primary px-8 py-4 rounded-xl active:opacity-80"
                 >
                   <Text className="text-background text-lg font-semibold">
-                    Iniciar Calibración
+                    {t("game.calibration.startButton")}
                   </Text>
                 </TouchableOpacity>
               )}
@@ -607,13 +607,15 @@ export default function GameScreen() {
           <View className="flex-1 justify-center items-center px-6">
             <View className="bg-black/70 rounded-3xl p-8 items-center max-w-md">
               <Text className="text-white text-2xl font-bold text-center mb-4">
-                ¡Calibración completa!
+                {t("game.ready.title")}
               </Text>
               <Text className="text-white/80 text-center mb-2">
-                {modeConfig?.title || "Juego personalizado"}
+                {displaySessionTitle}
               </Text>
               <Text className="text-white/60 text-center mb-6">
-                Tu fuerza máxima: {calibrationData.maxForce.toFixed(1)} kg
+                {t("game.ready.maxForce", {
+                  force: calibrationData.maxForce.toFixed(1),
+                })}
               </Text>
 
               <TouchableOpacity
@@ -621,7 +623,7 @@ export default function GameScreen() {
                 className="bg-primary px-8 py-4 rounded-xl active:opacity-80"
               >
                 <Text className="text-background text-lg font-semibold">
-                  Comenzar
+                  {t("game.ready.start")}
                 </Text>
               </TouchableOpacity>
             </View>
@@ -656,7 +658,9 @@ export default function GameScreen() {
             <View className="absolute top-4 right-4 z-20">
               <View className="bg-[#F5E6D3]/90 rounded-2xl px-4 py-2">
                 <Text className="text-[#5C4A3A] text-2xl font-bold">
-                  {currentForce.toFixed(1)}Kg
+                  {t("game.forceDisplay", {
+                    value: currentForce.toFixed(1),
+                  })}
                 </Text>
               </View>
             </View>

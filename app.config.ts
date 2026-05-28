@@ -114,6 +114,7 @@ const config: ExpoConfig = {
         },
       },
     ],
+    [ "expo-localization"]
   ],
   experiments: {
     typedRoutes: true,
