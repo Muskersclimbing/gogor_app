@@ -165,14 +165,21 @@ export default function EditGameScreen() {
                 );
               }
 
-              Alert.alert(t("common.success"), t("customGame.success.deleted"), [
-                {
-                  text: t("common.ok"),
-                  onPress: () => router.back(),
-                },
-              ]);
+              Alert.alert(
+                t("common.success"),
+                t("customGame.success.deleted"),
+                [
+                  {
+                    text: t("common.ok"),
+                    onPress: () => router.back(),
+                  },
+                ],
+              );
             } catch (error) {
-              Alert.alert(t("common.error"), t("customGame.errors.deleteFailed"));
+              Alert.alert(
+                t("common.error"),
+                t("customGame.errors.deleteFailed"),
+              );
               console.error(error);
             } finally {
               setLoading(false);

@@ -21,7 +21,15 @@
   "home": {
     "tagline": "Compatible con Tindeq, Force Board y WH-C06",
     "start": "Comenzar",
-    "bluetoothHint": "Asegúrate de tener el Bluetooth activado"
+    "bluetoothHint": "Asegúrate de tener el Bluetooth activado",
+    "bluetoothOn": "Bluetooth activado",
+    "bluetoothOff": "Bluetooth desactivado, actívalo en Ajustes",
+    "bluetoothUnauthorized": "Permite el acceso a Bluetooth para Gogor Games",
+    "bluetoothChecking": "Comprobando Bluetooth…",
+    "bluetoothUnavailable": "Bluetooth no está disponible en este dispositivo"
+  },
+  "settings": {
+    "language": "Idioma"
   },
   "modeSelect": {
     "title": "Elige tu modalidad",

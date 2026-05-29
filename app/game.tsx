@@ -96,7 +96,9 @@ export default function GameScreen() {
   const { t } = useTranslation();
   const params = useLocalSearchParams<{ mode?: string; gameId?: string }>();
   const gameMode = (params.mode || "quick") as GameMode;
-  const [modeConfig, setModeConfig] = useState<ModeConfig>(MODE_CONFIG[gameMode]);
+  const [modeConfig, setModeConfig] = useState<ModeConfig>(
+    MODE_CONFIG[gameMode],
+  );
   const [sessionTitle, setSessionTitle] = useState<string | null>(null);
 
   // Cargar juego personalizado si existe
@@ -226,10 +228,7 @@ export default function GameScreen() {
         isCalibrating.current = false;
         isFinishingCalibrationRef.current = false;
         calibrationForcesRef.current = [];
-        Alert.alert(
-          t("common.error"),
-          t("game.alerts.noCalibrationData"),
-        );
+        Alert.alert(t("common.error"), t("game.alerts.noCalibrationData"));
         setCalibrationTime(0);
         return;
       }

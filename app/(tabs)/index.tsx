@@ -3,13 +3,16 @@ import { useRouter } from "expo-router";
 import * as Haptics from "expo-haptics";
 import { useTranslation } from "react-i18next";
 
+import { LanguagePicker } from "@/components/language-picker";
 import { ScreenContainer } from "@/components/screen-container";
+import { useBluetoothState } from "@/hooks/use-bluetooth-state";
 import { useColors } from "@/hooks/use-colors";
 
 export default function HomeScreen() {
   const colors = useColors();
   const router = useRouter();
   const { t } = useTranslation();
+  const { isReady, isChecking, messageKey } = useBluetoothState();
 
   const handleStartPress = () => {
     if (Platform.OS !== "web") {
@@ -40,9 +43,20 @@ export default function HomeScreen() {
         </Text>
       </TouchableOpacity>
 
-      <View className="mt-8 items-center">
-        <Text className="text-sm text-muted text-center">
-          {t("home.bluetoothHint")}
+      <LanguagePicker className="mt-8 w-full max-w-sm" />
+
+      <View className="mt-6 items-center px-4">
+        <Text
+          className={`text-sm text-center ${
+            isReady
+              ? "text-primary"
+              : isChecking
+                ? "text-muted"
+                : "text-foreground"
+          }`}
+        >
+          {isReady ? "✓ " : ""}
+          {t(messageKey)}
         </Text>
       </View>
     </ScreenContainer>

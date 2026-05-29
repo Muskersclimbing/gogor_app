@@ -242,9 +242,7 @@ export default function OAuthCallback() {
         console.error("[OAuth] Callback error:", error);
         setStatus("error");
         setErrorMessage(
-          error instanceof Error
-            ? error.message
-            : t("oauth.failedGeneric"),
+          error instanceof Error ? error.message : t("oauth.failedGeneric"),
         );
       }
     };

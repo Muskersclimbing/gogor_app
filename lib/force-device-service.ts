@@ -27,6 +27,16 @@ export interface DeviceInfo {
 
 export type DeviceType = "tindeq" | "force_board" | "wh_c06";
 
+/** BLE adapter states from react-native-ble-plx, plus web/unavailable. */
+export type BluetoothAdapterState =
+  | "Unknown"
+  | "Resetting"
+  | "Unsupported"
+  | "Unauthorized"
+  | "PoweredOff"
+  | "PoweredOn"
+  | "unavailable";
+
 type UnitType = "kg" | "lbs" | "n";
 type ForceCallback = (data: ForceData) => void;
 type BatteryCallback = (voltage: number) => void;
@@ -84,6 +94,29 @@ class ForceDeviceService {
     }
 
     return "unknown";
+  }
+
+  async getBluetoothState(): Promise<BluetoothAdapterState> {
+    if (Platform.OS === "web") {
+      return "unavailable";
+    }
+
+    const manager = this.initializeScanner().manager;
+    return manager.state();
+  }
+
+  onBluetoothStateChange(
+    listener: (state: BluetoothAdapterState) => void,
+    emitCurrentState = true,
+  ): () => void {
+    if (Platform.OS === "web") {
+      listener("unavailable");
+      return () => {};
+    }
+
+    const manager = this.initializeScanner().manager;
+    const subscription = manager.onStateChange(listener, emitCurrentState);
+    return () => subscription.remove();
   }
 
   async scanForDevices(
