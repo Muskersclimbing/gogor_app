@@ -149,16 +149,16 @@ export default function ModeSelectScreen() {
   const { t } = useTranslation();
   const [customGames, setCustomGames] = useState<CustomGame[]>([]);
 
-  useFocusEffect(
-    useCallback(() => {
-      loadCustomGames();
-    }, []),
-  );
-
-  const loadCustomGames = async () => {
+  const loadCustomGames = useCallback(async () => {
     const games = await customGamesService.getAllGames();
     setCustomGames(games);
-  };
+  }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      void loadCustomGames();
+    }, [loadCustomGames]),
+  );
 
   const handleModeSelect = (mode: GameMode) => {
     router.push({

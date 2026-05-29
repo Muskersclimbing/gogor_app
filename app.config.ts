@@ -76,6 +76,12 @@ const config: ExpoConfig = {
     favicon: "./assets/images/favicon.png",
   },
   plugins: [
+    "expo-asset",
+    "expo-font",
+    "expo-image",
+    "expo-secure-store",
+    "expo-status-bar",
+    "expo-web-browser",
     "expo-router",
     [
       "react-native-ble-plx",

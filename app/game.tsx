@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   View,
   Text,
@@ -100,6 +100,35 @@ export default function GameScreen() {
     MODE_CONFIG[gameMode],
   );
   const [sessionTitle, setSessionTitle] = useState<string | null>(null);
+  const [gamePhase, setGamePhase] = useState<GamePhase>("calibration");
+  const [calibrationData, setCalibrationData] =
+    useState<CalibrationData | null>(null);
+  const [calibrationTime, setCalibrationTime] = useState(0);
+  const [currentForce, setCurrentForce] = useState(0);
+  const [, setMaxForceReached] = useState(0);
+  const [timeRemaining, setTimeRemaining] = useState(
+    MODE_CONFIG[gameMode].duration,
+  );
+  const [timeElapsed, setTimeElapsed] = useState(0);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [fruitsCollected, setFruitsCollected] = useState(0);
+
+  const isCalibrating = useRef(false);
+  const calibrationForcesRef = useRef<number[]>([]);
+  const gamePhaseRef = useRef<GamePhase>("calibration");
+  const isFinishingCalibrationRef = useRef(false);
+  const isEndingGameRef = useRef(false);
+  const finalStatsRef = useRef({ maxForce: 0, avgForce: 0 });
+  const finalFruitsRef = useRef(0);
+  const finalTimeRemainingRef = useRef(MODE_CONFIG[gameMode].duration);
+  const flappyBirdRef = useRef<FlappyBirdGameRef>(null);
+  const [currentSceneIndex] = useState(0);
+
+  const applyModeConfig = useCallback((config: ModeConfig) => {
+    setModeConfig(config);
+    setTimeRemaining(config.duration);
+    finalTimeRemainingRef.current = config.duration;
+  }, []);
 
   // Cargar juego personalizado si existe
   useEffect(() => {
@@ -130,7 +159,7 @@ export default function GameScreen() {
               lives: 0,
             };
             console.log("[GAME] customModeConfig creado:", customModeConfig);
-            setModeConfig(customModeConfig);
+            applyModeConfig(customModeConfig);
             setSessionTitle(game.name || t("game.customGame"));
           } else {
             console.error(
@@ -139,69 +168,27 @@ export default function GameScreen() {
               "game:",
               game,
             );
-            setModeConfig(MODE_CONFIG["quick"]);
+            applyModeConfig(MODE_CONFIG["quick"]);
             setSessionTitle(null);
           }
         } else {
           console.log("[DEBUG] Modo predefinido:", gameMode);
-          setModeConfig(MODE_CONFIG[gameMode]);
+          applyModeConfig(MODE_CONFIG[gameMode]);
           setSessionTitle(null);
         }
       } catch (error) {
         console.error("[GAME] ERROR en loadGame:", error);
         console.error("[GAME] Stack:", (error as any)?.stack);
-        setModeConfig(MODE_CONFIG["quick"]);
+        applyModeConfig(MODE_CONFIG["quick"]);
         setSessionTitle(null);
       }
     };
     loadGame();
-  }, [params.gameId, params.mode, gameMode, t]);
-
-  // Estado de calibración
-  const [gamePhase, setGamePhase] = useState<GamePhase>("calibration");
-  const [calibrationData, setCalibrationData] =
-    useState<CalibrationData | null>(null);
-  const [calibrationTime, setCalibrationTime] = useState(0);
-  const isCalibrating = useRef(false);
-  const calibrationForcesRef = useRef<number[]>([]);
-  const gamePhaseRef = useRef<GamePhase>("calibration");
-  const finishCalibrationRef = useRef<() => void>(() => {});
-  const handleGameEndRef = useRef<() => void>(() => {});
-  const isFinishingCalibrationRef = useRef(false);
-  const isEndingGameRef = useRef(false);
-
-  // Estado del juego
-  const [currentForce, setCurrentForce] = useState(0);
-  const [, setMaxForceReached] = useState(0);
-  const [timeRemaining, setTimeRemaining] = useState(0);
-
-  // Inicializar timeRemaining cuando modeConfig cambie
-  useEffect(() => {
-    const duration = modeConfig?.duration || MODE_CONFIG.quick.duration;
-    setTimeRemaining(duration);
-  }, [modeConfig?.duration]);
-  const [timeElapsed, setTimeElapsed] = useState(0);
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [fruitsCollected, setFruitsCollected] = useState(0);
+  }, [params.gameId, params.mode, gameMode, t, applyModeConfig]);
 
   useEffect(() => {
     gamePhaseRef.current = gamePhase;
   }, [gamePhase]);
-
-  // Refs para estadísticas finales y referencia al componente del juego
-  const finalStatsRef = useRef({ maxForce: 0, avgForce: 0 });
-  const finalFruitsRef = useRef(0);
-  const finalTimeRemainingRef = useRef(0);
-
-  // Inicializar finalTimeRemainingRef cuando modeConfig cambie
-  useEffect(() => {
-    const duration = modeConfig?.duration || MODE_CONFIG.quick.duration;
-    finalTimeRemainingRef.current = duration;
-  }, [modeConfig?.duration]);
-  const flappyBirdRef = useRef<FlappyBirdGameRef>(null);
-
-  // Estado de escenarios - un solo escenario fijo
-  const [currentSceneIndex] = useState(0); // Siempre 0, un solo escenario
 
   const currentScene =
     SCENES[modeConfig?.scenes?.[currentSceneIndex] || "yosemite"];
@@ -215,7 +202,7 @@ export default function GameScreen() {
 
   // ELIMINADO: useEffect de navegación - ahora se navega directamente desde handleGameEnd
 
-  const finishCalibration = async () => {
+  const finishCalibration = useCallback(async () => {
     try {
       await forceDeviceService.stopMeasurement();
 
@@ -267,12 +254,9 @@ export default function GameScreen() {
       console.error("Error finalizando calibración:", error);
       Alert.alert(t("common.error"), t("game.alerts.calibrationFailed"));
     }
-  };
-  finishCalibrationRef.current = () => {
-    void finishCalibration();
-  };
+  }, [t]);
 
-  const handleGameEnd = async () => {
+  const handleGameEnd = useCallback(async () => {
     if (Platform.OS !== "web") {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     }
@@ -328,10 +312,7 @@ export default function GameScreen() {
       isEndingGameRef.current = false;
       console.error("Error finalizando juego:", error);
     }
-  };
-  handleGameEndRef.current = () => {
-    void handleGameEnd();
-  };
+  }, [fruitsCollected, gameMode, modeConfig, router, timeRemaining]);
 
   // Verificar conexión al montar
   useEffect(() => {
@@ -412,8 +393,8 @@ export default function GameScreen() {
     }
 
     isEndingGameRef.current = true;
-    handleGameEndRef.current();
-  }, [isPlaying, timeRemaining]);
+    void handleGameEnd();
+  }, [handleGameEnd, isPlaying, timeRemaining]);
 
   // Cronómetro de calibración (5 segundos)
   useEffect(() => {
@@ -444,8 +425,8 @@ export default function GameScreen() {
     }
 
     isFinishingCalibrationRef.current = true;
-    finishCalibrationRef.current();
-  }, [calibrationTime, gamePhase]);
+    void finishCalibration();
+  }, [calibrationTime, finishCalibration, gamePhase]);
 
   const handleStartCalibration = async () => {
     if (Platform.OS !== "web") {
@@ -517,7 +498,7 @@ export default function GameScreen() {
     try {
       await forceDeviceService.stopMeasurement();
       setIsPlaying(false);
-      handleGameEnd();
+      void handleGameEnd();
     } catch (error) {
       console.error("Error deteniendo juego:", error);
     }

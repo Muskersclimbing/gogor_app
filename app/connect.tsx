@@ -54,56 +54,120 @@ export default function ConnectScreen() {
     );
   }, []);
 
-  const startScanning = useCallback(async () => {
-    try {
-      setIsScanning(true);
-      setDevices([]);
+  const runScan = useCallback(
+    async (reset: boolean) => {
+      try {
+        if (reset) {
+          setIsScanning(true);
+          setDevices([]);
+        }
 
-      const hasPermissions = await ensureBluetoothPermissions();
-      if (!hasPermissions) {
+        const hasPermissions = await ensureBluetoothPermissions();
+        if (!hasPermissions) {
+          setIsScanning(false);
+          Alert.alert(
+            t("connect.permissionsTitle"),
+            t("connect.permissionsMessage"),
+            [{ text: t("common.ok") }],
+          );
+          return;
+        }
+
+        await forceDeviceService.scanForDevices((device) => {
+          setDevices((prev) => {
+            const exists = prev.find((d) => d.id === device.id);
+            if (exists) {
+              return prev;
+            }
+
+            return [...prev, device];
+          });
+        });
+
+        setTimeout(() => {
+          forceDeviceService.stopScan();
+          setIsScanning(false);
+        }, 10000);
+      } catch (error) {
+        console.error("Error escaneando:", error);
         setIsScanning(false);
+
         Alert.alert(
-          t("connect.permissionsTitle"),
-          t("connect.permissionsMessage"),
+          t("connect.bluetoothErrorTitle"),
+          t("connect.bluetoothErrorMessage"),
           [{ text: t("common.ok") }],
         );
-        return;
       }
-
-      await forceDeviceService.scanForDevices((device) => {
-        setDevices((prev) => {
-          const exists = prev.find((d) => d.id === device.id);
-          if (exists) {
-            return prev;
-          }
-
-          return [...prev, device];
-        });
-      });
-
-      setTimeout(() => {
-        forceDeviceService.stopScan();
-        setIsScanning(false);
-      }, 10000);
-    } catch (error) {
-      console.error("Error escaneando:", error);
-      setIsScanning(false);
-
-      Alert.alert(
-        t("connect.bluetoothErrorTitle"),
-        t("connect.bluetoothErrorMessage"),
-        [{ text: t("common.ok") }],
-      );
-    }
-  }, [ensureBluetoothPermissions, t]);
+    },
+    [ensureBluetoothPermissions, t],
+  );
 
   useEffect(() => {
-    void startScanning();
+    let cancelled = false;
+
+    const scanOnMount = async () => {
+      try {
+        const hasPermissions = await ensureBluetoothPermissions();
+        if (cancelled) {
+          return;
+        }
+
+        if (!hasPermissions) {
+          setIsScanning(false);
+          Alert.alert(
+            t("connect.permissionsTitle"),
+            t("connect.permissionsMessage"),
+            [{ text: t("common.ok") }],
+          );
+          return;
+        }
+
+        await forceDeviceService.scanForDevices((device) => {
+          if (cancelled) {
+            return;
+          }
+
+          setDevices((prev) => {
+            const exists = prev.find((d) => d.id === device.id);
+            if (exists) {
+              return prev;
+            }
+
+            return [...prev, device];
+          });
+        });
+
+        setTimeout(() => {
+          if (cancelled) {
+            return;
+          }
+
+          forceDeviceService.stopScan();
+          setIsScanning(false);
+        }, 10000);
+      } catch (error) {
+        if (cancelled) {
+          return;
+        }
+
+        console.error("Error escaneando:", error);
+        setIsScanning(false);
+
+        Alert.alert(
+          t("connect.bluetoothErrorTitle"),
+          t("connect.bluetoothErrorMessage"),
+          [{ text: t("common.ok") }],
+        );
+      }
+    };
+
+    void scanOnMount();
 
     return () => {
+      cancelled = true;
       forceDeviceService.stopScan();
     };
-  }, [startScanning]);
+  }, [ensureBluetoothPermissions, t]);
 
   const handleDevicePress = async (deviceInfo: BluetoothDevice) => {
     if (Platform.OS !== "web") {
@@ -151,7 +215,7 @@ export default function ConnectScreen() {
     if (Platform.OS !== "web") {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     }
-    startScanning();
+    void runScan(true);
   };
 
   const statusText = isScanning

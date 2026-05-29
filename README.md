@@ -119,19 +119,64 @@ pnpm android
 
 ## EAS builds
 
-The project is configured for EAS Build with settings in `eas.json`.
+Build profiles live in `eas.json`:
 
-Useful commands:
+- `development` — dev client for internal distribution (BLE testing with Metro)
+- `preview` — internal APK/IPA for testers (no store submit)
+- `production` — store builds with auto-incrementing version; release scripts also submit
+
+### Development client (cloud)
 
 ```bash
-eas build --platform ios --clear-cache
-eas build --platform android --clear-cache
+eas build --platform ios --profile development
+eas build --platform android --profile development
 ```
 
-If EAS reports plugin resolution errors locally, make sure dependencies are installed before running:
+### Preview / internal test builds
 
 ```bash
+pnpm preview:ios
+pnpm preview:android
+pnpm preview
+```
+
+Equivalent raw commands:
+
+```bash
+eas build --platform ios --profile preview
+eas build --platform android --profile preview
+eas build --platform all --profile preview
+```
+
+`pnpm test:ios`, `pnpm test:android`, and `pnpm test:device` run the same `preview` profile.
+
+### Store release (build + submit)
+
+```bash
+pnpm release:ios
+pnpm release:android
+pnpm release
+```
+
+These run `eas build` with the `production` profile and `--auto-submit` (App Store Connect and Google Play per `eas.json` submit config).
+
+Equivalent raw commands:
+
+```bash
+eas build --platform ios --profile production --auto-submit
+eas build --platform android --profile production --auto-submit
+eas build --platform all --profile production --auto-submit
+```
+
+Android production submit expects `google-service-account.json` at the repo root.
+
+### Troubleshooting EAS locally
+
+```bash
+pnpm install
 npx expo config --json
+eas build --platform ios --clear-cache
+eas build --platform android --clear-cache
 ```
 
 ## BLE notes

@@ -33,6 +33,28 @@ Main scripts from `package.json`:
 - `pnpm android`
 - `pnpm ios`
 
+EAS build profiles (`eas.json`): `development`, `preview`, `production`.
+
+EAS preview / internal test builds (`preview` profile, internal distribution):
+
+- `pnpm preview:ios` → `eas build --platform ios --profile preview`
+- `pnpm preview:android` → `eas build --platform android --profile preview`
+- `pnpm preview` → `eas build --platform all --profile preview`
+- `pnpm test:ios`, `pnpm test:android`, `pnpm test:device` — aliases for the same `preview` profile
+
+EAS store release (`production` profile + `--auto-submit`):
+
+- `pnpm release:ios` → `eas build --platform ios --profile production --auto-submit`
+- `pnpm release:android` → `eas build --platform android --profile production --auto-submit`
+- `pnpm release` → `eas build --platform all --profile production --auto-submit`
+
+Submit config: iOS uses ASC app id in `eas.json`; Android expects `./google-service-account.json` for Play production track.
+
+Development client on device without local native build:
+
+- `eas build --platform ios --profile development`
+- `eas build --platform android --profile development`
+
 Current dev behavior:
 
 - `pnpm dev` starts Expo in `--dev-client` mode
