@@ -33,6 +33,7 @@
     "release:production": "eas build --platform all --profile production --auto-submit"
   },
   "dependencies": {
+    "@expo/dom-webview": "^56.0.5",
     "@expo/metro-runtime": "~56.0.13",
     "@expo/vector-icons": "^15.1.1",
     "@hangtime/grip-connect-react-native": "^0.13.0",
