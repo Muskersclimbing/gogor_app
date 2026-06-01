@@ -35,25 +35,30 @@ Main scripts from `package.json`:
 
 EAS build profiles (`eas.json`): `development`, `preview`, `production`.
 
-EAS preview / internal test builds (`preview` profile, internal distribution):
+EAS dev client builds (`development` profile, internal distribution):
 
-- `pnpm preview:ios` → `eas build --platform ios --profile preview`
-- `pnpm preview:android` → `eas build --platform android --profile preview`
-- `pnpm preview` → `eas build --platform all --profile preview`
-- `pnpm test:ios`, `pnpm test:android`, `pnpm test:device` — aliases for the same `preview` profile
+- `pnpm build:dev:ios` → `eas build --platform ios --profile development`
+- `pnpm build:dev:android` → `eas build --platform android --profile development`
 
-EAS store release (`production` profile + `--auto-submit`):
+EAS internal test builds (`preview` profile, internal distribution, no store submit):
 
-- `pnpm release:ios` → `eas build --platform ios --profile production --auto-submit`
-- `pnpm release:android` → `eas build --platform android --profile production --auto-submit`
-- `pnpm release` → `eas build --platform all --profile production --auto-submit`
+- `pnpm build:internal:ios` → `eas build --platform ios --profile preview`
+- `pnpm build:internal:android` → `eas build --platform android --profile preview`
+- `pnpm build:internal` → `eas build --platform all --profile preview`
 
-Submit config: iOS uses ASC app id in `eas.json`; Android expects `./google-service-account.json` for Play production track.
+EAS test release (`production` build + submit to TestFlight / Play internal testing):
 
-Development client on device without local native build:
+- `pnpm release:test:ios` → production build, submit via `test` profile (TestFlight)
+- `pnpm release:test:android` → production build, submit via `test` profile (Play internal track)
+- `pnpm release:test` → both platforms
 
-- `eas build --platform ios --profile development`
-- `eas build --platform android --profile development`
+EAS store release (`production` profile + `--auto-submit` to production track):
+
+- `pnpm release:production:ios` → `eas build --platform ios --profile production --auto-submit`
+- `pnpm release:production:android` → `eas build --platform android --profile production --auto-submit`
+- `pnpm release:production` → `eas build --platform all --profile production --auto-submit`
+
+Submit config: iOS uses ASC app id in `eas.json`; Android expects `./google-service-account.json`. Test releases use Play `internal` track; production releases use the `production` track.
 
 Current dev behavior:
 

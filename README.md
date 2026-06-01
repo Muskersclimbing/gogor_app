@@ -125,40 +125,47 @@ Build profiles live in `eas.json`:
 - `preview` — internal APK/IPA for testers (no store submit)
 - `production` — store builds with auto-incrementing version; release scripts also submit
 
+Submit profiles in `eas.json`:
+
+- `test` — TestFlight (iOS) and Play internal testing (Android)
+- `production` — App Store and Play production track
+
 ### Development client (cloud)
 
 ```bash
-eas build --platform ios --profile development
-eas build --platform android --profile development
+pnpm build:dev:ios
+pnpm build:dev:android
 ```
 
-### Preview / internal test builds
+### Internal test builds (no store submit)
+
+Uses the EAS `preview` profile: internal distribution APK/IPA for sideloading or direct install.
 
 ```bash
-pnpm preview:ios
-pnpm preview:android
-pnpm preview
+pnpm build:internal:ios
+pnpm build:internal:android
+pnpm build:internal
 ```
 
-Equivalent raw commands:
+### Test release (production build + store test tracks)
+
+Store-ready production build submitted to TestFlight (iOS) and Play internal testing (Android). Uses the `test` submit profile in `eas.json`.
 
 ```bash
-eas build --platform ios --profile preview
-eas build --platform android --profile preview
-eas build --platform all --profile preview
+pnpm release:test:ios
+pnpm release:test:android
+pnpm release:test
 ```
 
-`pnpm test:ios`, `pnpm test:android`, and `pnpm test:device` run the same `preview` profile.
-
-### Store release (build + submit)
+### Production release (build + submit)
 
 ```bash
-pnpm release:ios
-pnpm release:android
-pnpm release
+pnpm release:production:ios
+pnpm release:production:android
+pnpm release:production
 ```
 
-These run `eas build` with the `production` profile and `--auto-submit` (App Store Connect and Google Play per `eas.json` submit config).
+These run `eas build` with the `production` profile and `--auto-submit` to App Store / Play production.
 
 Equivalent raw commands:
 

@@ -26,6 +26,16 @@
     }
   },
   "submit": {
+    "test": {
+      "ios": {
+        "ascAppId": "6760430926"
+      },
+      "android": {
+        "serviceAccountKeyPath": "./google-service-account.json",
+        "track": "internal",
+        "releaseStatus": "completed"
+      }
+    },
     "production": {
       "ios": {
         "ascAppId": "6760430926"

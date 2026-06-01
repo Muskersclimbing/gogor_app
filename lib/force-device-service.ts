@@ -101,8 +101,13 @@ class ForceDeviceService {
       return "unavailable";
     }
 
-    const manager = this.initializeScanner().manager;
-    return manager.state();
+    try {
+      const manager = this.initializeScanner().manager;
+      return manager.state();
+    } catch (error) {
+      console.warn("[FORCE] Bluetooth state unavailable:", error);
+      return "unavailable";
+    }
   }
 
   onBluetoothStateChange(
@@ -114,9 +119,15 @@ class ForceDeviceService {
       return () => {};
     }
 
-    const manager = this.initializeScanner().manager;
-    const subscription = manager.onStateChange(listener, emitCurrentState);
-    return () => subscription.remove();
+    try {
+      const manager = this.initializeScanner().manager;
+      const subscription = manager.onStateChange(listener, emitCurrentState);
+      return () => subscription.remove();
+    } catch (error) {
+      console.warn("[FORCE] Bluetooth state listener unavailable:", error);
+      listener("unavailable");
+      return () => {};
+    }
   }
 
   async scanForDevices(

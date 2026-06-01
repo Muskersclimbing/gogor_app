@@ -36,7 +36,26 @@ export function useBluetoothState() {
   const [state, setState] = useState<BluetoothAdapterState>("Unknown");
 
   useEffect(() => {
-    return forceDeviceService.onBluetoothStateChange(setState, true);
+    let cancelled = false;
+    let unsubscribe: (() => void) | undefined;
+
+    try {
+      unsubscribe = forceDeviceService.onBluetoothStateChange((nextState) => {
+        if (!cancelled) {
+          setState(nextState);
+        }
+      }, true);
+    } catch (error) {
+      console.warn("[Bluetooth] Failed to initialize state listener:", error);
+      if (!cancelled) {
+        setState("unavailable");
+      }
+    }
+
+    return () => {
+      cancelled = true;
+      unsubscribe?.();
+    };
   }, []);
 
   return {
