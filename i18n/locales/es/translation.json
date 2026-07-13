@@ -97,6 +97,7 @@
   "devices": {
     "tindeq": "Tindeq",
     "forceBoard": "Force Board",
+    "frezDyno": "Frez Dyno",
     "whC06": "WH-C06",
     "unknown": "Desconocido"
   },

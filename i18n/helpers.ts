@@ -4,10 +4,11 @@ import type { DeviceInfo } from "@/lib/force-device-service";
 
 const DEVICE_TYPE_KEYS: Record<
   DeviceInfo["type"],
-  "tindeq" | "forceBoard" | "whC06"
+  "tindeq" | "forceBoard" | "frezDyno" | "whC06"
 > = {
   tindeq: "tindeq",
   force_board: "forceBoard",
+  frez_dyno: "frezDyno",
   wh_c06: "whC06",
 };
 

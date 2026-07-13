@@ -8,6 +8,7 @@ Currently supported devices:
 
 - Tindeq Progressor
 - Pitchsix Force Board
+- Frez Dyno
 - Weiheng WH-C06
 
 Current gameplay:
@@ -92,6 +93,7 @@ Name-based detection:
 
 - `progressor` or `tindeq` -> `tindeq`
 - `force board`, `pitchsix`, or `force` -> `force_board`
+- `frezdyno` or `frez dyno` -> `frez_dyno`
 - `wh-c06`, `if_b7`, `muscle meter`, or `weiheng` -> `wh_c06`
 
 Current service contract:

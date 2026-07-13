@@ -1,6 +1,7 @@
 import { Buffer } from "buffer";
 import {
   ForceBoard,
+  FrezDyno,
   Progressor,
   WHC06,
   type ForceMeasurement,
@@ -25,7 +26,7 @@ export interface DeviceInfo {
   type: DeviceType;
 }
 
-export type DeviceType = "tindeq" | "force_board" | "wh_c06";
+export type DeviceType = "tindeq" | "force_board" | "frez_dyno" | "wh_c06";
 
 /** BLE adapter states from react-native-ble-plx, plus web/unavailable. */
 export type BluetoothAdapterState =
@@ -41,7 +42,7 @@ type UnitType = "kg" | "lbs" | "n";
 type ForceCallback = (data: ForceData) => void;
 type BatteryCallback = (voltage: number) => void;
 type ConnectionCallback = (connected: boolean) => void;
-type GattDevice = Progressor | ForceBoard | WHC06;
+type GattDevice = Progressor | ForceBoard | FrezDyno;
 type SupportedDevices = GattDevice | WHC06;
 
 class ForceDeviceService {
@@ -75,6 +76,10 @@ class ForceDeviceService {
 
     if (name.includes("progressor") || name.includes("tindeq")) {
       return "tindeq";
+    }
+
+    if (name.includes("frezdyno") || name.includes("frez dyno")) {
+      return "frez_dyno";
     }
 
     if (
@@ -158,18 +163,26 @@ class ForceDeviceService {
             return;
           }
 
-          if (!device?.name) {
+          if (!device) {
             return;
           }
 
-          const deviceType = this.detectDeviceType(device.name);
+          const deviceName = device.name ?? device.localName;
+          if (!deviceName) {
+            return;
+          }
+
+          const deviceType = this.detectDeviceType(
+            device.name ?? undefined,
+            device.localName ?? undefined,
+          );
           if (deviceType === "unknown") {
             return;
           }
 
           onDeviceFound({
             id: device.id,
-            name: device.name,
+            name: deviceName,
             type: deviceType,
           });
         },
@@ -203,9 +216,11 @@ class ForceDeviceService {
         ? new Progressor()
         : deviceType === "force_board"
           ? new ForceBoard()
-          : deviceType === "wh_c06"
-            ? new WHC06()
-            : null;
+          : deviceType === "frez_dyno"
+            ? new FrezDyno()
+            : deviceType === "wh_c06"
+              ? new WHC06()
+              : null;
     if (!client) {
       throw new Error("Dispositivo no soportado");
     }
@@ -226,6 +241,32 @@ class ForceDeviceService {
 
         await new Promise<void>((resolve, reject) => {
           client.connect(resolve, reject);
+        });
+
+        this.device = client;
+        this.deviceType = deviceType;
+        this.isConnected = true;
+        this.connectionCallback?.(true);
+
+        console.log("[FORCE] Conexión establecida");
+        return;
+      }
+
+      if (client instanceof FrezDyno) {
+        client.notify((measurement) => {
+          this.handleMeasurement(measurement);
+        }, this.unit);
+
+        await client.connect(() => {
+          console.log("[FORCE] Servicios y notificaciones preparados");
+        });
+
+        client.device?.onDisconnected(() => {
+          console.log("[FORCE] Dispositivo desconectado");
+          this.isConnected = false;
+          this.device = null;
+          this.deviceType = null;
+          this.connectionCallback?.(false);
         });
 
         this.device = client;
@@ -319,6 +360,19 @@ class ForceDeviceService {
       return;
     }
 
+    if (this.device instanceof FrezDyno) {
+      await this.device.stream();
+      const tareStarted = this.device.tare(500);
+      if (!tareStarted) {
+        await this.device.stop();
+        throw new Error("No se pudo iniciar la tara de Frez Dyno");
+      }
+
+      await new Promise<void>((resolve) => setTimeout(resolve, 600));
+      await this.device.stop();
+      return;
+    }
+
     const forceBoard = this.device as ForceBoard;
     try {
       await forceBoard.tareByCharacteristic();
@@ -342,7 +396,8 @@ class ForceDeviceService {
 
     if (
       this.device instanceof Progressor ||
-      this.device instanceof ForceBoard
+      this.device instanceof ForceBoard ||
+      this.device instanceof FrezDyno
     ) {
       await this.device.stream();
     }
@@ -359,7 +414,8 @@ class ForceDeviceService {
 
     if (
       this.device instanceof Progressor ||
-      this.device instanceof ForceBoard
+      this.device instanceof ForceBoard ||
+      this.device instanceof FrezDyno
     ) {
       await this.device.stop();
     }
@@ -381,7 +437,8 @@ class ForceDeviceService {
     try {
       if (
         this.device instanceof Progressor ||
-        this.device instanceof ForceBoard
+        this.device instanceof ForceBoard ||
+        this.device instanceof FrezDyno
       ) {
         const rawValue = await this.device.battery();
         if (!rawValue) {
@@ -391,7 +448,9 @@ class ForceDeviceService {
         const batteryValue =
           this.deviceType === "tindeq"
             ? this.parseProgressorBattery(rawValue)
-            : this.parseForceBoardBattery(rawValue);
+            : this.deviceType === "force_board"
+              ? this.parseForceBoardBattery(rawValue)
+              : this.parseFrezDynoBattery(rawValue);
 
         if (batteryValue !== null) {
           this.batteryCallback?.(batteryValue);
@@ -446,6 +505,11 @@ class ForceDeviceService {
       );
       return null;
     }
+  }
+
+  private parseFrezDynoBattery(rawValue: string): number | null {
+    const percent = Number.parseInt(rawValue, 10);
+    return Number.isFinite(percent) ? percent : null;
   }
 }
 
