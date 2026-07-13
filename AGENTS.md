@@ -52,6 +52,8 @@ EAS test release (`production` build + submit to TestFlight / Play internal test
 - `pnpm release:test:ios` → production build, submit via `test` profile (TestFlight)
 - `pnpm release:test:android` → production build, submit via `test` profile (Play internal track)
 - `pnpm release:test` → both platforms
+- When an iOS build asks whether to log in to Apple, choose **no**. Use the existing remote iOS credentials; logging in
+  triggers unnecessary Apple team/provider selection.
 
 EAS store release (`production` profile + `--auto-submit` to production track):
 
