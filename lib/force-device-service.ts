@@ -38,6 +38,11 @@ export type BluetoothAdapterState =
   | "PoweredOn"
   | "unavailable";
 
+
+
+/** 100 unloaded samples at 250 Hz, plus margin, before Frez emits measurements. */
+const FREZ_TARE_WINDOW_MS = 500;
+
 type UnitType = "kg" | "lbs" | "n";
 type ForceCallback = (data: ForceData) => void;
 type BatteryCallback = (voltage: number) => void;
@@ -211,6 +216,12 @@ class ForceDeviceService {
       await this.disconnect();
     }
 
+    if (deviceType === "frez_dyno" && !FREZ_ACCESS_KEY) {
+      throw new Error(
+        "Falta EXPO_PUBLIC_FREZ_ACCESS_KEY para usar el Frez Dyno",
+      );
+    }
+
     const client =
       deviceType === "tindeq"
         ? new Progressor()
@@ -360,16 +371,9 @@ class ForceDeviceService {
       return;
     }
 
+    // Frez zeroes itself from the first 100 unloaded samples of every stream,
+    // so an explicit tare here would be discarded by startMeasurement().
     if (this.device instanceof FrezDyno) {
-      await this.device.stream();
-      const tareStarted = this.device.tare(500);
-      if (!tareStarted) {
-        await this.device.stop();
-        throw new Error("No se pudo iniciar la tara de Frez Dyno");
-      }
-
-      await new Promise<void>((resolve) => setTimeout(resolve, 600));
-      await this.device.stop();
       return;
     }
 
@@ -394,10 +398,18 @@ class ForceDeviceService {
       return;
     }
 
+    if (this.device instanceof FrezDyno) {
+      await this.device.stream();
+      // The device must stay unloaded until its zero is established.
+      await new Promise<void>((resolve) =>
+        setTimeout(resolve, FREZ_TARE_WINDOW_MS),
+      );
+      return;
+    }
+
     if (
       this.device instanceof Progressor ||
-      this.device instanceof ForceBoard ||
-      this.device instanceof FrezDyno
+      this.device instanceof ForceBoard
     ) {
       await this.device.stream();
     }
