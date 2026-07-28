@@ -38,7 +38,7 @@ export type BluetoothAdapterState =
   | "PoweredOn"
   | "unavailable";
 
-
+const FREZ_ACCESS_KEY = process.env.EXPO_PUBLIC_FREZ_ACCESS_KEY?.trim();
 
 /** 100 unloaded samples at 250 Hz, plus margin, before Frez emits measurements. */
 const FREZ_TARE_WINDOW_MS = 500;
@@ -228,7 +228,7 @@ class ForceDeviceService {
         : deviceType === "force_board"
           ? new ForceBoard()
           : deviceType === "frez_dyno"
-            ? new FrezDyno()
+            ? new FrezDyno({ accessKey: FREZ_ACCESS_KEY })
             : deviceType === "wh_c06"
               ? new WHC06()
               : null;
