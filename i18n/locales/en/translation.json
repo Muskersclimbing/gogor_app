@@ -19,7 +19,7 @@
     "home": "Home"
   },
   "home": {
-    "tagline": "Works with Tindeq, Force Board, and WH-C06",
+    "tagline": "Works with Tindeq, Force Board, Frez Dyno, and WH-C06",
     "start": "Start",
     "bluetoothHint": "Make sure Bluetooth is turned on",
     "bluetoothOn": "Bluetooth is on",

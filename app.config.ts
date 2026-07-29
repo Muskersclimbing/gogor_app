@@ -41,9 +41,9 @@ const config: ExpoConfig = {
     infoPlist: {
       ITSAppUsesNonExemptEncryption: false,
       NSBluetoothAlwaysUsageDescription:
-        "This app needs Bluetooth to connect to supported force devices like Tindeq Progressor and Force Board.",
+        "This app needs Bluetooth to connect to supported force devices like Tindeq Progressor, Force Board, Frez Dyno, and WH-C06.",
       NSBluetoothPeripheralUsageDescription:
-        "This app needs Bluetooth to connect to supported force devices like Tindeq Progressor and Force Board.",
+        "This app needs Bluetooth to connect to supported force devices like Tindeq Progressor, Force Board, Frez Dyno, and WH-C06.",
     },
   },
   android: {
