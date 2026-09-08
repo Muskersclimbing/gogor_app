@@ -25,7 +25,8 @@ import { FruitProgressIndicator } from "@/components/fruit-progress-indicator";
 import { customGamesService } from "@/lib/custom-games-service";
 import { getModeLabel } from "@/i18n/helpers";
 
-type GameMode = "quick" | "total";
+type BuiltInGameMode = "quick" | "total";
+type GameMode = BuiltInGameMode | "custom";
 type GamePhase = "calibration" | "ready" | "playing" | "rest" | "finished";
 type SceneName =
   | "yosemite"
@@ -71,7 +72,7 @@ interface ModeConfig {
   lives?: number;
 }
 
-const MODE_CONFIG: Record<GameMode, ModeConfig> = {
+const MODE_CONFIG: Record<BuiltInGameMode, ModeConfig> = {
   quick: {
     duration: 180,
     fruitGoal: 15,
@@ -95,10 +96,12 @@ export default function GameScreen() {
   const router = useRouter();
   const { t } = useTranslation();
   const params = useLocalSearchParams<{ mode?: string; gameId?: string }>();
-  const gameMode = (params.mode || "quick") as GameMode;
-  const [modeConfig, setModeConfig] = useState<ModeConfig>(
-    MODE_CONFIG[gameMode],
-  );
+  const gameMode: GameMode =
+    params.mode === "custom" || params.mode === "total" ? params.mode : "quick";
+  // Custom workouts load asynchronously, so the first render needs a valid config.
+  const initialModeConfig =
+    MODE_CONFIG[gameMode === "custom" ? "quick" : gameMode];
+  const [modeConfig, setModeConfig] = useState<ModeConfig>(initialModeConfig);
   const [sessionTitle, setSessionTitle] = useState<string | null>(null);
   const [gamePhase, setGamePhase] = useState<GamePhase>("calibration");
   const [calibrationData, setCalibrationData] =
@@ -107,7 +110,7 @@ export default function GameScreen() {
   const [currentForce, setCurrentForce] = useState(0);
   const [, setMaxForceReached] = useState(0);
   const [timeRemaining, setTimeRemaining] = useState(
-    MODE_CONFIG[gameMode].duration,
+    initialModeConfig.duration,
   );
   const [timeElapsed, setTimeElapsed] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -120,7 +123,7 @@ export default function GameScreen() {
   const isEndingGameRef = useRef(false);
   const finalStatsRef = useRef({ maxForce: 0, avgForce: 0 });
   const finalFruitsRef = useRef(0);
-  const finalTimeRemainingRef = useRef(MODE_CONFIG[gameMode].duration);
+  const finalTimeRemainingRef = useRef(initialModeConfig.duration);
   const flappyBirdRef = useRef<FlappyBirdGameRef>(null);
   const [currentSceneIndex] = useState(0);
 
@@ -173,7 +176,7 @@ export default function GameScreen() {
           }
         } else {
           console.log("[DEBUG] Modo predefinido:", gameMode);
-          applyModeConfig(MODE_CONFIG[gameMode]);
+          applyModeConfig(initialModeConfig);
           setSessionTitle(null);
         }
       } catch (error) {
@@ -184,7 +187,14 @@ export default function GameScreen() {
       }
     };
     loadGame();
-  }, [params.gameId, params.mode, gameMode, t, applyModeConfig]);
+  }, [
+    params.gameId,
+    params.mode,
+    gameMode,
+    initialModeConfig,
+    t,
+    applyModeConfig,
+  ]);
 
   useEffect(() => {
     gamePhaseRef.current = gamePhase;

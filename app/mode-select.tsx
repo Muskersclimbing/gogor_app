@@ -12,6 +12,7 @@ import { useTranslation } from "react-i18next";
 
 import { ScreenContainer } from "@/components/screen-container";
 import { useColors } from "@/hooks/use-colors";
+import { forceDeviceService } from "@/lib/force-device-service";
 import {
   customGamesService,
   type CustomGame,
@@ -162,14 +163,14 @@ export default function ModeSelectScreen() {
 
   const handleModeSelect = (mode: GameMode) => {
     router.push({
-      pathname: "/connect",
+      pathname: forceDeviceService.getIsConnected() ? "/game" : "/connect",
       params: { mode },
     });
   };
 
   const handleCustomGameSelect = (game: CustomGame) => {
     router.push({
-      pathname: "/connect",
+      pathname: forceDeviceService.getIsConnected() ? "/game" : "/connect",
       params: {
         mode: "custom",
         gameId: game.id,
