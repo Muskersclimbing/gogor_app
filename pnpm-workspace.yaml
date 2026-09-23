@@ -1,3 +1,6 @@
 allowBuilds:
   esbuild: true
   unrs-resolver: true
+minimumReleaseAgeExclude:
+  - '@hangtime/grip-connect-react-native@0.15.2'
+  - '@hangtime/grip-connect@0.15.1'

@@ -176,8 +176,8 @@ importers:
         specifier: ^15.1.1
         version: 15.1.1(expo-font@57.0.4)(react-native@0.86.3(@babel/core@7.29.7(supports-color@10.2.2))(@react-native/metro-config@0.87.1(@babel/core@7.29.7(supports-color@10.2.2))(supports-color@10.2.2))(@types/react@19.2.18)(react@19.2.3)(supports-color@10.2.2))(react@19.2.3)
       '@hangtime/grip-connect-react-native':
-        specifier: ^0.15.0
-        version: 0.15.0(react-native@0.86.3(@babel/core@7.29.7(supports-color@10.2.2))(@react-native/metro-config@0.87.1(@babel/core@7.29.7(supports-color@10.2.2))(supports-color@10.2.2))(@types/react@19.2.18)(react@19.2.3)(supports-color@10.2.2))(react@19.2.3)
+        specifier: ^0.15.2
+        version: 0.15.2(react-native@0.86.3(@babel/core@7.29.7(supports-color@10.2.2))(@react-native/metro-config@0.87.1(@babel/core@7.29.7(supports-color@10.2.2))(supports-color@10.2.2))(@types/react@19.2.18)(react@19.2.3)(supports-color@10.2.2))(react@19.2.3)
       '@react-native-async-storage/async-storage':
         specifier: ^2.2.0
         version: 2.2.0(react-native@0.86.3(@babel/core@7.29.7(supports-color@10.2.2))(@react-native/metro-config@0.87.1(@babel/core@7.29.7(supports-color@10.2.2))(supports-color@10.2.2))(@types/react@19.2.18)(react@19.2.3)(supports-color@10.2.2))
@@ -351,7 +351,7 @@ importers:
         specifier: ~19.2.18
         version: 19.2.18
       '@types/react-dom':
-        specifier: ^19.2.7
+        specifier: ^19.3.0
         version: 19.3.0(@types/react@19.2.18)
       concurrently:
         specifier: ^10.0.5
@@ -1704,11 +1704,11 @@ packages:
     resolution: {integrity: sha512-J3eL4n4h5QTwfD0SIz8OIk6/+sOL/hFZAMacgCM07UNlxBQfJipEpIC2AQxvGkbYeStByJ0TVhQAJo+DeNgaSQ==}
     hasBin: true
 
-  '@hangtime/grip-connect-react-native@0.15.0':
-    resolution: {integrity: sha512-CW1d3C0oxjFMyPanmqkuyxy2qyt9F+du7d9HEjmDvSRgZERyk82kuCN9vm/A8vZRW+s7hpqTmEJkOHAFcsruvw==}
+  '@hangtime/grip-connect-react-native@0.15.2':
+    resolution: {integrity: sha512-c9TLZUPkuxTXThOa58qTvGpyQqepUvpXxRC+9oYOJ9PAcbjLTCEAiATlc12yoYmWiKBOfbKVwCl71UeZivTlow==}
 
-  '@hangtime/grip-connect@0.15.0':
-    resolution: {integrity: sha512-GCzHwomr0RXCa0LFWWnpmiEAXJERRrP4wruFicFI+qv/IkvSbTtv5FjZaawiLeSiZ9Paie5EuRHd3dM8cjNOdA==}
+  '@hangtime/grip-connect@0.15.1':
+    resolution: {integrity: sha512-3N0REWb6rf3S6I993jPKaFpI9gHAM68gDmRlhC60S7miDqlPv3gHsIqfLnkN5T688Ni0qTGk7MHj3PaqAV2DqQ==}
 
   '@humanfs/core@0.19.2':
     resolution: {integrity: sha512-UhXNm+CFMWcbChXywFwkmhqjs3PRCmcSa/hfBgLIb7oQ5HNb1wS0icWsGtSAUNgefHeI+eBrA8I1fxmbHsGdvA==}
@@ -7602,16 +7602,16 @@ snapshots:
       chalk: 4.1.2
       js-yaml: 4.3.2
 
-  '@hangtime/grip-connect-react-native@0.15.0(react-native@0.86.3(@babel/core@7.29.7(supports-color@10.2.2))(@react-native/metro-config@0.87.1(@babel/core@7.29.7(supports-color@10.2.2))(supports-color@10.2.2))(@types/react@19.2.18)(react@19.2.3)(supports-color@10.2.2))(react@19.2.3)':
+  '@hangtime/grip-connect-react-native@0.15.2(react-native@0.86.3(@babel/core@7.29.7(supports-color@10.2.2))(@react-native/metro-config@0.87.1(@babel/core@7.29.7(supports-color@10.2.2))(supports-color@10.2.2))(@types/react@19.2.18)(react@19.2.3)(supports-color@10.2.2))(react@19.2.3)':
     dependencies:
-      '@hangtime/grip-connect': 0.15.0
+      '@hangtime/grip-connect': 0.15.1
       buffer: 6.0.3
       react-native-ble-plx: 3.5.1(react-native@0.86.3(@babel/core@7.29.7(supports-color@10.2.2))(@react-native/metro-config@0.87.1(@babel/core@7.29.7(supports-color@10.2.2))(supports-color@10.2.2))(@types/react@19.2.18)(react@19.2.3)(supports-color@10.2.2))(react@19.2.3)
     transitivePeerDependencies:
       - react
       - react-native
 
-  '@hangtime/grip-connect@0.15.0': {}
+  '@hangtime/grip-connect@0.15.1': {}
 
   '@humanfs/core@0.19.2':
     dependencies:
