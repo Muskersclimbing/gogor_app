@@ -72,7 +72,9 @@
     "bluetoothErrorTitle": "Bluetooth error",
     "bluetoothErrorMessage": "Could not start scanning. Make sure Bluetooth is on and the app has the required permissions.",
     "connectionErrorTitle": "Connection error",
-    "connectionErrorMessage": "Could not connect to the device. Please try again."
+    "connectionErrorMessage": "Could not connect to the device. Please try again.",
+    "connected": "Connected",
+    "calibrate": "Calibrate ({{count}} connected)"
   },
   "results": {
     "completed": "Session complete!",
@@ -109,7 +111,9 @@
       "title": "Calibration",
       "instructions": "We will measure your maximum force.\n\nWhen you press \"Start\", apply maximum force for 5 seconds.",
       "squeeze": "Squeeze hard!",
-      "startButton": "Start Calibration"
+      "startButton": "Start Calibration",
+      "device": "Device {{index}} of {{count}}: {{name}}",
+      "preparing": "Preparing…"
     },
     "ready": {
       "title": "Calibration complete!",

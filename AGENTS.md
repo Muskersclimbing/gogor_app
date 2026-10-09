@@ -14,7 +14,9 @@ Currently supported devices:
 Current gameplay:
 
 - Main flow: `home -> mode-select -> connect -> game -> results`
-- The game uses a force-controlled Flappy Bird variant.
+- The game uses a force-controlled Flappy Bird variant, with one independently controlled, numbered bird per connected device.
+- Find Device supports connecting several devices. When multiple devices are found, use the calibration button above Cancel; a single discovered and connected device continues automatically after scanning.
+- Calibration measures each connected device separately for 5 seconds, in connection order. Devices share the game scene and fruit score.
 - Custom games also exist and are stored through `customGamesService`.
 
 ## Stack and scripts
@@ -101,12 +103,17 @@ Name-based detection:
 Current service contract:
 
 - `scanForDevices(onDeviceFound)`
-- `connect(deviceId, deviceType)`
-- `tare()`
-- `startMeasurement()`
-- `stopMeasurement()`
-- `readBattery()`
-- force, battery, and connection listeners
+- `connect(deviceId, deviceType, name?)` adds a connection without replacing existing connections
+- `getConnectedDevices()` returns the connected roster
+- `disconnect(deviceId?)` disconnects one device, or all devices when omitted
+- `tare(deviceId?)`
+- `startMeasurement(deviceId?)`
+- `stopMeasurement(deviceId?)`
+- `readBattery(deviceId?)`
+- Measurement commands target one device when an ID is supplied, otherwise all connected devices.
+- Force packets include `deviceId`; battery and connection callbacks also receive the device ID. Listener registration returns an unsubscribe function.
+- Discovery and WH-C06 advertisement streams share a scan, filtered by device ID. Loss of WH-C06 advertisements for 10 seconds disconnects that device.
+- Stopping measurements preserves connections for the next session. Losing any session device pauses the game and stops measurement for all devices.
 
 ## Useful Tindeq notes
 

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import {
   View,
   Text,
@@ -9,7 +9,7 @@ import {
   Alert,
   PermissionsAndroid,
 } from "react-native";
-import { useRouter, useLocalSearchParams } from "expo-router";
+import { useRouter, useLocalSearchParams, useFocusEffect } from "expo-router";
 import * as Haptics from "expo-haptics";
 import { useTranslation } from "react-i18next";
 
@@ -19,6 +19,7 @@ import {
   forceDeviceService,
   type DeviceInfo,
 } from "@/lib/force-device-service";
+import { shouldAutoCalibrate } from "@/lib/multidevice-game";
 import { getDeviceTypeLabel } from "@/i18n/helpers";
 
 type BluetoothDevice = DeviceInfo;
@@ -29,8 +30,31 @@ export default function ConnectScreen() {
   const { t } = useTranslation();
   const params = useLocalSearchParams<{ mode?: string; gameId?: string }>();
   const [isScanning, setIsScanning] = useState(true);
-  const [isConnecting, setIsConnecting] = useState(false);
-  const [devices, setDevices] = useState<BluetoothDevice[]>([]);
+  const [connectingId, setConnectingId] = useState<string | null>(null);
+  const [connectedDevices, setConnectedDevices] = useState(() =>
+    forceDeviceService.getConnectedDevices(),
+  );
+  const [devices, setDevices] = useState<BluetoothDevice[]>(() =>
+    forceDeviceService.getConnectedDevices(),
+  );
+  const scanTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const mounted = useRef(false);
+  const navigating = useRef(false);
+  const connectionInProgress = useRef(false);
+  const isConnecting = connectingId !== null;
+
+  const goToCalibration = useCallback(() => {
+    if (navigating.current || !forceDeviceService.getIsConnected()) return;
+    navigating.current = true;
+    forceDeviceService.stopScan();
+    router.push({
+      pathname: "/game",
+      params: {
+        mode: params.mode || "quick",
+        ...(params.gameId ? { gameId: params.gameId } : {}),
+      },
+    });
+  }, [params.gameId, params.mode, router]);
 
   const ensureBluetoothPermissions = useCallback(async () => {
     if (Platform.OS !== "android") {
@@ -54,152 +78,116 @@ export default function ConnectScreen() {
     );
   }, []);
 
-  const runScan = useCallback(
-    async (reset: boolean) => {
-      try {
-        if (reset) {
-          setIsScanning(true);
-          setDevices([]);
-        }
-
-        const hasPermissions = await ensureBluetoothPermissions();
+  const runScan = useCallback(() => {
+    if (scanTimer.current) clearTimeout(scanTimer.current);
+    return ensureBluetoothPermissions()
+      .then(async (hasPermissions) => {
+        if (!mounted.current) return;
+        setConnectedDevices(forceDeviceService.getConnectedDevices());
         if (!hasPermissions) {
           setIsScanning(false);
           Alert.alert(
             t("connect.permissionsTitle"),
             t("connect.permissionsMessage"),
-            [{ text: t("common.ok") }],
           );
           return;
         }
-
         await forceDeviceService.scanForDevices((device) => {
-          setDevices((prev) => {
-            const exists = prev.find((d) => d.id === device.id);
-            if (exists) {
-              return prev;
-            }
-
-            return [...prev, device];
-          });
+          if (!mounted.current) return;
+          setDevices((prev) =>
+            prev.some((item) => item.id === device.id)
+              ? prev
+              : [...prev, device],
+          );
         });
-
-        setTimeout(() => {
+        if (!mounted.current) {
           forceDeviceService.stopScan();
-          setIsScanning(false);
+          return;
+        }
+        scanTimer.current = setTimeout(() => {
+          forceDeviceService.stopScan();
+          if (mounted.current) setIsScanning(false);
         }, 10000);
-      } catch (error) {
-        console.error("Error escaneando:", error);
+      })
+      .catch(() => {
+        if (!mounted.current) return;
         setIsScanning(false);
-
         Alert.alert(
           t("connect.bluetoothErrorTitle"),
           t("connect.bluetoothErrorMessage"),
-          [{ text: t("common.ok") }],
         );
-      }
-    },
-    [ensureBluetoothPermissions, t],
+      });
+  }, [ensureBluetoothPermissions, t]);
+
+  useFocusEffect(
+    useCallback(() => {
+      mounted.current = true;
+      navigating.current = false;
+      const unsubscribe = forceDeviceService.onConnectionChange(() => {
+        if (mounted.current)
+          setConnectedDevices(forceDeviceService.getConnectedDevices());
+      });
+      void runScan();
+      return () => {
+        mounted.current = false;
+        unsubscribe();
+        if (scanTimer.current) clearTimeout(scanTimer.current);
+        forceDeviceService.stopScan();
+      };
+    }, [runScan]),
   );
 
   useEffect(() => {
-    let cancelled = false;
-
-    const scanOnMount = async () => {
-      try {
-        const hasPermissions = await ensureBluetoothPermissions();
-        if (cancelled) {
-          return;
-        }
-
-        if (!hasPermissions) {
-          setIsScanning(false);
-          Alert.alert(
-            t("connect.permissionsTitle"),
-            t("connect.permissionsMessage"),
-            [{ text: t("common.ok") }],
-          );
-          return;
-        }
-
-        await forceDeviceService.scanForDevices((device) => {
-          if (cancelled) {
-            return;
-          }
-
-          setDevices((prev) => {
-            const exists = prev.find((d) => d.id === device.id);
-            if (exists) {
-              return prev;
-            }
-
-            return [...prev, device];
-          });
-        });
-
-        setTimeout(() => {
-          if (cancelled) {
-            return;
-          }
-
-          forceDeviceService.stopScan();
-          setIsScanning(false);
-        }, 10000);
-      } catch (error) {
-        if (cancelled) {
-          return;
-        }
-
-        console.error("Error escaneando:", error);
-        setIsScanning(false);
-
-        Alert.alert(
-          t("connect.bluetoothErrorTitle"),
-          t("connect.bluetoothErrorMessage"),
-          [{ text: t("common.ok") }],
-        );
-      }
-    };
-
-    void scanOnMount();
-
-    return () => {
-      cancelled = true;
-      forceDeviceService.stopScan();
-    };
-  }, [ensureBluetoothPermissions, t]);
+    // Wait for discovery to finish: the first advertisement does not mean only
+    // one device is available. With multiple discoveries the user chooses when.
+    if (
+      shouldAutoCalibrate(
+        isScanning,
+        isConnecting,
+        devices.length,
+        connectedDevices.length,
+      )
+    ) {
+      goToCalibration();
+    }
+  }, [
+    connectedDevices.length,
+    devices.length,
+    goToCalibration,
+    isConnecting,
+    isScanning,
+  ]);
 
   const handleDevicePress = async (deviceInfo: BluetoothDevice) => {
-    if (Platform.OS !== "web") {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    }
-
-    setIsConnecting(true);
-
+    if (
+      connectionInProgress.current ||
+      forceDeviceService.getIsConnected(deviceInfo.id)
+    )
+      return;
+    connectionInProgress.current = true;
+    setConnectingId(deviceInfo.id);
+    if (Platform.OS !== "web")
+      void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     try {
-      await forceDeviceService.connect(deviceInfo.id, deviceInfo.type);
-
-      const gameParams: { mode: string; gameId?: string } = {
-        mode: params.mode || "quick",
-      };
-      if (params.gameId) {
-        gameParams.gameId = Array.isArray(params.gameId)
-          ? params.gameId[0]
-          : params.gameId;
-      }
-      router.push({
-        pathname: "/game",
-        params: gameParams,
-      });
-    } catch (error) {
-      console.error("Error conectando:", error);
-      setIsConnecting(false);
-
-      Alert.alert(
-        t("connect.connectionErrorTitle"),
-        t("connect.connectionErrorMessage"),
-        [{ text: t("common.ok") }],
+      await forceDeviceService.connect(
+        deviceInfo.id,
+        deviceInfo.type,
+        deviceInfo.name,
       );
+      if (!mounted.current && !navigating.current) {
+        await forceDeviceService.disconnect(deviceInfo.id);
+      } else if (mounted.current) {
+        setConnectedDevices(forceDeviceService.getConnectedDevices());
+      }
+    } catch {
+      if (mounted.current)
+        Alert.alert(
+          t("connect.connectionErrorTitle"),
+          t("connect.connectionErrorMessage"),
+        );
+    } finally {
+      connectionInProgress.current = false;
+      if (mounted.current) setConnectingId(null);
     }
   };
 
@@ -215,19 +203,22 @@ export default function ConnectScreen() {
     if (Platform.OS !== "web") {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     }
-    void runScan(true);
+    setIsScanning(true);
+    void runScan();
   };
 
-  const statusText = isScanning
-    ? t("connect.scanning")
-    : isConnecting
-      ? t("connect.connecting")
+  const statusText = isConnecting
+    ? t("connect.connecting")
+    : isScanning
+      ? t("connect.scanning")
       : t("connect.devicesFound", { count: devices.length });
 
   const renderDevice = ({ item }: { item: BluetoothDevice }) => (
     <TouchableOpacity
       onPress={() => handleDevicePress(item)}
-      disabled={isConnecting}
+      disabled={
+        isConnecting || connectedDevices.some((device) => device.id === item.id)
+      }
       className="bg-surface p-4 rounded-xl mb-3 border border-border active:opacity-70"
     >
       <View className="flex-row justify-between items-center">
@@ -243,7 +234,11 @@ export default function ConnectScreen() {
         </View>
         <View className="bg-primary px-4 py-2 rounded-lg">
           <Text className="text-background font-medium">
-            {t("connect.connect")}
+            {connectedDevices.some((device) => device.id === item.id)
+              ? t("connect.connected")
+              : connectingId === item.id
+                ? t("connect.connecting")
+                : t("connect.connect")}
           </Text>
         </View>
       </View>
@@ -270,12 +265,14 @@ export default function ConnectScreen() {
         </View>
       )}
 
-      {!isScanning && !isConnecting && (
-        <FlatList
-          data={devices}
-          renderItem={renderDevice}
-          keyExtractor={(item) => item.id}
-          ListEmptyComponent={
+      <FlatList
+        className="flex-1"
+        data={devices}
+        extraData={{ connectedDevices, connectingId }}
+        renderItem={renderDevice}
+        keyExtractor={(item) => item.id}
+        ListEmptyComponent={
+          isScanning ? null : (
             <View className="items-center py-8">
               <Text className="text-muted text-center mb-4">
                 {t("connect.empty")}
@@ -289,8 +286,23 @@ export default function ConnectScreen() {
                 </Text>
               </TouchableOpacity>
             </View>
-          }
-        />
+          )
+        }
+      />
+
+      {(devices.length > 1 || connectedDevices.length > 1) && (
+        <TouchableOpacity
+          onPress={goToCalibration}
+          disabled={isConnecting || connectedDevices.length === 0}
+          className="bg-primary px-6 py-4 rounded-xl mt-4 active:opacity-70"
+          style={{
+            opacity: isConnecting || connectedDevices.length === 0 ? 0.5 : 1,
+          }}
+        >
+          <Text className="text-background text-center font-semibold">
+            {t("connect.calibrate", { count: connectedDevices.length })}
+          </Text>
+        </TouchableOpacity>
       )}
 
       {!isConnecting && (

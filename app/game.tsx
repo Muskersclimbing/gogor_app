@@ -6,8 +6,9 @@ import {
   Platform,
   Alert,
   ImageBackground,
+  ScrollView,
 } from "react-native";
-import { useRouter, useLocalSearchParams } from "expo-router";
+import { useRouter, useLocalSearchParams, useFocusEffect } from "expo-router";
 import * as Haptics from "expo-haptics";
 import { useTranslation } from "react-i18next";
 
@@ -23,16 +24,14 @@ import {
 } from "@/components/flappy-bird-game";
 import { FruitProgressIndicator } from "@/components/fruit-progress-indicator";
 import { customGamesService } from "@/lib/custom-games-service";
+import { calculateCalibration, getPlayerColor } from "@/lib/multidevice-game";
 import { getModeLabel } from "@/i18n/helpers";
 
 type BuiltInGameMode = "quick" | "total";
 type GameMode = BuiltInGameMode | "custom";
 type GamePhase = "calibration" | "ready" | "playing" | "rest" | "finished";
 type SceneName =
-  | "yosemite"
-  | "monument_valley"
-  | "albarracin"
-  | "fontainebleau";
+  "yosemite" | "monument_valley" | "albarracin" | "fontainebleau";
 
 interface SceneConfig {
   name: SceneName;
@@ -104,11 +103,28 @@ export default function GameScreen() {
   const [modeConfig, setModeConfig] = useState<ModeConfig>(initialModeConfig);
   const [sessionTitle, setSessionTitle] = useState<string | null>(null);
   const [gamePhase, setGamePhase] = useState<GamePhase>("calibration");
-  const [calibrationData, setCalibrationData] =
-    useState<CalibrationData | null>(null);
+  const [sessionDevices] = useState(() =>
+    forceDeviceService.getConnectedDevices(),
+  );
+  const [calibrations, setCalibrations] = useState<
+    Record<string, CalibrationData>
+  >({});
+  const [calibrationIndex, setCalibrationIndex] = useState(0);
+  const calibrationDevice = sessionDevices[calibrationIndex];
+  const calibrationDeviceIdRef = useRef(calibrationDevice?.id);
+  useEffect(() => {
+    calibrationDeviceIdRef.current = calibrationDevice?.id;
+  }, [calibrationDevice?.id]);
+  const [calibrationPreparing, setCalibrationPreparing] = useState(false);
+  const [startingGame, setStartingGame] = useState(false);
+  const [interrupted, setInterrupted] = useState(false);
+  const interruptedRef = useRef(false);
+  const [deviceForces, setDeviceForces] = useState<Record<string, number>>({});
+  const calibrationData = sessionDevices[0]
+    ? calibrations[sessionDevices[0].id]
+    : undefined;
   const [calibrationTime, setCalibrationTime] = useState(0);
-  const [currentForce, setCurrentForce] = useState(0);
-  const [, setMaxForceReached] = useState(0);
+  const currentForce = deviceForces[calibrationDevice?.id ?? ""] ?? 0;
   const [timeRemaining, setTimeRemaining] = useState(
     initialModeConfig.duration,
   );
@@ -118,7 +134,6 @@ export default function GameScreen() {
 
   const isCalibrating = useRef(false);
   const calibrationForcesRef = useRef<number[]>([]);
-  const gamePhaseRef = useRef<GamePhase>("calibration");
   const isFinishingCalibrationRef = useRef(false);
   const isEndingGameRef = useRef(false);
   const finalStatsRef = useRef({ maxForce: 0, avgForce: 0 });
@@ -196,10 +211,6 @@ export default function GameScreen() {
     applyModeConfig,
   ]);
 
-  useEffect(() => {
-    gamePhaseRef.current = gamePhase;
-  }, [gamePhase]);
-
   const currentScene =
     SCENES[modeConfig?.scenes?.[currentSceneIndex] || "yosemite"];
 
@@ -213,58 +224,35 @@ export default function GameScreen() {
   // ELIMINADO: useEffect de navegación - ahora se navega directamente desde handleGameEnd
 
   const finishCalibration = useCallback(async () => {
+    const deviceId = calibrationDeviceIdRef.current;
     try {
-      await forceDeviceService.stopMeasurement();
-
-      const capturedForces = calibrationForcesRef.current;
-
-      console.log("[DEBUG] Fuerzas capturadas:", capturedForces.length);
-      console.log("[DEBUG] Muestra:", capturedForces.slice(0, 5));
-
-      if (capturedForces.length === 0) {
-        isCalibrating.current = false;
-        isFinishingCalibrationRef.current = false;
-        calibrationForcesRef.current = [];
+      await forceDeviceService.stopMeasurement(deviceId);
+      if (interruptedRef.current || !deviceId) return;
+      const calibration = calculateCalibration(calibrationForcesRef.current);
+      isCalibrating.current = false;
+      isFinishingCalibrationRef.current = false;
+      calibrationForcesRef.current = [];
+      if (!calibration) {
         Alert.alert(t("common.error"), t("game.alerts.noCalibrationData"));
         setCalibrationTime(0);
         return;
       }
-
-      const sortedForces = [...capturedForces].sort((a, b) => b - a);
-      const top20Percent = sortedForces.slice(
-        0,
-        Math.max(1, Math.ceil(sortedForces.length * 0.2)),
-      );
-      const maxForce =
-        top20Percent.reduce((sum, f) => sum + f, 0) / top20Percent.length;
-
-      console.log("[DEBUG] maxForce calculado:", maxForce);
-
-      const calibration: CalibrationData = {
-        maxForce,
-        lowZone: maxForce * 0.33,
-        mediumZone: maxForce * 0.66,
-        highZone: maxForce,
-      };
-
-      console.log("[DEBUG] calibrationData:", calibration);
-
-      isCalibrating.current = false;
-      isFinishingCalibrationRef.current = false;
-      calibrationForcesRef.current = [];
-      setCalibrationData(calibration);
-      setGamePhase("ready");
-
-      if (Platform.OS !== "web") {
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      setCalibrations((prev) => ({ ...prev, [deviceId]: calibration }));
+      if (calibrationIndex + 1 < sessionDevices.length) {
+        setCalibrationIndex((prev) => prev + 1);
+      } else {
+        setGamePhase("ready");
       }
-    } catch (error) {
+      if (Platform.OS !== "web")
+        void Haptics.notificationAsync(
+          Haptics.NotificationFeedbackType.Success,
+        );
+    } catch {
       isCalibrating.current = false;
       isFinishingCalibrationRef.current = false;
-      console.error("Error finalizando calibración:", error);
       Alert.alert(t("common.error"), t("game.alerts.calibrationFailed"));
     }
-  }, [t]);
+  }, [calibrationIndex, sessionDevices.length, t]);
 
   const handleGameEnd = useCallback(async () => {
     if (Platform.OS !== "web") {
@@ -325,41 +313,14 @@ export default function GameScreen() {
   }, [fruitsCollected, gameMode, modeConfig, router, timeRemaining]);
 
   // Verificar conexión al montar
-  useEffect(() => {
-    const connected = forceDeviceService.getIsConnected();
-    if (!connected) {
-      Alert.alert(
-        t("game.alerts.notConnectedTitle"),
-        t("game.alerts.notConnectedMessage"),
-        [
-          {
-            text: t("common.goBack"),
-            onPress: () => router.back(),
-          },
-        ],
-      );
-      return;
-    }
-
-    // Configurar listeners
-    forceDeviceService.onForceData((data: ForceData) => {
-      const force = data.weight;
-      setCurrentForce(force);
-
-      if (isCalibrating.current) {
-        calibrationForcesRef.current.push(force);
-      }
-
-      if (gamePhaseRef.current === "playing") {
-        setMaxForceReached((prev) => (force > prev ? force : prev));
-      }
-    });
-    forceDeviceService.onBatteryData((_voltage: number) => {});
-    forceDeviceService.onConnectionChange((isConnected: boolean) => {
-      if (!isConnected) {
+  useFocusEffect(
+    useCallback(() => {
+      interruptedRef.current = false;
+      const connected = forceDeviceService.getIsConnected();
+      if (!connected) {
         Alert.alert(
-          t("game.alerts.disconnectedTitle"),
-          t("game.alerts.disconnectedMessage"),
+          t("game.alerts.notConnectedTitle"),
+          t("game.alerts.notConnectedMessage"),
           [
             {
               text: t("common.goBack"),
@@ -367,16 +328,68 @@ export default function GameScreen() {
             },
           ],
         );
+        return;
       }
-    });
 
-    // Leer batería inicial
-    forceDeviceService.readBattery().catch(console.error);
+      // Configurar listeners
+      const unsubscribeForce = forceDeviceService.onForceData(
+        (data: ForceData) => {
+          if (
+            interruptedRef.current ||
+            !sessionDevices.some((device) => device.id === data.deviceId)
+          )
+            return;
+          const force = data.weight;
+          setDeviceForces((prev) => ({ ...prev, [data.deviceId]: force }));
 
-    return () => {
-      forceDeviceService.stopMeasurement().catch(console.error);
-    };
-  }, [router, t]);
+          if (
+            isCalibrating.current &&
+            data.deviceId === calibrationDeviceIdRef.current
+          ) {
+            calibrationForcesRef.current.push(force);
+          }
+        },
+      );
+      const unsubscribeConnection = forceDeviceService.onConnectionChange(
+        (isConnected: boolean, deviceId: string) => {
+          if (
+            !isConnected &&
+            sessionDevices.some((device) => device.id === deviceId)
+          ) {
+            interruptedRef.current = true;
+            setInterrupted(true);
+            isCalibrating.current = false;
+            setCalibrationTime(0);
+            setIsPlaying(false);
+            void forceDeviceService.stopMeasurement().catch(console.error);
+            Alert.alert(
+              t("game.alerts.disconnectedTitle"),
+              t("game.alerts.disconnectedMessage"),
+              [
+                {
+                  text: t("common.goBack"),
+                  onPress: () => router.back(),
+                },
+              ],
+            );
+          }
+        },
+      );
+
+      // Leer batería inicial
+      forceDeviceService.readBattery().catch(console.error);
+
+      return () => {
+        interruptedRef.current = true;
+        setIsPlaying(false);
+        setCalibrationTime(0);
+        unsubscribeForce();
+        unsubscribeConnection();
+        isCalibrating.current = false;
+        forceDeviceService.stopMeasurement().catch(console.error);
+      };
+    }, [router, sessionDevices, t]),
+  );
 
   // Cronómetro del juego
   useEffect(() => {
@@ -439,60 +452,69 @@ export default function GameScreen() {
   }, [calibrationTime, finishCalibration, gamePhase]);
 
   const handleStartCalibration = async () => {
-    if (Platform.OS !== "web") {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    }
-
+    if (
+      isCalibrating.current ||
+      calibrationPreparing ||
+      interrupted ||
+      !calibrationDevice
+    )
+      return;
+    setCalibrationPreparing(true);
+    if (Platform.OS !== "web")
+      void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     try {
-      isCalibrating.current = true;
       isFinishingCalibrationRef.current = false;
       calibrationForcesRef.current = [];
-      setCurrentForce(0);
-
-      // Calibrar a cero
-      await forceDeviceService.tare();
-
-      // Esperar 1 segundo
+      setDeviceForces((prev) => ({ ...prev, [calibrationDevice.id]: 0 }));
+      await forceDeviceService.tare(calibrationDevice.id);
       await new Promise((resolve) => setTimeout(resolve, 1000));
-
-      // Iniciar medición
-      await forceDeviceService.startMeasurement();
-
-      // Iniciar cronómetro de 5 segundos
+      if (interruptedRef.current) return;
+      await forceDeviceService.startMeasurement(calibrationDevice.id);
+      if (interruptedRef.current) {
+        await forceDeviceService.stopMeasurement(calibrationDevice.id);
+        return;
+      }
+      // Capture only after tare and stream initialization have finished.
+      isCalibrating.current = true;
       setCalibrationTime(5);
-    } catch (error) {
+    } catch {
       isCalibrating.current = false;
       isFinishingCalibrationRef.current = false;
-      console.error("Error iniciando calibración:", error);
       Alert.alert(t("common.error"), t("game.alerts.calibrationStartFailed"));
+    } finally {
+      setCalibrationPreparing(false);
     }
   };
 
   const handleStartGame = async () => {
-    // Reproducir música según escenario
-    // const scenarioMusic = currentSceneIndex === 0 ? "mountain" : currentSceneIndex === 1 ? "forest" : "desert";
-    // audioService.playMusic(scenarioMusic); // Desactivado: usar música del FlappyBirdGame en su lugar
-    if (Platform.OS !== "web") {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    }
-
+    if (
+      startingGame ||
+      interrupted ||
+      sessionDevices.some((device) => !calibrations[device.id])
+    )
+      return;
+    setStartingGame(true);
+    if (Platform.OS !== "web")
+      void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     try {
-      // Calibrar a cero antes de empezar
       await forceDeviceService.tare();
       await new Promise((resolve) => setTimeout(resolve, 500));
-
-      // Iniciar medición
+      if (interruptedRef.current) return;
       await forceDeviceService.startMeasurement();
-
+      if (interruptedRef.current) {
+        await forceDeviceService.stopMeasurement();
+        return;
+      }
       isEndingGameRef.current = false;
       setIsPlaying(true);
       setGamePhase("playing");
-      setMaxForceReached(0);
       setTimeElapsed(0);
       setFruitsCollected(0);
-    } catch (error) {
-      console.error("Error iniciando juego:", error);
+      finalFruitsRef.current = 0;
+    } catch {
       Alert.alert(t("common.error"), t("game.alerts.gameStartFailed"));
+    } finally {
+      setStartingGame(false);
     }
   };
 
@@ -514,12 +536,9 @@ export default function GameScreen() {
     }
   };
 
-  const handleFruitCollected = () => {
-    setFruitsCollected((prev) => {
-      const newCount = prev + 1;
-      finalFruitsRef.current = newCount;
-      return newCount;
-    });
+  const handleFruitCollected = useCallback((count: number) => {
+    setFruitsCollected(count);
+    finalFruitsRef.current = count;
 
     if (Platform.OS !== "web") {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -527,9 +546,7 @@ export default function GameScreen() {
 
     // Las frutas solo suman puntos, no terminan el juego
     // El juego solo termina cuando se acaba el tiempo
-  };
-
-  const handleCollision = () => {};
+  }, []);
 
   const backgroundImage = currentScene.dayImage;
   const displaySessionTitle =
@@ -561,6 +578,18 @@ export default function GameScreen() {
                 {t("game.calibration.instructions")}
               </Text>
 
+              {sessionDevices.length > 1 && calibrationDevice && (
+                <Text
+                  className="text-center font-semibold mb-4"
+                  style={{ color: getPlayerColor(calibrationIndex) }}
+                >
+                  {t("game.calibration.device", {
+                    index: calibrationIndex + 1,
+                    count: sessionDevices.length,
+                    name: calibrationDevice.name,
+                  })}
+                </Text>
+              )}
               {calibrationTime > 0 ? (
                 <>
                   <Text className="text-white text-7xl font-bold mb-4">
@@ -581,10 +610,16 @@ export default function GameScreen() {
               ) : (
                 <TouchableOpacity
                   onPress={handleStartCalibration}
+                  disabled={calibrationPreparing || interrupted}
+                  style={{
+                    opacity: calibrationPreparing || interrupted ? 0.5 : 1,
+                  }}
                   className="bg-primary px-8 py-4 rounded-xl active:opacity-80"
                 >
                   <Text className="text-background text-lg font-semibold">
-                    {t("game.calibration.startButton")}
+                    {calibrationPreparing
+                      ? t("game.calibration.preparing")
+                      : t("game.calibration.startButton")}
                   </Text>
                 </TouchableOpacity>
               )}
@@ -602,14 +637,35 @@ export default function GameScreen() {
               <Text className="text-white/80 text-center mb-2">
                 {displaySessionTitle}
               </Text>
-              <Text className="text-white/60 text-center mb-6">
-                {t("game.ready.maxForce", {
-                  force: calibrationData.maxForce.toFixed(1),
-                })}
-              </Text>
+              <ScrollView
+                style={{ maxHeight: 240 }}
+                className="mb-6"
+                contentContainerStyle={{ gap: 8 }}
+              >
+                {sessionDevices.map((device, index) => (
+                  <View key={device.id}>
+                    {sessionDevices.length > 1 && (
+                      <Text
+                        className="text-center font-semibold"
+                        style={{ color: getPlayerColor(index) }}
+                      >
+                        {index + 1}. {device.name}
+                      </Text>
+                    )}
+                    <Text className="text-white/60 text-center">
+                      {t("game.ready.maxForce", {
+                        force:
+                          calibrations[device.id]?.maxForce.toFixed(1) ?? "0.0",
+                      })}
+                    </Text>
+                  </View>
+                ))}
+              </ScrollView>
 
               <TouchableOpacity
                 onPress={handleStartGame}
+                disabled={startingGame || interrupted}
+                style={{ opacity: startingGame || interrupted ? 0.5 : 1 }}
                 className="bg-primary px-8 py-4 rounded-xl active:opacity-80"
               >
                 <Text className="text-background text-lg font-semibold">
@@ -647,11 +703,18 @@ export default function GameScreen() {
             {/* UI Top Right: Fuerza actual */}
             <View className="absolute top-4 right-4 z-20">
               <View className="bg-[#F5E6D3]/90 rounded-2xl px-4 py-2">
-                <Text className="text-[#5C4A3A] text-2xl font-bold">
-                  {t("game.forceDisplay", {
-                    value: currentForce.toFixed(1),
-                  })}
-                </Text>
+                {sessionDevices.map((device, index) => (
+                  <Text
+                    key={device.id}
+                    className="text-[#5C4A3A] font-bold"
+                    style={{ fontSize: sessionDevices.length > 1 ? 16 : 24 }}
+                  >
+                    {sessionDevices.length > 1 ? `${index + 1}. ` : ""}
+                    {t("game.forceDisplay", {
+                      value: (deviceForces[device.id] ?? 0).toFixed(1),
+                    })}
+                  </Text>
+                ))}
               </View>
             </View>
 
@@ -687,21 +750,14 @@ export default function GameScreen() {
             {/* Juego Flappy Bird */}
             <FlappyBirdGame
               ref={flappyBirdRef}
-              currentForce={currentForce}
-              lowZone={calibrationData?.lowZone || 6.6}
-              highZone={calibrationData?.highZone || 20}
+              players={sessionDevices.map((device, index) => ({
+                id: device.id,
+                color: getPlayerColor(index),
+                currentForce: deviceForces[device.id] ?? 0,
+                highZone: calibrations[device.id].highZone,
+              }))}
               onFruitCollected={handleFruitCollected}
-              onGameOver={handleCollision}
               isPaused={!isPlaying}
-              onForceStats={(stats) => {
-                console.log("[game.tsx] onForceStats recibido:", stats);
-                setMaxForceReached(stats.maxForce);
-                finalStatsRef.current = {
-                  maxForce: stats.maxForce,
-                  avgForce: stats.avgForce,
-                };
-              }}
-              onCollision={() => {}}
             />
           </View>
         )}

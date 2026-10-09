@@ -72,7 +72,9 @@
     "bluetoothErrorTitle": "Error de Bluetooth",
     "bluetoothErrorMessage": "No se pudo iniciar el escaneo. Asegúrate de que Bluetooth esté activado y que la app tenga los permisos necesarios.",
     "connectionErrorTitle": "Error de conexión",
-    "connectionErrorMessage": "No se pudo conectar al dispositivo. Inténtalo de nuevo."
+    "connectionErrorMessage": "No se pudo conectar al dispositivo. Inténtalo de nuevo.",
+    "connected": "Conectado",
+    "calibrate": "Calibrar ({{count}} conectados)"
   },
   "results": {
     "completed": "¡Sesión completada!",
@@ -109,7 +111,9 @@
       "title": "Calibración",
       "instructions": "Vamos a medir tu fuerza máxima.\n\nCuando presiones \"Iniciar\", aplica la máxima fuerza durante 5 segundos.",
       "squeeze": "¡Aprieta con fuerza!",
-      "startButton": "Iniciar Calibración"
+      "startButton": "Iniciar Calibración",
+      "device": "Dispositivo {{index}} de {{count}}: {{name}}",
+      "preparing": "Preparando…"
     },
     "ready": {
       "title": "¡Calibración completa!",
